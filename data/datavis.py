@@ -40,4 +40,4 @@ class Data:
 if __name__ == "__main__":
     d = Data()
     d.randomise()
-    d.plot_data(0)
+    d.print_data()
