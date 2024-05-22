@@ -19,7 +19,7 @@ data.randomise()
 
 previous_cycles = cycles
 
-pop = Population(10, None, 2)
+pop = Population(10, None, 3)
 prev_cycle = cycles[0]
 
 for epoch in range(1000):
@@ -38,7 +38,7 @@ for epoch in range(1000):
     print("Average MSE: ", pop.average_mse())
 
     # init new population
-    pop = Population(10, pop, 2)
+    pop = Population(10, pop, 3)
 
     import_costs = add_noise(import_costs)
     irradiance = add_noise(irradiance)
