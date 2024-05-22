@@ -32,7 +32,7 @@ def predict_next_value(data, num_predictions=1):
     return combined_prediction
 
 # Example usage
-data = np.sin(2 * np.pi * np.arange(100) / 20) + np.random.normal(0, 0.1, 100)
+data = np.sin(2 * np.pi * np.arange(100) / 20) + np.sin(np.pi * np.arange(100) /40)+ np.random.normal(0, 0.1, 100)
 predictions = predict_next_value(data, num_predictions=5)
 print(predictions)
 
