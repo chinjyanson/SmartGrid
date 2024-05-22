@@ -1,6 +1,10 @@
 import numpy as np
 import scipy.special
 
+"""
+    Neural net class and genetic algorithm largely repurposed from an older project
+"""
+
 class neural_net:
     def __init__(self, input_nodes, hidden_a_nodes, hidden_b_nodes, output_nodes):
         self.inodes = input_nodes
@@ -8,7 +12,7 @@ class neural_net:
         self.hnodes_b = hidden_b_nodes
         self.onodes = output_nodes
 
-        self.activation_func = lambda x : scipy.special.expit(x)
+        self.activation_func = lambda x : np.array([i * (i > 0) for i in x])
 
         # weight matrix between input and hidden
         self.wi_ha = np.random.normal(0.0, pow(self.inodes, -0.5), (self.hnodes_a, self.inodes))
@@ -57,9 +61,8 @@ class Population:
 
     def average_mse(self):
         return np.average([1/x for x in self.fitnesses])
-
+    
     def crossover(self):
-        print('Crossover Process')
         # setup higher probabilities for higher performing neural nets
         sum_of_fitnesses = np.sum(self.old_fitnesses)
         probs = [self.old_fitnesses[i]/sum_of_fitnesses for i in range(self.size)]
@@ -120,7 +123,6 @@ class Population:
             self.models.append(child)
 
     def mutate(self):
-        print('Mutation Process')
         for model in self.models:
             for row in model.wi_ha:
                 for ind, col in enumerate(row):
