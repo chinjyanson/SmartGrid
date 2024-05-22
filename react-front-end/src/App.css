@@ -13,6 +13,28 @@
   }
 }
 
+/* navbar allows for the formatting of navbar */
+.navbar-logo{
+  color: white;
+  font-size: 20px;
+}
+
+/* navbar menu such that the words will appear in a straight line*/
+.navbar-menu{
+  display: flex;
+  list-style-type: none;
+  flex-direction: row;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+}
+
+/* makes sure that the things inside the navbar are not shown to be hyperlinked */
+.navbar-menu li a{
+  text-decoration: none;
+  color: white;
+}
+
 .App-header {
   background-color: #282c34;
   min-height: 100vh;
