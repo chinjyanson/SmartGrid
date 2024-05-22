@@ -23,14 +23,21 @@ pop = Population(10, None, 3)
 prev_cycle = cycles[0]
 
 for epoch in range(1000):
-    import_costs = [round(x) for x in pad(prev_cycle[0])]
+    import_costs = [round(x) for x in prev_cycle[0]]
     irradiance = [round(x) for x in prev_cycle[1]]
 
     for num, model in enumerate(pop.models):
         predicted_import_costs = []
         
         for i in range(data.data_points):
-            predicted_import_costs.append(model.query([irradiance[i], import_costs[i-1], import_costs[i+1]])[0][0])
+            if (i == 0): 
+                input = [irradiance[i], 0, import_costs[1]]
+            elif(i == data.data_points-1):
+                input = [irradiance[i], import_costs[i-1], 0]
+            else:
+                input = [irradiance[i], import_costs[i-1], import_costs[i+1]]
+
+            predicted_import_costs.append(model.query(input)[0][0])
 
         pop.fitnesses[num] = 1 / mse(import_costs, predicted_import_costs)
 
