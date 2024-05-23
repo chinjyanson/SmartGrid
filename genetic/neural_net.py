@@ -32,20 +32,24 @@ class neural_net:
 
         return final_outputs
 
-hidden_a_size = 5
-hidden_b_size = 5
-output_size = 1
+hidden_a_size = 10
+hidden_b_size = 10
 
 # genetic algorithm
 mutation_prob = 0.08
 elitism = 0.2
 mutation_power= 0.1
 
+"""
+    Initialise a population of neural nets, pass in the population size, number of input neurons for each neural net,
+    number of output neurons for each neural net
+"""
 class Population:
-    def __init__(self, size, old_population, input_size):
+    def __init__(self, size, old_population, input_size, output_size):
         self.size = size
         self.fitnesses = np.zeros(self.size)
         self.input_size = input_size
+        self.output_size = output_size
         # at the start of the game, there's no old population
         if old_population is None:
             # set up population of nueral nets
@@ -80,13 +84,13 @@ class Population:
 
                 # setup models from those indices
                 parent_a, parent_b = self.old_models[a], self.old_models[b]
-                child = neural_net(self.input_size, hidden_a_size, hidden_b_size, output_size)
+                child = neural_net(self.input_size, hidden_a_size, hidden_b_size, self.output_size)
                 a_fitness, b_fitness = self.old_fitnesses[a], self.old_fitnesses[b]
 
                 if a_fitness == 0 and b_fitness == 0:
                     child.wi_ha = np.zeros((hidden_a_size, self.input_size))
                     child.wha_hb = np.zeros((hidden_b_size, hidden_a_size))
-                    child.whb_o = np.zeros((output_size, hidden_b_size))
+                    child.whb_o = np.zeros((self.output_size, hidden_b_size))
 
                     prob_from_a = 0.5
 

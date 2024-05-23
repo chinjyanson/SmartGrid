@@ -2,7 +2,7 @@ import requests
 import sys
 sys.path.insert(0, '/home/ilan/Desktop/SmartGrid')
 
-import utils
+from utils import plot_datas
 
 class server_data:
     def __init__(self):
@@ -47,5 +47,4 @@ if (__name__ == "__main__"):
     buy = serve.parsed_data['buy_price']
     sell = serve.parsed_data['sell_price']
 
-    serve.deferables()
-    print(serve.parsed_data['deferables'])
+    plot_datas(buy, sell)
