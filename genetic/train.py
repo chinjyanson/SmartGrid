@@ -25,10 +25,14 @@ data.randomise()
 previous_cycles = cycles
 
 pop = Population(40, None, 2)
+best_model = None
 pc = cycles[0][0]
+
+test = cycles[1][0]
 
 print("actual: ", pc)  
 
+# training
 for epoch in range(100):
     preds = []
     
@@ -36,7 +40,7 @@ for epoch in range(100):
         predicted_import_costs = []
         
         for i in range(data.data_points):
-            if(i == 0): input = [pc[0], pc[i+1]]
+            if(i == 0): input = [pc[i+2], pc[i+1]]
             elif(i == data.data_points-1): input = [pc[i-1], pc[i-2]]
             else: input = [pc[i-1], pc[i+1]]
     
@@ -47,12 +51,27 @@ for epoch in range(100):
 
         # print(f"fitness by {num}: ", pop.fitnesses[num])  
 
-    print(f"Best pred: {preds[np.argmax(pop.fitnesses)]}")
+    best_model = np.argmax(pop.fitnesses)
+    print(f"Best pred: {preds[best_model]}")
 
     # print average mse of newest population
     print("Average MSE: ", pop.average_mse())
 
-    plot_datas(pc, preds[np.argmax(pop.fitnesses)])
+    # plot_datas(pc, preds[np.argmax(pop.fitnesses)])
 
     # init new population
     pop = Population(40, pop, 2)
+
+# predict
+model = pop.models[best_model]
+predicted_import_costs = []
+
+for i in range(data.data_points):
+    if(i == 0): input = [test[i+2], test[i+1]]
+    elif(i == data.data_points-1): input = [test[i-1], test[i-2]]
+    else: input = [test[i-1], test[i+1]]
+    
+    predicted_import_costs.append(model.query(input)[0][0])
+
+print("Prediction vs Actual")
+plot_datas(test, predicted_import_costs)
