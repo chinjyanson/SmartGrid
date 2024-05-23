@@ -10,7 +10,7 @@ class server_data:
         self.json = ""
         self.data_points = 60
         self.parsed_data = {'buy_price':[], 'demand':[], 'sell_price':[], 'sun':[], 'deferables':[]}
-        self.deffs = []
+        self.tick = 0
 
     def set_json(self, endpoint):
         print(self.url+endpoint)
@@ -26,23 +26,29 @@ class server_data:
     def live_sunshine(self):
         self.set_json('/sun')
         self.parsed_data['sun'] = self.json['sun']
-        print(self.json)
+        self.tick = self.json['tick']
 
     def live_prices(self):
         self.set_json('/price')
         self.parsed_data['buy_price'] = self.json['buy_price']
         self.parsed_data['sell_price'] = self.json['sell_price']
+        self.tick = self.json['tick']
 
     def live_demand(self):
         self.set_json('/demand')
         self.parsed_data['demand'] = self.json['demand']
+        self.tick = self.json['tick']
 
     def deferables(self):
         self.set_json('/deferables')
         self.parsed_data['deferables'] = self.json  
+        self.tick = self.json['tick']
 
 if (__name__ == "__main__"):
     serve = server_data()
-    serve.live_sunshine()
+    serve.set_historical_prices()
 
-    sun = serve.parsed_data['sun']
+    buy = serve.parsed_data['buy_price']
+    sell = serve.parsed_data['sell_price']
+
+    plot_datas([buy, sell])
