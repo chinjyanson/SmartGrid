@@ -27,9 +27,13 @@ def mae(a, b):
 def add_noise(array):
     return [round(x + np.random.normal(0, pow(len(array), -0.5)), 2) for x in array]
 
-def plot_datas(datas):   
+def plot_datas(datas, title, ylabel):   
     times = [i*5 for i in range(60)]
     colors = cm.rainbow(np.linspace(0, 1, len(datas)))
+
+    plt.title(title)
+    plt.xlabel('Time (s)')
+    plt.ylabel(ylabel)    
     
     for i in range(len(datas)):
         plt.plot(times, datas[i], colors[i])

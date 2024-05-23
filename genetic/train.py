@@ -55,13 +55,8 @@ def train_on_made_data():
         best_model = np.argmax(pop.fitnesses)
         print(f"Best pred: {preds[best_model]}")
 
-        if((epoch % 10) == 0):
-            plot_datas([pc, preds[best_model]])
-
         # print average mse of newest population
         print("Average MSE: ", pop.average_mse())
-
-        # plot_datas([pc, preds[np.argmax(pop.fitnesses)]])
 
         # init new population
         pop = Population(40, pop, 2)
@@ -76,7 +71,6 @@ def train_on_made_data():
         else: input = [test[i-1], test[i+1]]   
 
     print("Prediction vs Actual")
-    plot_datas([test, predicted_import_costs])
 
 """
     return a tuple of actual data and a set of synthetic data derived from this actual data
@@ -116,7 +110,7 @@ def get_synthetic_data(data_type, amount):
         if(not(epoch % 10) and len(out) < amount):
             out.append(preds[best_model])
 
-        # plot_datas([h_data, preds[best_model]])
+        # plot_datas([h_data, preds[best_model]], "Synthetic data vs Actual data", data_type)
 
         pop = Population(10, pop, 2)
     
@@ -155,13 +149,13 @@ def train_on_histories(histories, most_recent):
         best_model_index = np.argmax(pop.fitnesses)
         best_pred = preds[best_model_index]
 
-        # plot_datas([best_pred, actual])
+        # plot_datas([best_pred, actual], "Training to predict most recent cycle given histories", "Data")
 
         # print("Best fitness: ", pop.fitnesses[best_model_index])
 
         pop = Population(100, pop, num_of_histories)
 
-    plot_datas([best_pred, most_recent])
+    plot_datas([best_pred, most_recent], "Best prediction of most recent cycle", "Data")
 
     return pop.models[best_model_index]
 
@@ -198,10 +192,13 @@ def query_model(data):
 
             prediction.append(best_model.query(input)[0][0])
 
-        plot_datas([prediction])
+        plot_datas([prediction], "Prediction of current cycle", data)
+
+        return prediction
 
     else:
         print("Training on this data not implemented yet")
+        return None
 
 query_model('sell_price')
 
