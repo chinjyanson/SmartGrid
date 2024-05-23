@@ -25,16 +25,17 @@ class server_data:
     
     def live_sunshine(self):
         self.set_json('/sun')
-        self.parsed_data['sun'] = self.set_json['sun']
+        self.parsed_data['sun'] = self.json['sun']
+        print(self.json)
 
     def live_prices(self):
         self.set_json('/price')
-        self.parsed_data['buy_price'] = self.set_json['buy_price']
-        self.parsed_data['sell_price'] = self.set_json['sell_price']
+        self.parsed_data['buy_price'] = self.json['buy_price']
+        self.parsed_data['sell_price'] = self.json['sell_price']
 
     def live_demand(self):
         self.set_json('/demand')
-        self.parsed_data['demand'] = self.set_json['demand']
+        self.parsed_data['demand'] = self.json['demand']
 
     def deferables(self):
         self.set_json('/deferables')
@@ -42,9 +43,6 @@ class server_data:
 
 if (__name__ == "__main__"):
     serve = server_data()
-    serve.set_historical_prices()
+    serve.live_sunshine()
 
-    buy = serve.parsed_data['buy_price']
-    sell = serve.parsed_data['sell_price']
-
-    plot_datas(buy, sell)
+    sun = serve.parsed_data['sun']
