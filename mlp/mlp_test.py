@@ -3,18 +3,16 @@
 """
 
 from numpy import array
-import importlib.util
+
+import sys
+sys.path.insert(0, '/home/ilan/Desktop/SmartGrid')
+
+from utils import module_from_file
 from keras.models import Sequential
 from keras.layers import Dense, LSTM, Dropout
 import numpy as np
 
 from sklearn.model_selection import train_test_split, KFold
-
-def module_from_file(module_name, file_path):
-    spec = importlib.util.spec_from_file_location(module_name, file_path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
 
 # import a module using its name as a string
 m = module_from_file("Data", "data/datavis.py")

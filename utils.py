@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import importlib.util
 
 """
     Useful helper functions
@@ -22,6 +23,13 @@ def add_noise(array):
 
 def plot_datas(a, b):
     times = [i*5 for i in range(len(a))]
-    plt.plot(times, a, 'r')
-    plt.plot(times, b, 'b')
+
+    if(a): plt.plot(times, a, 'r')
+    if(b): plt.plot(times, b, 'b')
     plt.show()
+
+def module_from_file(module_name, file_path):
+    spec = importlib.util.spec_from_file_location(module_name, file_path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module

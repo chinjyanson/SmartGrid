@@ -2,6 +2,10 @@ import importlib.util
 from neural_net import Population
 import math
 import numpy as np
+
+import sys
+sys.path.insert(0, '/home/ilan/Desktop/SmartGrid')
+
 from utils import pad, mse, add_noise, plot_datas
 
 """
