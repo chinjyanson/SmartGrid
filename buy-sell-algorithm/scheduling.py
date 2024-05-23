@@ -21,7 +21,7 @@ capacity = [5, 6, 5, 6, 5, 7, 5, 6, 5, 6]  # Example capacities
 # Initialize the problem
 prob = pulp.LpProblem("EnergyOptimization", pulp.LpMaximize)
 
-# Objective: Maximize the total energy used
+# Objective Function: Maximize the total energy used
 prob += pulp.lpSum([use[j, i] for j in range(num_jobs) for i in range(num_time_slots)]), "TotalEnergyUsed"
 
 # Constraints
