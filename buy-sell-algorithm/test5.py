@@ -1,23 +1,25 @@
 import numpy as np
 from scipy.optimize import minimize
 import time
-import random
+import matplotlib as plt
 import server_data as data
 
-def maximize_profit_mpc(initial_buffer_level, max_buffer_capacity, buy_prices, sell_prices, time_step=5, horizon=10):
+def maximize_profit_mpc(initial_buffer_level, max_buffer_capacity, predicted_buy_prices, predicted_sell_prices, time_step=5, horizon=10):
     buffer = initial_buffer_level
     total_profit = 0
-    n = len(buy_prices)
+    n = len(predicted_buy_prices)
 
-    def objective(x, buffer, buy_prices, sell_prices):
+    # x is an array with first half representing buy energy and second half representing sell energy
+    # This means that x[t] is amount of energy to buy at time t and x[horizon + t] is amount of energy to sell at time t
+    def objective(x, buffer, predicted_buy_prices, predicted_sell_prices):
         profit = 0
         buffer_level = buffer
         for t in range(horizon):
             buy_energy = x[t]
             sell_energy = x[horizon + t]
             buffer_level += buy_energy - sell_energy
-            profit -= buy_energy * buy_prices[t]
-            profit += sell_energy * sell_prices[t]
+            profit -= buy_energy * predicted_buy_prices[t]
+            profit += sell_energy * predicted_sell_prices[t]
         return -profit  # Minimize negative profit = maximize positive profit
 
     def constraint(x, buffer, t):
@@ -39,19 +41,31 @@ def maximize_profit_mpc(initial_buffer_level, max_buffer_capacity, buy_prices, s
         net_input = energy_in - energy_used
         buffer += net_input
 
+        # Get current buy and sell prices
+        current_buy_price, current_sell_price = get_current_buy_sell_prices()
+
         x0 = np.zeros(2 * horizon)  # Initial guess
         bounds = [(0, max_buffer_capacity)] * horizon + [(0, max_buffer_capacity)] * horizon  # Bounds for buy/sell
         constraints = [{'type': 'ineq', 'fun': constraint, 'args': (buffer, i)} for i in range(horizon)] + \
                       [{'type': 'ineq', 'fun': buffer_constraint, 'args': (buffer, i)} for i in range(horizon)]
         
-        result = minimize(objective, x0, args=(buffer, buy_prices[t:t + horizon], sell_prices[t:t + horizon]), 
+        result = minimize(objective, x0, args=(buffer, predicted_buy_prices[t:t + horizon], predicted_sell_prices[t:t + horizon]), 
                           bounds=bounds, constraints=constraints)
         
         if result.success:
             optimal_buy_sell = result.x
-            buffer += optimal_buy_sell[0] - optimal_buy_sell[horizon]
-            total_profit -= optimal_buy_sell[0] * buy_prices[t]
-            total_profit += optimal_buy_sell[horizon] * sell_prices[t]
+            # Update buffer and profit based on actual prices
+            actual_buy_energy = optimal_buy_sell[0]
+            actual_sell_energy = optimal_buy_sell[horizon]
+            buffer += actual_buy_energy - actual_sell_energy
+            total_profit -= actual_buy_energy * current_buy_price
+            total_profit += actual_sell_energy * current_sell_price
+
+            print(f"Cycle {t//time_step + 1}:")
+            print(f"  Energy Bought: {actual_buy_energy} kWh")
+            print(f"  Energy Sold: {actual_sell_energy} kWh")
+            print(f"  Energy Stored: {buffer} kWh")
+            print(f"  Energy Used: {energy_used} kWh")
 
         time.sleep(time_step)
     
@@ -65,8 +79,6 @@ def get_current_energy_in():
     area = 1000
     sun_energy = serve.parsed_data['sun']
     solar_energy = sun_energy / area
-    # print("Solar energy: ")
-    # print(solar_energy)
     return solar_energy
 
 def get_current_energy_used():
@@ -76,8 +88,14 @@ def get_current_energy_used():
     energy_demand= serve.parsed_data['demand']
     return energy_demand
 
+def get_current_buy_sell_prices():
+    serve = data.server_data()
+    serve.live_prices()
+    current_buy_price = serve.parsed_data['buy_price']
+    current_sell_price = serve.parsed_data['sell_price']
+    return current_buy_price, current_sell_price
 # Example data
-buy_prices = [
+predicted_buy_prices = [
     10.7422509253765045, 10.2408420501390114, 10.7417511266066489, 1.06936452410405569,
     10.015446540839825218, 10.646511979863557, 10.05495912021415106, 10.5192874889764744,
     10.972610428342263, 10.49862227191646236, 10.8622085737855102, 10.7330479544661466,
@@ -87,15 +105,15 @@ buy_prices = [
     10.9977209720767929, 10.35960845726367074, 10.738752464505671, 10.936677422040921,
     10.28755465331238483, 10.3734234545984727, 1.8215499104690176, 10.11955601173369768,
     10.2532473072991761, 10.6319831588347471, 10.1503563487731917, 10.8709569032195323,
-    10.7216381940885112, 10.5942189574294577, 01.8363208485697761, 10.41386121814881827,
-    10.49059314367218754, 01.720680530367957, 10.34111326631053285, 10.3406577488224808,
+    10.7216381940885112, 10.5942189574294577, 1.8363208485697761, 10.41386121814881827,
+    10.49059314367218754, 1.720680530367957, 10.34111326631053285, 10.3406577488224808,
     10.2743140840667153, 10.6878782017951669, 10.6183503355264123, 10.6467363787054432,
     10.7294034149868627, 10.014102001704026312, 10.09303679885047089, 10.15991409014207192,
     10.4299530571512661, 10.06798160263867958, 10.535982895811561, 10.3114280224147168,
     10.9966936406284793, 10.9160705198779759, 10.3995848673058702, 10.07073433158143017
 ]
   # Predicted buy prices for future time steps
-sell_prices = [
+predicted_sell_prices = [
     0.48346614194152926, 0.24585679317713371, 0.17236870397626192, 0.49690805066356225,
     0.35425188417565623, 0.6420416900356466, 0.5500960448354515, 0.7325338233837977,
     0.8210762787940382, 0.9778315914739988, 0.5176982875713605, 0.17741163158740303,
@@ -116,5 +134,6 @@ sell_prices = [
 initial_buffer_level = 10
 max_buffer_capacity = 20
 
-max_profit = maximize_profit_mpc(initial_buffer_level, max_buffer_capacity, buy_prices, sell_prices)
+max_profit = maximize_profit_mpc(initial_buffer_level, max_buffer_capacity, predicted_buy_prices, predicted_sell_prices)
 print(f"Maximum Profit: {max_profit}")
+
