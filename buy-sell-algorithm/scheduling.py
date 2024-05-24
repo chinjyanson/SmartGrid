@@ -48,6 +48,7 @@ for j in range(num_jobs):
 
 print("Total energy used:", pulp.value(prob.objective))
 
+
 #without task limit constraint
 '''
 import pulp
