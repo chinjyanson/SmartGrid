@@ -13,7 +13,7 @@ m_made = module_from_file("Data", "data/datavis.py")
 
 serve = m_server.server_data()
 
-histories_buffer = {'buy_price':[], 'sell_price':[]}
+histories_buffer = {'buy_price':[], 'sell_price':[], 'demand':[]}
 
 """
     Training on model data using genetic algorithm
@@ -200,5 +200,4 @@ def query_model(data):
         print("Training on this data not implemented yet")
         return None
 
-query_model('sell_price')
-
+query_model('buy_price')

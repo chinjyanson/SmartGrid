@@ -50,5 +50,8 @@ if (__name__ == "__main__"):
 
     buy = serve.parsed_data['buy_price']
     sell = serve.parsed_data['sell_price']
+    demand = serve.parsed_data['demand']
 
-    plot_datas([buy, sell], "Data from server", "Buy and sell")
+    plot_datas([buy], "Data from server", "Buy")
+    plot_datas([sell], "Data from sever", "Sell")
+    plot_datas([demand],  "Data from server", "Demand")
