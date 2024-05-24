@@ -4,7 +4,7 @@ import math
 import numpy as np
 
 import sys
-sys.path.insert(0, '/home/ilan/Desktop/SmartGrid')
+sys.path.insert(0, '/Users/ASUS/SmartGrid')
 
 from utils import module_from_file, mse, add_noise, plot_datas, split_sequence, mae
 
@@ -155,7 +155,7 @@ def train_on_histories(histories, most_recent):
 
         pop = Population(100, pop, num_of_histories)
 
-    plot_datas([best_pred, most_recent], "Best prediction of most recent cycle", "Data")
+    #plot_datas([best_pred, most_recent], "Best prediction of most recent cycle", "Data")
 
     return pop.models[best_model_index]
 
@@ -192,7 +192,8 @@ def query_model(data):
 
             prediction.append(best_model.query(input)[0][0])
 
-        plot_datas([prediction], "Prediction of current cycle", data)
+        #plot_datas([prediction], "Prediction of current cycle", data)
+        print(prediction)
 
         return prediction
 
@@ -200,4 +201,5 @@ def query_model(data):
         print("Training on this data not implemented yet")
         return None
 
-query_model('buy_price')
+if __name__ == "__main__":
+    query_model('sell_price')
