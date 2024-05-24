@@ -5,6 +5,8 @@ import matplotlib as plt
 import server_data as data
 
 def maximize_profit_mpc(initial_buffer_level, max_buffer_capacity, predicted_buy_prices, predicted_sell_prices, time_step=5, horizon=10):
+    start_time = time.time()
+    
     buffer = initial_buffer_level
     total_profit = 0
     n = len(predicted_buy_prices)
@@ -66,8 +68,11 @@ def maximize_profit_mpc(initial_buffer_level, max_buffer_capacity, predicted_buy
             print(f"  Energy Sold: {actual_sell_energy} kWh")
             print(f"  Energy Stored: {buffer} kWh")
             print(f"  Energy Used: {energy_used} kWh")
-
-        time.sleep(time_step)
+        
+        end_time = time.time()
+        execution_time = end_time - start_time
+        sleep_time = max(0, time_step - execution_time)
+        time.sleep(sleep_time)
     
     return total_profit
 
