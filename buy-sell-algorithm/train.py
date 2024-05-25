@@ -216,7 +216,7 @@ class Train:
                 self.histories_buffer[data] = self.histories_buffer[data][1:]
                 self.histories_buffer[data].append(most_recent)  # discard the least recent history, append most recent history, always keep availability of 5
             
-            if(self.data_fitnesses[data] != 0): self.fitness_threshold = add_noise(self.data_fitnesses[data])
+            if(self.data_fitnesses[data] != 0): self.fitness_threshold = min(add_noise(self.data_fitnesses[data]), 1)
 
             # train model to predict the most recent cycle given a set of previous cycles
             best_model, best_fitness = self.train_on_histories(previous, most_recent)
