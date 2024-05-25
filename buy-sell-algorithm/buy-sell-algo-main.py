@@ -34,12 +34,21 @@ def maximize_profit_mpc(initial_buffer_level, max_buffer_capacity, predicted_buy
         sell_energy = x[horizon + t]
         return buffer + buy_energy - sell_energy
 
+    def no_simultaneous_buy_sell_constraint(x, t):
+        buy_energy = x[t]
+        sell_energy = x[horizon + t]
+        return buy_energy * sell_energy
+    
+    def buy_sell_either_constraint(x, t):
+        buy_energy = x[t]
+        sell_energy = x[horizon + t]
+        return buy_energy * sell_energy - 1e-5  # Ensures that one of them is zero
     
     for t in range(0, n - horizon, time_step):
         start_time = time.time()
         # Simulate real-time change in energy_in and energy_used
         energy_in = get_current_energy_in()
-        energy_used = get_current_energy_used()
+        energy_used = get_current_energy_used() # TODO: + scheduled_use()
         
         # Update buffer with net input energy
         net_input = energy_in - energy_used
@@ -53,7 +62,9 @@ def maximize_profit_mpc(initial_buffer_level, max_buffer_capacity, predicted_buy
         x0 = np.zeros(2 * horizon)  # Initial guess
         bounds = [(0, max_buffer_capacity)] * horizon + [(0, max_buffer_capacity)] * horizon  # Bounds for buy/sell
         constraints = [{'type': 'ineq', 'fun': constraint, 'args': (buffer, i)} for i in range(horizon)] + \
-                      [{'type': 'ineq', 'fun': buffer_constraint, 'args': (buffer, i)} for i in range(horizon)]
+                      [{'type': 'ineq', 'fun': buffer_constraint, 'args': (buffer, i)} for i in range(horizon)] + \
+                      [{'type': 'eq', 'fun': buy_sell_either_constraint, 'args': (i,)} for i in range(horizon)]
+        
         
         result = minimize(objective, x0, args=(buffer, predicted_buy_prices[t:t + horizon], predicted_sell_prices[t:t + horizon]), 
                           bounds=bounds, constraints=constraints)

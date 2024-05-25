@@ -1,52 +1,60 @@
 import pulp
+import server_data as data
 
 # Example data (to be replaced with actual data)
-num_jobs = 5
-num_time_slots = 10
+def schuedule_deferable_demand():
 
-# Amount of energy used by job j at time slot i
-use = pulp.LpVariable.dicts("use", ((j, i) for j in range(num_jobs) for i in range(num_time_slots)), 
-                            lowBound=0, cat='Integer')
+    # fetching data from server
+    serve = data.server_data()
+    serve.deferables()
+    deferables = serve.parsed_data['deferables']
 
-# Binary variables to indicate if a job is active at a given time slot
-active = pulp.LpVariable.dicts("active", ((j, i) for j in range(num_jobs) for i in range(num_time_slots)),
-                               cat='Binary')
+    num_jobs = 5
+    num_time_slots = 10
 
-# Length of each job
-Time = [3, 2, 4, 1, 2]  # Example job lengths
+    # Amount of energy used by job j at time slot i
+    use = pulp.LpVariable.dicts("use", ((j, i) for j in range(num_jobs) for i in range(num_time_slots)), 
+                                lowBound=0, cat='Integer')
 
-# Capacity at each time slot
-capacity = [5, 6, 5, 6, 5, 7, 5, 6, 5, 6]  # Example capacities
+    # Binary variables to indicate if a job is active at a given time slot
+    active = pulp.LpVariable.dicts("active", ((j, i) for j in range(num_jobs) for i in range(num_time_slots)),
+                                cat='Binary')
 
-# Initialize the problem
-prob = pulp.LpProblem("EnergyOptimization", pulp.LpMaximize)
+    # Length of each job
+    Time = [3, 2, 4, 1, 2]  # Example job lengths
 
-# Objective Function: Maximize the total energy used
-prob += pulp.lpSum([use[j, i] for j in range(num_jobs) for i in range(num_time_slots)]), "TotalEnergyUsed"
+    # Capacity at each time slot
+    capacity = [5, 6, 5, 6, 5, 7, 5, 6, 5, 6]  # Example capacities
 
-# Constraints
-for i in range(num_time_slots):
-    # Constraint: Total energy used at time slot i should not exceed the capacity
-    prob += pulp.lpSum([use[j, i] for j in range(num_jobs)]) <= capacity[i], f"Capacity_Constraint_{i}"
-    
-    # Constraint: No more than 3 tasks running at the same time slot
-    prob += pulp.lpSum([active[j, i] for j in range(num_jobs)]) <= 3, f"Task_Limit_Constraint_{i}"
+    # Initialize the problem
+    prob = pulp.LpProblem("EnergyOptimization", pulp.LpMaximize)
 
-for j in range(num_jobs):
+    # Objective Function: Maximize the total energy used
+    prob += pulp.lpSum([use[j, i] for j in range(num_jobs) for i in range(num_time_slots)]), "TotalEnergyUsed"
+
+    # Constraints
     for i in range(num_time_slots):
-        # Ensure that if a job is active, it is marked as such in the active variable
-        prob += use[j, i] <= capacity[i] * active[j, i], f"Active_Use_Link_{j}_{i}"
+        # Constraint: Total energy used at time slot i should not exceed the capacity
+        prob += pulp.lpSum([use[j, i] for j in range(num_jobs)]) <= capacity[i], f"Capacity_Constraint_{i}"
+        
+        # Constraint: No more than 3 tasks running at the same time slot
+        prob += pulp.lpSum([active[j, i] for j in range(num_jobs)]) <= 3, f"Task_Limit_Constraint_{i}"
 
-# Solve the problem
-prob.solve()
+    for j in range(num_jobs):
+        for i in range(num_time_slots):
+            # Ensure that if a job is active, it is marked as such in the active variable
+            prob += use[j, i] <= capacity[i] * active[j, i], f"Active_Use_Link_{j}_{i}"
 
-# Print the results
-print("Status:", pulp.LpStatus[prob.status])
-for j in range(num_jobs):
-    for i in range(num_time_slots):
-        print(f"Use[{j}, {i}] = {pulp.value(use[j, i])}")
+    # Solve the problem
+    prob.solve()
 
-print("Total energy used:", pulp.value(prob.objective))
+    # Print the results
+    print("Status:", pulp.LpStatus[prob.status])
+    for j in range(num_jobs):
+        for i in range(num_time_slots):
+            print(f"Use[{j}, {i}] = {pulp.value(use[j, i])}")
+
+    print("Total energy used:", pulp.value(prob.objective))
 
 
 #without task limit constraint
