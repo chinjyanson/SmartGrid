@@ -6,7 +6,7 @@ import numpy as np
 import sys
 sys.path.insert(0, '/Users/ASUS/SmartGrid')
 
-from utils import module_from_file, mse, plot_datas, save_population, get_population
+from utils import module_from_file, mse, plot_datas, save_population, get_population, add_noise
 
 m_server = module_from_file("server_data", "data/server_data.py")
 m_made = module_from_file("Data", "data/datavis.py")
@@ -21,8 +21,9 @@ class Train:
         self.saved_pop = False
         # save up to 5 histories of data required for prediction of each  form of data
         self.histories_buffer = {'buy_price':[], 'sell_price':[], 'demand':[]}
+        self.data_fitnesses = {'buy_price':0, 'sell_price':0, 'demand':0}
         self.num_of_histories = 5
-        self.fitness_threshold = 0.008
+        self.fitness_threshold = 0
         self.fitness_buffer = []
         self.epsilon = 0.0001
 
@@ -116,8 +117,6 @@ class Train:
             if(not(epoch % 10) and len(out) < amount):
                 out.append(preds[best_model])
 
-            # plot_datas([h_data, preds[best_model]], "Synthetic data vs Actual data", data_type)
-
             pop = Population(10, pop, 2)
         
         return out, h_data
@@ -132,12 +131,13 @@ class Train:
         
         return False
 
-    def train_on_histories(self, histories : list[list], most_recent:list) -> neural_net:
+    def train_on_histories(self, histories : list[list], most_recent:list) -> tuple[neural_net, int]:
         """
             given a set of histories, and the most recent history, train to predict the cycle of the 
             most recent history
         """
         print("Training on the historical data. Training to predict most recent cycle")
+        print("Threshold: ", self.fitness_threshold)
 
         if(self.saved_pop): 
             old_pop = get_population()
@@ -172,7 +172,7 @@ class Train:
             best_pred = preds[best_model_index]
             best_fitness = pop.fitnesses[best_model_index]
 
-            if (best_fitness > self.fitness_threshold):
+            if ((self.fitness_threshold != 0) and (best_fitness > self.fitness_threshold)):
                 break
             else:
                 self.fitness_buffer.append(best_fitness)
@@ -186,11 +186,10 @@ class Train:
         plot_datas([best_pred, most_recent], "Best prediction of most recent cycle", "Data")
 
         # save the best population when this is called. when this function gets called again, it will start from this population of genomes instead of starting randomly
-        
         save_population(most_recent_pop)
         self.saved_pop = True
 
-        return pop.models[best_model_index]
+        return pop.models[best_model_index], best_fitness
 
     def query_model(self, data : str) -> list:
         """
@@ -216,9 +215,13 @@ class Train:
                 # discard the least recent history, append most recent history, always keep availability of 5
                 self.histories_buffer[data] = self.histories_buffer[data][1:]
                 self.histories_buffer[data].append(most_recent)  # discard the least recent history, append most recent history, always keep availability of 5
+            
+            if(self.data_fitnesses[data] != 0): self.fitness_threshold = add_noise(self.data_fitnesses[data])
 
             # train model to predict the most recent cycle given a set of previous cycles
-            best_model = self.train_on_histories(previous, most_recent)
+            best_model, best_fitness = self.train_on_histories(previous, most_recent)
+
+            self.data_fitnesses[data] = best_fitness
 
             prediction = []
             for j in range(60):
@@ -239,6 +242,9 @@ if __name__ == "__main__":
 
     buy = trainer.query_model('buy_price')
     plot_datas([buy], "Prediction of current cycle", "Buy price")
+
+    sell = trainer.query_model('sell_price')
+    plot_datas([sell], "Prediction of current cycle", "Sell price")
 
     sell = trainer.query_model('sell_price')
     plot_datas([sell], "Prediction of current cycle", "Sell price")

@@ -42,8 +42,8 @@ def mae(a, b):
     
     return out / len(b)
      
-def add_noise(array):
-    return [round(x + np.random.normal(0, pow(len(array), -0.5)), 2) for x in array]
+def add_noise(x):
+    return 5*x
 
 def plot_datas(datas, title, ylabel):   
     """
