@@ -12,12 +12,13 @@ class neural_net:
         self.hnodes_b = hidden_b_nodes
         self.onodes = output_nodes
 
-        self.activation_func = lambda x : np.array([i * (i > 0) for i in x])
-
         # weight matrix between input and hidden
         self.wi_ha = np.random.normal(0.0, pow(self.inodes, -0.5), (self.hnodes_a, self.inodes))
         self.wha_hb = np.random.normal(0.0, pow(self.hnodes_a, -0.5), (self.hnodes_b, self.hnodes_a))
         self.whb_o = np.random.normal(0.0, pow(self.hnodes_b, -0.5), (self.onodes, self.hnodes_b))
+
+    def activation_func(self, x):
+        return np.array([i * (i > 0) for i in x])
 
     def query(self, input_list):
         inputs = np.array(input_list, ndmin=2).T
