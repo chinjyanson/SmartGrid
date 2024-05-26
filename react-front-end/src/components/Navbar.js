@@ -1,18 +1,22 @@
-import React from 'react'
+import React from 'react';
+import { Link } from 'react-router-dom';
 
-function Navbar() {
+const Navbar = () => {
   return (
-    <div className='navbar'>
-        <div className='navbar-logo'>
-            <h1>Logo</h1>
-        </div>
-        <ul className='navbar-menu'> // replace with icons in the future and relocate this 
-            <li>Home</li>  
-            <li>About</li>
-            <li>Contact</li>
-        </ul>
-    </div>
-  )
-}
+    <nav className="navbar h-16 w-full bg-gray-800 text-white flex items-center justify-center">
+      <ul className="flex space-x-4">
+        <li>
+          <Link to="/" className="text-lg">Home</Link>
+        </li>
+        <li>
+          <Link to="/money" className="text-lg">Money</Link>
+        </li>
+        <li>
+          <Link to="/usage" className="text-lg">Usage</Link>
+        </li>
+      </ul>
+    </nav>
+  );
+};
 
-export default Navbar
+export default Navbar;
