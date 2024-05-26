@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Line } from 'react-chartjs-2';
 import 'chart.js/auto';
 import Battery from '../components/Battery';
 
 const Usage = () => {
+  const [currentGraph, setCurrentGraph] = useState('dataset1');
+
   const data1 = {
     labels: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'],
     datasets: [
@@ -17,16 +19,22 @@ const Usage = () => {
   };
 
   const data2 = {
-    labels: ['Saturday', 'Sunday'],
+    labels: ['Saturday', 'Sunday', 'Monday', 'Tuesday'],
     datasets: [
       {
         label: 'Second dataset',
         backgroundColor: 'rgba(54,162,235,0.2)',
         borderColor: 'rgba(54,162,235,1)',
-        data: [23, 17],
+        data: [23, 17, 10, 5],
       },
     ],
   };
+
+  const handleLabelClick = (dataset) => {
+    setCurrentGraph(dataset);
+  };
+
+  const currentData = currentGraph === 'dataset1' ? data1 : data2;
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen">
@@ -34,10 +42,21 @@ const Usage = () => {
       <div className="flex w-11/12 md:w-3/4">
         <div className="w-1/2">
           <div className="chart-container mb-8">
-            <Line data={data1} />
+            <Line data={currentData} />
           </div>
-          <div className="chart-container">
-            <Line data={data2} />
+          <div className="flex space-x-4">
+            <button
+              className={`px-4 py-2 ${currentGraph === 'dataset1' ? 'bg-blue-500' : 'bg-gray-500'} text-white rounded`}
+              onClick={() => handleLabelClick('dataset1')}
+            >
+              First dataset
+            </button>
+            <button
+              className={`px-4 py-2 ${currentGraph === 'dataset2' ? 'bg-blue-500' : 'bg-gray-500'} text-white rounded`}
+              onClick={() => handleLabelClick('dataset2')}
+            >
+              Second dataset
+            </button>
           </div>
         </div>
         <div className="w-1/2 text-white ml-8">
@@ -55,7 +74,7 @@ const Usage = () => {
             Suspendisse potenti. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas.
             Fusce vehicula massa nec magna cursus, a tincidunt odio efficitur.
           </p>
-          <Battery level={5} />  
+          <Battery level={75} />
         </div>
       </div>
     </div>
