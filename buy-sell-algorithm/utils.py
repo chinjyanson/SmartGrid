@@ -2,6 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import importlib.util
+import pickle
+
 
 """
     Useful helper functions
@@ -11,21 +13,37 @@ def pad(array):
     return [0]+array+[0]
 
 def mse(a, b):
+    """
+        Mean squared error
+    """
     out = 0 
     for x, y in zip(a, b):
         out += ((x - y)**2)
     
     return out / len(b)
 
+def sse(a, b):
+    """
+        Sum of squared errors
+    """
+    out = 0 
+    for x, y in zip(a, b):
+        out += (x - y)**2
+                
+    return out
+
 def mae(a, b):
+    """
+        Mean absolute error
+    """
     out = 0 
     for x, y in zip(a, b):
         out += abs(x - y)
     
     return out / len(b)
      
-def add_noise(array):
-    return [round(x + np.random.normal(0, pow(len(array), -0.5)), 2) for x in array]
+def add_noise(x):
+    return 5*x
 
 def plot_datas(datas, title, ylabel):   
     """
@@ -71,3 +89,17 @@ def split_sequence(sequence, x_width, y_width=1):
         y.append(seq_y)
           
     return np.array(X), np.array(y)
+
+def save_population(pop):
+    try:
+        with open("genetic/best.pop", "wb") as f:
+            pickle.dump(pop, f)
+    except IOError as e:
+        print("Could not save population because of ", e)
+
+def get_population():
+    try:
+        with open("genetic/best.pop", "rb") as f:
+            return pickle.load(f)
+    except IOError as e:
+        print("Could not load population because of ", e)

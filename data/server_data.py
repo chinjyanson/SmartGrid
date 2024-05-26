@@ -2,24 +2,26 @@ import requests
 import sys
 sys.path.insert(0, '/home/ilan/Desktop/SmartGrid')
 
-from utils import plot_datas
-
 class server_data:
-    def __init__(self):
+    def __init__(self) -> None:
         self.url = 'https://icelec50015.azurewebsites.net'
         self.json = ""
         self.data_points = 60
         self.parsed_data = {'buy_price':[], 'demand':[], 'sell_price':[], 'sun':[], 'deferables':[]}
         self.tick = 0
 
-    def set_json(self, endpoint):
+    def set_json(self, endpoint) -> None:
         print(self.url+endpoint)
-        self.json = requests.get(self.url+endpoint).json()
+        try:
+            self.json = requests.get(self.url+endpoint).json()
+        except:
+            print("Cannot get data from external server")
 
     def set_historical_prices(self):
         self.set_json('/yesterday')
 
         for s in ['buy_price', 'demand', 'sell_price']:
+            self.parsed_data[s] = []
             for i in range(self.data_points):
                 self.parsed_data[s].append(self.json[i][s])
     
@@ -46,12 +48,8 @@ class server_data:
 
 if (__name__ == "__main__"):
     serve = server_data()
-    serve.set_historical_prices()
+    serve.live_demand()
 
-    buy = serve.parsed_data['buy_price']
-    sell = serve.parsed_data['sell_price']
-    demand = serve.parsed_data['demand']
+    print(serve.parsed_data['demand'])
 
-    plot_datas([buy], "Data from server", "Buy")
-    plot_datas([sell], "Data from sever", "Sell")
-    plot_datas([demand],  "Data from server", "Demand")
+    
