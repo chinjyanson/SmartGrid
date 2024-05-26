@@ -1,3 +1,4 @@
 # Smart Grid
 
-![alt text](https://github.com/chinjyanson/SmartGrid/blob/TopLevel.drawio.png?raw=true)
+![alt text](https://github.com/chinjyanson/SmartGrid/blob/main/TopLevel.drawio.png)
+
