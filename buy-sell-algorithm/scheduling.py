@@ -60,4 +60,5 @@ def schedule_deferable_demand():
     print("Total energy used:", pulp.value(prob.objective))
 
 # Run the function
-schedule_deferable_demand()
+if __name__ == "__main__":
+    schedule_deferable_demand()

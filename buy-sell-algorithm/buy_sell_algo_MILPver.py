@@ -1,7 +1,7 @@
 import numpy as np
 import pulp
 import server_data as data
-import train as train
+import predictions.train as train
 import time
 
 def maximize_profit_mip(initial_buffer_level, max_buffer_capacity, predicted_buy_prices, predicted_sell_prices, time_step=5, horizon=10):
