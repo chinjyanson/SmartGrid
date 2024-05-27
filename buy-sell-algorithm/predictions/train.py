@@ -1,27 +1,13 @@
-import importlib.util
-from .neural_net import Population, neural_net
-import math
+import sys, os
+
+train_root = os.path.abspath(os.path.join(os.path.dirname(__file__)))
+
+if train_root not in sys.path:
+    sys.path.insert(0, train_root)
+
+from neural_net import Population, neural_net
 import numpy as np
-from .utils.helper import module_from_file, mse, plot_datas, save_population, get_population, add_noise
-
-# class Import:
-#     def __init__(self):
-#         self.Population = Population()
-#         self.neural_net = neural_net()
-
-
-import sys
-sys.path.insert(0, '/Users/ASUS/SmartGrid')
-
-# def import_helper():
-#     module_from_file()
-#     mse()
-#     plot_datas()
-#     save_population()
-#     get_population()
-#     add_noise()
-
-#from utils.helper import module_from_file, mse, plot_datas, save_population, get_population, add_noise
+from utils.helper import module_from_file, mse, plot_datas, save_population, get_population, add_noise
 
 m_server = module_from_file("server_data", "buy-sell-algorithm/data/server_data.py")
 m_made = module_from_file("Data", "buy-sell-algorithm/data/datavis.py")
