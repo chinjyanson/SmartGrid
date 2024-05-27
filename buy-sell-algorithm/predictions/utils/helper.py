@@ -93,14 +93,16 @@ def split_sequence(sequence:list[float], x_width:int, y_width:int=1) -> tuple[np
 
 def save_population(pop, dir) -> None:
     try:
-        with open("genetic/best.pop", "wb") as f:
+        file_name = os.path.join(dir, "best.pop")
+        with open(file_name, "wb") as f:
             pickle.dump(pop, f)
     except IOError as e:
         print("Could not save population because of ", e)
 
 def get_population(dir):
     try:
-        with open("genetic/best.pop", "rb") as f:
+        file_name = os.path.join(dir, "best.pop")
+        with open(file_name, "rb") as f:
             return pickle.load(f)
     except IOError as e:
         print("Could not load population because of ", e)
