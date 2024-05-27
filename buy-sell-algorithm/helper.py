@@ -92,14 +92,14 @@ def split_sequence(sequence, x_width, y_width=1):
 
 def save_population(pop):
     try:
-        with open("genetic/best.pop", "wb") as f:
+        with open("best.pop", "wb") as f:
             pickle.dump(pop, f)
     except IOError as e:
         print("Could not save population because of ", e)
 
 def get_population():
     try:
-        with open("genetic/best.pop", "rb") as f:
+        with open("best.pop", "rb") as f:
             return pickle.load(f)
     except IOError as e:
         print("Could not load population because of ", e)
