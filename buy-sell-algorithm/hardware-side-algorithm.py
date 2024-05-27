@@ -3,8 +3,8 @@ import requests
 import json
 from machine import Pin, I2C, ADC, PWM
 
-# Use I2C for SMPS communication????
-i2c = I2C(0, scl=Pin(1), sda=Pin(0), freq=2400000)
+# Use I2C for SMPS communication? 
+i2c = I2C(0, scl=Pin(1), sda=Pin(0), freq= )
 
 SMPS_I2C_ADDRESS = 
 VOLTAGE_REGISTER = 

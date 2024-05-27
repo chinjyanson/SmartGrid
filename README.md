@@ -21,10 +21,14 @@ This project not only addresses the current challenges of energy management but 
 | -------------------- | ------ | -------- | --------------------------------------- |
 | Anson Chin Jun Yen   | EIE    | 02194736 | Buy-Sell Algo and WebApp                |
 | Samuel Khoo Ing Shin | EIE    |          | API development and Top level planning  |
-| Ilan Iwumbwe         | EIE    |          | Buy Sell Algo and Microcontroller       |
-| Eddie Moualek        | EEE    |          |                                         |
-| Justin Lam           | EEE    |          |                                         |
-| Lucas Lasanta        | EEE    |          |                                         |
+| Ilan Iwumbwe         | EIE    | 02211662 | Buy Sell Algo and Microcontroller       |
+| Eddie Moualek        | EEE    |          | Hardware                                |
+| Justin Lam           | EEE    |          | Hardware                                |
+| Lucas Lasanta        | EEE    |          | Hardware                                |
+
+## Running the code
+
+Install all required dependencies using `pip install -r requirements.txt`
 
 ## Planning 
 

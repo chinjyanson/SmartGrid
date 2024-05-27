@@ -32,8 +32,9 @@ class Train:
     """
         Train models using a genetic algorithm to synthesize data if needed, and predict data in a cycle
     """
+    call_counter = 0
+
     def __init__(self) -> None:
-        self.saved_pop = False
         # save up to 5 histories of data required for prediction of each  form of data
         self.histories_buffer = {'buy_price':[], 'sell_price':[], 'demand':[]}
         self.data_fitnesses = {'buy_price':0, 'sell_price':0, 'demand':0}
@@ -41,8 +42,15 @@ class Train:
         self.fitness_threshold = 0
         self.fitness_buffer = []
         self.epsilon = 0.0001
+        self.save_checkpoint = 1
+        self.saved_pop_path = os.path.join(train_root, "saved_populations")
+
+        os.makedirs(self.saved_pop_path, exist_ok=True)
 
     def train_on_made_data(self) -> None:
+        """
+            This is no longer in use, but left here for testing if needed
+        """
         cycles = m_made.cycles
         data = m_made.Data()
         data.randomise()
@@ -136,7 +144,7 @@ class Train:
         
         return out, h_data
     
-    def assymptotic(self, fitness):
+    def asymptotic(self, fitness:float) -> bool:
         """
             Need to flesh out this idea
         """
@@ -146,7 +154,7 @@ class Train:
         
         return False
 
-    def train_on_histories(self, histories : list[list], most_recent:list) -> tuple[neural_net, int]:
+    def train_on_histories(self, histories : list[list], most_recent:list):
         """
             given a set of histories, and the most recent history, train to predict the cycle of the 
             most recent history
@@ -154,8 +162,9 @@ class Train:
         print("Training on the historical data. Training to predict most recent cycle")
         print("Threshold: ", self.fitness_threshold)
 
-        if(self.saved_pop): 
-            old_pop = get_population()
+        old_pop = get_population(self.saved_pop_path)
+
+        if(old_pop):
             pop = Population(50, old_pop, self.num_of_histories, 6, 6)
             print("Loaded previous best population")
         else:
@@ -201,12 +210,13 @@ class Train:
         plot_datas([best_pred, most_recent], "Best prediction of most recent cycle", "Data")
 
         # save the best population when this is called. when this function gets called again, it will start from this population of genomes instead of starting randomly
-        save_population(most_recent_pop)
-        self.saved_pop = True
+        # save based on a checkpoint, saves every time this function is called by default
+        if((Train.call_counter % self.save_checkpoint) == 0):
+            save_population(most_recent_pop, self.saved_pop_path)
 
         return pop.models[best_model_index], best_fitness
 
-    def query_model(self, data : str) -> list:
+    def query_model(self, data : str) -> list[int] | None:
         """
         - this should be called at the beginning of each cycle to predict values for whole cycle
         - it takes some time:
