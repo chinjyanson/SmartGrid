@@ -1,8 +1,8 @@
 import importlib.util
-from neural_net import Population, neural_net
+from .neural_net import Population, neural_net
 import math
 import numpy as np
-from helper import module_from_file, mse, plot_datas, save_population, get_population, add_noise
+from .utils.helper import module_from_file, mse, plot_datas, save_population, get_population, add_noise
 
 # class Import:
 #     def __init__(self):
