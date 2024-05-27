@@ -1,5 +1,5 @@
 import pulp
-import server_data as data
+import data.server_data as data
 
 def schedule_deferable_demand():
     # Fetching data from server

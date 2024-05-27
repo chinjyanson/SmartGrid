@@ -1,6 +1,5 @@
 import requests
 import sys
-sys.path.insert(0, '/home/ilan/Desktop/SmartGrid')
 
 class server_data:
     def __init__(self) -> None:
@@ -16,10 +15,10 @@ class server_data:
             self.json = requests.get(self.url+endpoint).json()
         except:
             print("Cannot get data from external server")
+            sys.exit(1)
 
     def set_historical_prices(self):
         self.set_json('/yesterday')
-
         for s in ['buy_price', 'demand', 'sell_price']:
             self.parsed_data[s] = []
             for i in range(self.data_points):

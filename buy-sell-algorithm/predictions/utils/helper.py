@@ -3,16 +3,17 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import importlib.util
 import pickle
-
+from types import ModuleType
+import os
 
 """
     Useful helper functions
 """
 
-def pad(array):
+def pad(array:list[int]) -> int:
     return [0]+array+[0]
 
-def mse(a, b):
+def mse(a:float, b:float) -> float:
     """
         Mean squared error
     """
@@ -22,7 +23,7 @@ def mse(a, b):
     
     return out / len(b)
 
-def sse(a, b):
+def sse(a:float, b:float) -> float:
     """
         Sum of squared errors
     """
@@ -32,7 +33,7 @@ def sse(a, b):
                 
     return out
 
-def mae(a, b):
+def mae(a:float, b:float) ->float:
     """
         Mean absolute error
     """
@@ -42,10 +43,10 @@ def mae(a, b):
     
     return out / len(b)
      
-def add_noise(x):
+def add_noise(x:float) -> float:
     return 5*x
 
-def plot_datas(datas, title, ylabel):   
+def plot_datas(datas:list[list[int]], title:str, ylabel:str)->None:   
     """
     Pass a list of datas to plot
     set of data on the same graph needs to be put into a list
@@ -63,14 +64,14 @@ def plot_datas(datas, title, ylabel):
 
     plt.show()
 
-def module_from_file(module_name, file_path):
+def module_from_file(module_name:str, file_path:str)->ModuleType:
     spec = importlib.util.spec_from_file_location(module_name, file_path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
 
 # split a univariate sequence into samples
-def split_sequence(sequence, x_width, y_width=1):
+def split_sequence(sequence:list[float], x_width:int, y_width:int=1) -> tuple[np.array, np.array]:
     X, y = list(), list()
     
     for i in range(len(sequence)):
@@ -90,16 +91,19 @@ def split_sequence(sequence, x_width, y_width=1):
           
     return np.array(X), np.array(y)
 
-def save_population(pop):
+def save_population(pop, dir) -> None:
     try:
-        with open("genetic/best.pop", "wb") as f:
+        file_name = os.path.join(dir, "best.pop")
+        with open(file_name, "wb") as f:
             pickle.dump(pop, f)
     except IOError as e:
         print("Could not save population because of ", e)
 
-def get_population():
+def get_population(dir):
     try:
-        with open("genetic/best.pop", "rb") as f:
+        file_name = os.path.join(dir, "best.pop")
+        with open(file_name, "rb") as f:
             return pickle.load(f)
     except IOError as e:
         print("Could not load population because of ", e)
+        return None
