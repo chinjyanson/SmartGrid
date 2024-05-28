@@ -34,11 +34,6 @@ def maximize_profit_mpc(initial_buffer_level, max_buffer_capacity, predicted_buy
         buy_energy = x[t]
         sell_energy = x[horizon + t]
         return buffer + buy_energy - sell_energy
-
-    def no_simultaneous_buy_sell_constraint(x, t):
-        buy_energy = x[t]
-        sell_energy = x[horizon + t]
-        return buy_energy * sell_energy
     
     def buy_sell_either_constraint(x, t):
         buy_energy = x[t]
@@ -90,6 +85,9 @@ def maximize_profit_mpc(initial_buffer_level, max_buffer_capacity, predicted_buy
             print(f"  Current Buy Price: {current_buy_price} £/kWh")
             print(f"  Current Sell Price: {current_sell_price} £/kWh")
         
+        else:
+            print(f"Cycle {t//time_step + 1}: Optimization failed")
+            print(result.message)
         #factor in the code time taken into the sleep time (call every 5 seconds regardless of code)
         #TODO: Figure out if the code execution time is consistently above > 5 seconds, because it could mess up future data
         end_time = time.time()
