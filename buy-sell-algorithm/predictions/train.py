@@ -140,7 +140,7 @@ class Train:
         
         return False
 
-    def train_on_histories(self, histories : list[list], most_recent:list):
+    def train_on_histories(self, histories : list[list], most_recent:list, file_name):
         """
             given a set of histories, and the most recent history, train to predict the cycle of the 
             most recent history
@@ -148,7 +148,7 @@ class Train:
         print("Training on the historical data. Training to predict most recent cycle")
         print("Threshold: ", self.fitness_threshold)
 
-        old_pop = get_population(self.saved_pop_path)
+        old_pop = get_population(file_name)
 
         if(old_pop):
             pop = Population(50, old_pop, self.num_of_histories, 6, 6)
@@ -161,7 +161,7 @@ class Train:
         best_fitness = None
         most_recent_pop = None
 
-        for epoch in range(80):
+        for epoch in range(70):
             print("Epoch: ", epoch+1)
             preds = []
 
@@ -187,7 +187,7 @@ class Train:
             else:
                 self.fitness_buffer.append(best_fitness)
             
-            # plot_datas([best_pred, most_recent], "Training to predict most recent cycle given histories", "Data")
+            #plot_datas([best_pred, most_recent], "Training to predict most recent cycle given histories", "Data")
             print("Best fitness: ", best_fitness)
 
             most_recent_pop = pop
@@ -198,7 +198,7 @@ class Train:
         # save the best population when this is called. when this function gets called again, it will start from this population of genomes instead of starting randomly
         # save based on a checkpoint, saves every time this function is called by default
         if((Train.call_counter % self.save_checkpoint) == 0):
-            save_population(most_recent_pop, self.saved_pop_path)
+            save_population(most_recent_pop, file_name)   
 
         return pop.models[best_model_index], best_fitness
 
@@ -230,7 +230,7 @@ class Train:
             if(self.data_fitnesses[data] != 0): self.fitness_threshold = min(add_noise(self.data_fitnesses[data]), 1)
 
             # train model to predict the most recent cycle given a set of previous cycles
-            best_model, best_fitness = self.train_on_histories(previous, most_recent)
+            best_model, best_fitness = self.train_on_histories(previous, most_recent, os.path.join(self.saved_pop_path, data+".pop"))
 
             self.data_fitnesses[data] = best_fitness
 

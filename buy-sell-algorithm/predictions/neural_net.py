@@ -2,7 +2,7 @@ import numpy as np
 import scipy.special
 
 """
-    Neural net class and genetic algorithm largely repurposed from an older project
+    Neural net class and genetic algorithm 
 """
 
 class neural_net:
@@ -11,6 +11,8 @@ class neural_net:
         self.hnodes_a = hidden_a_nodes
         self.hnodes_b = hidden_b_nodes
         self.onodes = output_nodes
+
+        # initialise weight matrices
 
         # weight matrix between input and hidden
         self.wi_ha = np.random.normal(0.0, pow(self.inodes, -0.5), (self.hnodes_a, self.inodes))
@@ -89,10 +91,6 @@ class Population:
                 a_fitness, b_fitness = self.old_fitnesses[a], self.old_fitnesses[b]
 
                 if a_fitness == 0 and b_fitness == 0:
-                    child.wi_ha = np.zeros((self.ha_size, self.input_size))
-                    child.wha_hb = np.zeros((self.hb_size, self.ha_size))
-                    child.whb_o = np.zeros((self.output_size, self.hb_size))
-
                     prob_from_a = 0.5
 
                     # cross-over weights between inputs and hidden a
