@@ -27,6 +27,7 @@ def maximize_profit_mpc(initial_buffer_level, max_buffer_capacity, predicted_buy
         
         # Define optimization variables
         print("horizon: " + str(horizon))
+        buy_sell_energy = cp.Variable(horizon)
         solar_energy = cp.Parameter(horizon, nonneg=True)
         buy_energy = cp.Variable(horizon, nonneg=True)
         sell_energy = cp.Variable(horizon, nonneg=True)
@@ -37,8 +38,7 @@ def maximize_profit_mpc(initial_buffer_level, max_buffer_capacity, predicted_buy
         z_store_use = cp.Variable(horizon, boolean=True)  # Binary variable to enforce either store or use stored energy
         
         # Objective function
-        profit = cp.sum(cp.multiply(sell_energy, predicted_sell_prices[t:t + horizon]) - 
-                        cp.multiply(buy_energy, predicted_buy_prices[t:t + horizon]))
+        profit = cp.sum(cp.multiply(sell_energy, predicted_sell_prices[t:t + horizon]) - cp.multiply(buy_energy, predicted_buy_prices[t:t + horizon]))
         
         # Constraints
         constraints = [
@@ -76,6 +76,14 @@ def maximize_profit_mpc(initial_buffer_level, max_buffer_capacity, predicted_buy
             
             # Update buffer and profit based on actual prices
             buffer += optimal_store_energy - optimal_use_stored_energy + optimal_buy_energy - optimal_sell_energy
+            
+            if buy_sell_energy > 0:
+                profit += buy_sell_energy * current_buy_price
+            if buy_sell_energy < 0:
+                profit -= buy_sell_energy * current_sell_price
+            
+
+
             total_profit -= optimal_buy_energy * current_buy_price
             total_profit += optimal_sell_energy * current_sell_price
             buffer = min(max(buffer, 0), max_buffer_capacity)
