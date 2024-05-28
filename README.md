@@ -37,7 +37,7 @@ Install all required dependencies using `pip install -r requirements.txt`
 
 ### Top Level Design
 
-![alt text](https://github.com/chinjyanson/SmartGrid/blob/main/TopLevel.drawio.svg)
+![alt text](https://github.com/chinjyanson/SmartGrid/blob/main/images/TopLevel.drawio.png)
 
 
 ## Buy Sell Algorithm
