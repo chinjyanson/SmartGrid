@@ -1,10 +1,27 @@
 import socket
 import time
+import network
+import machine
 
 # code that allows rapberry pi to connect to wlan given here: https://projects.raspberrypi.org/en/projects/get-started-pico-w/2
+ssid = 'Yuh'
+password = 'chinjyanson'
+
+led = machine.Pin("LED", machine.Pin.OUT)
+
+def connect():
+    #Connect to WLAN
+    wlan = network.WLAN(network.STA_IF)
+    wlan.active(True)
+    wlan.connect(ssid, password)
+    while wlan.isconnected() == False:
+        print('Waiting for connection...')
+        time.sleep(1)
+    ip = wlan.ifconfig()[0]
+    print("Connected with ip", ip)
 
 def connect_to_server():
-    server_ip = 'laptop ip'
+    server_ip = '192.168.241.163'
     server_port = 9999
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((server_ip, server_port))
@@ -25,4 +42,7 @@ def connect_to_server():
         s.close()
 
 if __name__ == "__main__":
+    led.toggle()
+    connect()
     connect_to_server()
+
