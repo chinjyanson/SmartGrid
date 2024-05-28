@@ -26,6 +26,8 @@ def maximize_profit_mpc(initial_buffer_level, max_buffer_capacity, predicted_buy
         current_buy_price, current_sell_price = get_current_buy_sell_prices()
         
         # Define optimization variables
+        print("horizon: " + str(horizon))
+        solar_energy = cp.Parameter(horizon, nonneg=True)
         buy_energy = cp.Variable(horizon, nonneg=True)
         sell_energy = cp.Variable(horizon, nonneg=True)
         store_energy = cp.Variable(horizon, nonneg=True)
@@ -51,7 +53,8 @@ def maximize_profit_mpc(initial_buffer_level, max_buffer_capacity, predicted_buy
 
         for i in range(horizon):
             constraints += [
-                buffer_level[i + 1] == buffer_level[i] + store_energy[i] - use_stored_energy[i] + buy_energy[i] - sell_energy[i],
+                store_energy[i] == max(0, solar_energy - energy_used - buy_energy[i]),  # Store excess solar energy
+                buffer_level[i + 1] == buffer_level[i] + store_energy[i] - use_stored_energy[i],
                 buffer_level[i + 1] <= max_buffer_capacity,
                 buffer_level[i + 1] >= 0,
                 sell_energy[i] <= buffer_level[i],  # Can only sell if we have enough in the buffer
@@ -89,6 +92,7 @@ def maximize_profit_mpc(initial_buffer_level, max_buffer_capacity, predicted_buy
             print(f"  Current Sell Price: {current_sell_price} £/kWh")
         else:
             print(f"Cycle {t//time_step + 1}: Optimization failed")
+            print(problem.status)
         
         # Factor in the code time taken into the sleep time (call every 5 seconds regardless of code)
         end_time = time.time()
