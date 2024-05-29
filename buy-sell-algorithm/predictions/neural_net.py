@@ -65,11 +65,8 @@ class Population:
             self.crossover()
             self.mutate()
 
-        self.fitnesses = np.zeros(self.size)
+        self.fitnesses = []
 
-    def average_mse(self):
-        return np.average([1/x for x in self.fitnesses])
-    
     def crossover(self):
         # setup higher probabilities for higher performing neural nets
         sum_of_fitnesses = np.sum(self.old_fitnesses)
