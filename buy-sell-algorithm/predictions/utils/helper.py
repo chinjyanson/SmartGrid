@@ -43,8 +43,11 @@ def mae(a:float, b:float) ->float:
     
     return out / len(b)
      
-def add_noise(x:float) -> float:
-    return 5*x
+def add_noise(x:float, y:int) -> float:
+    """
+        Multiply x by y
+    """
+    return x*y
 
 def plot_datas(datas, title, ylabel, start_index=0, end_index=60)->None:   
     """

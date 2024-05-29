@@ -9,6 +9,7 @@ from neural_net import Population, neural_net
 import numpy as np
 from utils.helper import module_from_file, mse, plot_datas, save_population, get_population, add_noise, batch_up
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
+import time
 
 m_server = module_from_file("server_data", "buy-sell-algorithm/data/server_data.py")
 m_made = module_from_file("Data", "buy-sell-algorithm/data/datavis.py")
@@ -21,11 +22,10 @@ class Train:
     """
     call_counter = 0
 
-    def __init__(self, elitism, mutation_prob, mutation_power) -> None:
-        # save up to 5 histories of data required for prediction of each  form of data
+    def __init__(self, elitism, mutation_prob, mutation_power, max_epochs, num_of_histories, data_batch_size, nn_batch_size, parsed_data) -> None:
         self.histories_buffer = {'buy_price':[], 'sell_price':[], 'demand':[]}
         self.data_fitnesses = {'buy_price':0, 'sell_price':0, 'demand':0}
-        self.num_of_histories = 5
+        self.num_of_histories = num_of_histories
         self.fitness_threshold = 0
         self.fitness_buffer = []
         self.epsilon = 0.0001
@@ -36,45 +36,54 @@ class Train:
         self.mutation_prob = mutation_prob
         self.mutation_power = mutation_power
 
+        self.epochs = max_epochs
+
+        self.data_batch_size = data_batch_size
+        self.nn_batch_size = nn_batch_size
+
+        self.parsed_data = parsed_data
+
         os.makedirs(self.saved_pop_path, exist_ok=True)
+
+    def change_historical_data(self, hd):
+        self.parsed_data = hd
 
     def get_synthetic_data(self, data_type : str, num_of_available_histories : int) -> tuple[list[list], list]:
         """
             return a tuple of actual data and a set of synthetic data derived from this actual data
         """
-        serve.set_historical_prices()
-        h_data = serve.parsed_data[data_type]
+        h_data = self.parsed_data[data_type]
 
         print("Training to synthesize similar data from one previous cycle")
 
         out = []
         amount = min(self.num_of_histories - num_of_available_histories, 10)
 
-        pop = Population(6, 6, pop_size=10, input_nodes=2, output_nodes=1, mutation_prob=self.mutation_prob, mutation_power=self.mutation_power, elitism=self.elitism)
+        pop = Population(4, 4, pop_size=10, input_nodes=2, output_nodes=1, mutation_prob=self.mutation_prob, mutation_power=self.mutation_power, elitism=self.elitism)
         best_model = None
         data_points = 60
 
         # training
         for epoch in range(50):
-            preds = []
+            synthetics = []
             
-            for num, model in enumerate(pop.models):
-                predicted_import_costs = []
+            for model in pop.models:
+                synth = []
                 
                 for i in range(data_points):
                     if(i == 0): input = [h_data[i+2], h_data[i+1]]
                     elif(i == data_points-1): input = [h_data[i-1], h_data[i-2]]
                     else: input = [h_data[i-1], h_data[i+1]]
             
-                    predicted_import_costs.append(model.query(input)[0][0])
+                    synth.append(model.query(input)[0][0])
 
-                pop.fitnesses[num] = 1 / mse(h_data, predicted_import_costs)
-                preds.append(predicted_import_costs)
+                pop.fitnesses.append(1 / mse(h_data, synth))
+                synthetics.append(synth)
 
             best_model = np.argmax(pop.fitnesses)
             
             if(not(epoch % 10) and len(out) < amount):
-                out.append(preds[best_model])
+                out.append(synthetics[best_model])
 
             pop = Population(old_pop=pop)
         
@@ -92,13 +101,11 @@ class Train:
 
         return prediction
     
-    def train_in_parallel(self, model, histories):
-        tasks = [
-            (0, 15, model, histories),
-            (15, 30, model, histories),
-            (30, 45, model, histories),
-            (45, 60, model, histories)
-        ]
+    def train_in_parallel(self, batches, model, histories):
+        tasks = []
+
+        for batch in batches:
+            tasks.append((*batch, model, histories))
 
         prediction = []
 
@@ -110,6 +117,30 @@ class Train:
 
         return prediction
     
+    def train_models(self, models : neural_net, histories : list[list[float]], most_recent : list[float]) -> tuple[list[float], list[float]]:
+        """
+            Train models on a set of histories and return a tuple lists of each model's fitness, and each model's prediction 
+        """
+        fitnesses = []
+        predictions = []
+
+        for model in models:
+            # run different copies of the model in parallel on different batches of the histories to make predictions
+            # full range is 0->60, make in batches of 15
+
+            batches = batch_up((0, 60), self.data_batch_size)
+            prediction = []
+
+            for batch in batches:
+                prediction += self.make_prediction(*batch, model, histories)
+            
+            #prediction = self.train_in_parallel(batches, model, histories)
+
+            fitnesses.append(1 / mse(most_recent, prediction))
+            predictions.append(prediction)
+
+        return fitnesses, predictions
+    
     def train_on_histories(self, histories, most_recent, pop):
         """
             given a set of histories, and the most recent history, train to predict the cycle of the 
@@ -119,28 +150,19 @@ class Train:
         best_fitness = None
         most_recent_pop = None
 
-        for epoch in range(70):
+        for epoch in range(self.epochs):
             print("Epoch: ", epoch+1)
-            preds = []
 
-            for num, model in enumerate(pop.models):
-                # run different copies of the model in parallel on different batches of the histories to make predictions
-                # full range is 0->60, make in batches of 15
-                # I want to run each of these predictions in parallel not sequentially
+            batches = batch_up((0, pop.size), self.nn_batch_size)
+            all_predictions = []
 
-                batches = batch_up((0, 60), 20)
-                prediction = []
-
-                for batch in batches:
-                    prediction += self.make_prediction(*batch, model, histories)
-                
-                # prediction = self.train_in_parallel(model, histories)
-
-                pop.fitnesses[num] += 1 / mse(most_recent, prediction)
-                preds.append(prediction)
+            for x, y in batches:
+                fitnesses, predictions = self.train_models(pop.models[x:y], histories, most_recent)
+                pop.fitnesses += fitnesses
+                all_predictions += predictions
 
             best_model_index = np.argmax(pop.fitnesses)
-            best_pred = preds[best_model_index]
+            # best_pred = all_predictions[best_model_index]
             best_fitness = pop.fitnesses[best_model_index]
 
             if ((self.fitness_threshold != 0) and (best_fitness > self.fitness_threshold)):
@@ -153,7 +175,7 @@ class Train:
             most_recent_pop = pop
             pop = Population(old_pop=pop)
         
-        plot_datas([best_pred, most_recent], "Best prediction of most recent cycle", "Data")
+        #plot_datas([best_pred, most_recent], "Best prediction of most recent cycle", "Data")
 
         return pop.models[best_model_index], best_fitness, most_recent_pop
 
@@ -165,7 +187,7 @@ class Train:
         
         Return prediction of next cycle
         """
-
+        print()
         if(data in self.histories_buffer):
             available_histories = self.histories_buffer[data]
 
@@ -174,15 +196,15 @@ class Train:
                 previous, most_recent = self.get_synthetic_data(data, len(available_histories))
                 self.histories_buffer[data] = previous[1:]
                 self.histories_buffer[data].append(most_recent)
+
             else:
                 print(f"Have 5 histories for {data}, get most recent data for training")
-                serve.set_historical_prices()
-                previous, most_recent = available_histories, serve.parsed_data[data]
+                previous, most_recent = available_histories, self.parsed_data[data]
                 # discard the least recent history, append most recent history, always keep availability of 5
                 self.histories_buffer[data] = self.histories_buffer[data][1:]
                 self.histories_buffer[data].append(most_recent)  # discard the least recent history, append most recent history, always keep availability of 5
-            
-            if(self.data_fitnesses[data] != 0): self.fitness_threshold = min(add_noise(self.data_fitnesses[data]), 50)
+        
+            if(self.data_fitnesses[data] != 0): self.fitness_threshold = min(add_noise(self.data_fitnesses[data], 2), 100)
 
             print("Training on the historical data. Training to predict most recent cycle")
             print("Threshold: ", self.fitness_threshold)
@@ -225,13 +247,23 @@ class Train:
             return None
         
 if __name__ == "__main__":
-    trainer = Train(elitism=0.2, mutation_prob=0.08, mutation_power=0.1)
+    trainer = Train(elitism=0.2, mutation_prob=0.08, mutation_power=0.1, max_epochs=65, num_of_histories=5, 
+                data_batch_size=15, nn_batch_size=60, parsed_data=serve.parsed_data)
+    
+    for cycle in range(3):
+        print("Cycle ", cycle+1)
+        print()
+        start = time.time()
+        serve.set_historical_prices()
+        trainer.change_historical_data(serve.parsed_data)
 
-    buy = trainer.query_model('buy_price')
-    plot_datas([buy], "Prediction of current cycle", "Buy price")
+        buy = trainer.query_model('buy_price')
+        sell = trainer.query_model('sell_price')
+        demand = trainer.query_model('demand')
 
-    sell = trainer.query_model('sell_price')
-    plot_datas([sell], "Prediction of current cycle", "Sell price")
+        print("Time: ", time.time() - start)
+        print()
 
-    sell = trainer.query_model('sell_price')
-    plot_datas([sell], "Prediction of current cycle", "Sell price")
+        plot_datas([buy, serve.parsed_data['buy_price']], "Prediction of current cycle vs prev cycle", "All")
+        plot_datas([sell, serve.parsed_data['sell_price']], "Prediction of current cycle vs prev cycle", "All")
+        plot_datas([demand, serve.parsed_data['demand']], "Prediction of current cycle vs prev cycle", "All")
