@@ -43,16 +43,19 @@ def mae(a:float, b:float) ->float:
     
     return out / len(b)
      
-def add_noise(x:float) -> float:
-    return 5*x
+def add_noise(x:float, y:int) -> float:
+    """
+        Multiply x by y
+    """
+    return x*y
 
-def plot_datas(datas:list[list[int]], title:str, ylabel:str)->None:   
+def plot_datas(datas, title, ylabel, start_index=0, end_index=60)->None:   
     """
     Pass a list of datas to plot
     set of data on the same graph needs to be put into a list
     """
 
-    times = [i*5 for i in range(60)]
+    times = [i*5 for i in range(start_index, end_index)]
     colors = cm.rainbow(np.linspace(0, 1, len(datas)))
 
     plt.title(title)
@@ -109,3 +112,14 @@ def get_population(file_name):
     except IOError as e:
         print("Could not load population because of ", e)
         return None
+
+def batch_up(_range, width):
+    """
+        `_range` - tuple of full range to batch up
+        `width` - size of a single batch
+    """
+    out = []
+    for i in range(*_range, width):
+        out.append((i, i+width))
+
+    return out
