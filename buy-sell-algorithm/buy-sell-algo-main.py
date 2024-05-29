@@ -121,6 +121,7 @@ def get_current_buy_sell_prices():
     current_sell_price = serve.parsed_data['sell_price']
     return current_buy_price, current_sell_price
 
+# need to send historical prices to trainer at start of each cycle
 serve = data.server_data()
 serve.set_historical_prices()
 
