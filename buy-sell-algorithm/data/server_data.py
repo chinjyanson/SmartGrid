@@ -42,7 +42,12 @@ class server_data:
 
     def deferables(self):
         self.set_json('/deferables')
-        self.parsed_data['deferables'] = self.json  
+        self.parsed_data['start'] = self.json['start']
+        self.parsed_data['end'] = self.json['end']
+        self.parsed_data['energy'] = self.json['energy']
+
+    def get_ticks(self):
+        self.set_json('/sun')
         self.tick = self.json['tick']
 
 if (__name__ == "__main__"):
