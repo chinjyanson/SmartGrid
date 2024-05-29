@@ -1,70 +1,71 @@
 import numpy as np
-import scipy.special
 
 """
     Neural net class and genetic algorithm 
 """
 
 class neural_net:
-    def __init__(self, input_nodes, hidden_a_nodes, hidden_b_nodes, output_nodes):
-        self.inodes = input_nodes
-        self.hnodes_a = hidden_a_nodes
-        self.hnodes_b = hidden_b_nodes
-        self.onodes = output_nodes
-
+    def __init__(self, *args, **kwargs):
         # initialise weight matrices
+        if("weight_matrices" in kwargs):
+            self.weight_matrices = kwargs["weight_matrices"]
+        else:
+            layers = (kwargs["input_nodes"], *args, kwargs["output_nodes"],)
 
-        # weight matrix between input and hidden
-        self.wi_ha = np.random.normal(0.0, pow(self.inodes, -0.5), (self.hnodes_a, self.inodes))
-        self.wha_hb = np.random.normal(0.0, pow(self.hnodes_a, -0.5), (self.hnodes_b, self.hnodes_a))
-        self.whb_o = np.random.normal(0.0, pow(self.hnodes_b, -0.5), (self.onodes, self.hnodes_b))
+            self.weight_matrices = []
+
+            for n in range(len(layers)-1):
+                self.weight_matrices.append(np.random.normal(0.0, pow(layers[n], -0.5), (layers[n+1], layers[n])))
 
     def activation_func(self, x):
         return np.array([i * (i > 0) for i in x])
 
     def query(self, input_list):
-        inputs = np.array(input_list, ndmin=2).T
+        h_hat = np.array(input_list, ndmin=2).T
+        
+        for wm in self.weight_matrices:
+            h = np.matmul(wm, h_hat)
+            h_hat = self.activation_func(h)
 
-        hidden_a_inputs = np.matmul(self.wi_ha, inputs)
-        hidden_a_outputs = self.activation_func(hidden_a_inputs)
-        hidden_b_inputs = np.matmul(self.wha_hb, hidden_a_outputs)
-        hidden_b_outputs = self.activation_func(hidden_b_inputs)
-
-        final_inputs = np.matmul(self.whb_o, hidden_b_outputs)  
-        final_outputs = self.activation_func(final_inputs)
-
-        return final_outputs
-
-
-# genetic algorithm
-mutation_prob = 0.08
-elitism = 0.2
-mutation_power= 0.1
-
+        return h_hat
+    
 """
     Initialise a population of neural nets, pass in the population size, number of input neurons for each neural net,
     number of output neurons for each neural net
 """
 class Population:
-    def __init__(self, size, old_population, input_size, hidden_a_size=5, hidden_b_size=5, output_size=1):
-        self.size = size
-        self.fitnesses = np.zeros(self.size)
-        self.input_size = input_size
-        self.ha_size = hidden_a_size
-        self.hb_size = hidden_b_size
-        self.output_size = output_size
-        # at the start of the game, there's no old population
-        if old_population is None:
-            # set up population of nueral nets
-            self.models = [neural_net(self.input_size, hidden_a_size, hidden_b_size, output_size) for _ in range(self.size)]
+    def __init__(self, *args, **kwargs):        
+        if "old_pop" not in kwargs:
+            self.size = kwargs["pop_size"]
+            self.models = [neural_net(*args, input_nodes=kwargs["input_nodes"], output_nodes=kwargs["output_nodes"]) for _ in range(self.size)]
+            self.input_nodes = kwargs["input_nodes"]
+            self.hidden_nodes = args
+            self.output_nodes = kwargs["output_nodes"]
+
+            self.mutation_prob = kwargs["mutation_prob"]
+            self.elitism = kwargs["elitism"]
+            self.mutation_power = kwargs["mutation_power"]
+
         else:
-            # get all nueral nets from previous iteration
+            old_population = kwargs["old_pop"]
+
+            self.size = old_population.size
+            self.input_nodes = old_population.input_nodes
+            self.hidden_nodes = old_population.hidden_nodes
+            self.output_nodes = old_population.output_nodes
+
+            self.mutation_prob = old_population.mutation_prob if ("mutation_prob" not in kwargs) else kwargs["mutation_prob"]
+            self.elitism = old_population.elitism if ("elitism" not in kwargs) else kwargs["elitism"]
+            self.mutation_power = old_population.mutation_power if ("mutation_power" not in kwargs) else kwargs["mutation_power"]
+
             self.old_models = old_population.models
             self.old_fitnesses = old_population.fitnesses
-            # setup models for this iteration, will fill list in mutation and crossover phase
+
             self.models = []
             self.crossover()
             self.mutate()
+
+        self.fitnesses = np.zeros(self.size)
 
     def average_mse(self):
         return np.average([1/x for x in self.fitnesses])
@@ -75,7 +76,7 @@ class Population:
         probs = [self.old_fitnesses[i]/sum_of_fitnesses for i in range(self.size)]
 
         for i in range(self.size):
-            if i < self.size*elitism:
+            if i < self.size*self.elitism:
                 # sort by order of fitness (descending)
                 fitness_indices = np.argsort(probs)[::-1]
                 # if model within elitism critical region, select it as is
@@ -87,57 +88,38 @@ class Population:
 
                 # setup models from those indices
                 parent_a, parent_b = self.old_models[a], self.old_models[b]
-                child = neural_net(self.input_size, self.ha_size, self.hb_size, self.output_size)
+                child = neural_net(*self.hidden_nodes, input_nodes=self.input_nodes, output_nodes=self.output_nodes) 
                 a_fitness, b_fitness = self.old_fitnesses[a], self.old_fitnesses[b]
 
                 if a_fitness == 0 and b_fitness == 0:
                     prob_from_a = 0.5
 
-                    # cross-over weights between inputs and hidden a
-                    for row_ind, row in enumerate(child.wi_ha):
-                        for col_ind, col in enumerate(row):
-                            if np.random.random() < prob_from_a:
-                                child.wi_ha[row_ind][col_ind] = parent_a.wi_ha[row_ind][col_ind]
-                            else:
-                                child.wi_ha[row_ind][col_ind] = parent_b.wi_ha[row_ind][col_ind]
-
-                    # cross-over weights between hidden a and hidden b
-                    for row_ind, row in enumerate(child.wha_hb):
-                        for col_ind, col in enumerate(row):
-                            if np.random.random() < prob_from_a:
-                                child.wha_hb[row_ind][col_ind] = parent_a.wha_hb[row_ind][col_ind]
-                            else:
-                                child.wha_hb[row_ind][col_ind] = parent_b.wha_hb[row_ind][col_ind]
-
-                    # cross-over weights between hidden b and output
-                    for row_ind, row in enumerate(child.whb_o):
-                        for col_ind, col in enumerate(row):
-                            if np.random.random() < prob_from_a:
-                                child.whb_o[row_ind][col_ind] = parent_a.whb_o[row_ind][col_ind]
-                            else:
-                                child.whb_o[row_ind][col_ind] = parent_b.whb_o[row_ind][col_ind]
-
+                    for wm in child.weight_matrices:
+                        for row_ind, row in enumerate(wm):
+                            for col_ind, col in enumerate(row):
+                                if np.random.random() < prob_from_a:
+                                    wm[row_ind][col_ind] = parent_a.wi_ha[row_ind][col_ind]
+                                else:
+                                    wm[row_ind][col_ind] = parent_b.wi_ha[row_ind][col_ind]
                 else:
-                    child.wi_ha = (a_fitness/(a_fitness+b_fitness))*parent_a.wi_ha + (b_fitness/(a_fitness+b_fitness))*parent_b.wi_ha
-                    child.wha_hb = (a_fitness/(a_fitness+b_fitness))*parent_a.wha_hb + (b_fitness/(a_fitness+b_fitness))*parent_b.wha_hb
-                    child.whb_o = (a_fitness/(a_fitness+b_fitness))*parent_a.whb_o + (b_fitness/(a_fitness+b_fitness))*parent_b.whb_o
+                    for i in range(len(child.weight_matrices)):
+                        wm = (a_fitness/(a_fitness+b_fitness))*parent_a.weight_matrices[i] + (b_fitness/(a_fitness+b_fitness))*parent_b.weight_matrices[i]
 
             # add new object to population
             self.models.append(child)
 
     def mutate(self):
         for model in self.models:
-            for row in model.wi_ha:
-                for ind, col in enumerate(row):
-                    if np.random.random() < mutation_prob:
-                        row[ind] += np.random.uniform(-mutation_power, mutation_power)
+            for wm in model.weight_matrices:
+                for row in wm:
+                    for ind, col in enumerate(row):
+                        if np.random.random() < self.mutation_prob:
+                            row[ind] += np.random.uniform(-self.mutation_power, self.mutation_power)
 
-            for row in model.wha_hb:
-                for ind, col in enumerate(row):
-                    if np.random.random() < mutation_prob:
-                        row[ind] += np.random.uniform(-mutation_power, mutation_power)
 
-            for row in model.whb_o:
-                for ind, col in enumerate(row):
-                    if np.random.random() < mutation_prob:
-                        row[ind] += np.random.uniform(-mutation_power, mutation_power)
+                #rands = np.random.uniform(-mutation_power, mutation_power, size=wm.shape)
+                #mask = np.random.random(wm.shape) < mutation_prob
+
+                #wm = np.where(mask, wm + rands, wm)
+
+
