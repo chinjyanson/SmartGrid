@@ -4,7 +4,7 @@ import time
 import data.server_data as data
 from predictions.train import Train
 
-def maximize_profit_mpc(initial_storage_level, max_storage_capacity, predicted_buy_prices, predicted_sell_prices, time_step=5, horizon=15):
+def maximize_profit_mpc(initial_storage_level, max_storage_capacity, predicted_buy_prices, predicted_sell_prices, predicted_demand, time_step=5, horizon=15):
     
     storage = initial_storage_level
     total_profit = 0
@@ -37,8 +37,8 @@ def maximize_profit_mpc(initial_storage_level, max_storage_capacity, predicted_b
         neg_storage_transactions = cp.Variable(horizon, nonneg=True)
 
         # Objective function
-        profit = cp.sum(cp.multiply(neg_energy_transactions, predicted_sell_prices[t:t + horizon]) - cp.multiply(pos_energy_transactions, predicted_buy_prices[t:t + horizon]))
-        
+        profit = cp.sum(cp.multiply(neg_energy_transactions, predicted_sell_prices[t:t + horizon]) - cp.multiply(pos_energy_transactions, predicted_buy_prices[t:t + horizon]) - cp.multiply(demand, predicted_demand[t:t + horizon]))
+
         # Constraints
         constraints = [
             storage_level[0] == storage,  # Initial storage level
@@ -70,12 +70,11 @@ def maximize_profit_mpc(initial_storage_level, max_storage_capacity, predicted_b
             
             # Update storage and profit based on actual prices
             storage += optimal_storage_transaction - optimal_energy_transaction
+            storage = min(max(storage, 0), max_storage_capacity)
             if optimal_energy_transaction < 0:
                 total_profit -= optimal_energy_transaction * current_sell_price 
             elif optimal_energy_transaction > 0:
                 total_profit -= optimal_energy_transaction * current_buy_price
-
-            storage = min(max(storage, 0), max_storage_capacity)
             
             print(f"Cycle {t//time_step + 1}:")
             print(f"  Energy Transaction: {optimal_energy_transaction} kWh")
@@ -85,6 +84,11 @@ def maximize_profit_mpc(initial_storage_level, max_storage_capacity, predicted_b
             print(f"  Solar Energy: {energy_in} kWh")
             print(f"  Current Buy Price: {current_buy_price} £/kWh")
             print(f"  Current Sell Price: {current_sell_price} £/kWh")
+
+            # uncomment this if you want storage to be 1 cycle behind (storage at the beginning of the cycle)
+            # storage += optimal_storage_transaction - optimal_energy_transaction
+            # storage = min(max(storage, 0), max_storage_capacity)
+
         else:
             print(f"Cycle {t//time_step + 1}: Optimization failed")
             print(problem.status)
@@ -127,5 +131,5 @@ predicted_demand = train.query_model('demand')
 initial_storage_level = 0
 max_storage_capacity = 50
 
-max_profit = maximize_profit_mpc(initial_storage_level, max_storage_capacity, predicted_buy_prices, predicted_sell_prices)
+max_profit = maximize_profit_mpc(initial_storage_level, max_storage_capacity, predicted_buy_prices, predicted_sell_prices, predicted_demand)
 print(f"Maximum Profit: {max_profit}")
