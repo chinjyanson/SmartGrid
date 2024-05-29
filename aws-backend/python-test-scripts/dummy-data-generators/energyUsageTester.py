@@ -15,7 +15,7 @@ def call_api(day):
         print("Total demand:", total_demand)
 
         # Performing the API post with the extracted information
-        post_data = {"day": day, "energyUsed": total_demand}
+        post_data = {"dayID": day, "energyUsed": total_demand}
         response = requests.post("https://evuc3y0h1g.execute-api.eu-north-1.amazonaws.com/PROD/accessUsageLog", json=post_data)
         print("successful post") if response.status_code == 200 else print("failed post")
     else:

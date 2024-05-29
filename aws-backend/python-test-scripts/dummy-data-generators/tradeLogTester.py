@@ -15,7 +15,7 @@ class TradeLogTester:
 
     def test_api_post(self, day, earnings, energysold, energybought):
         data = {
-            "day": day,
+            "dayID": day,
             "earnings": earnings,
             "energySold": energysold,
             "energyBought": energybought

@@ -8,45 +8,51 @@ const dynamodb = new AWS.DynamoDB.DocumentClient();
 const tradeTable = 'trade-log';
 
 //------------mainfunction--------------
-// NEED TO FIX THIS LIMITTING 
 async function getTradeLog(){
     const params = {
         TableName: tradeTable,
-        Limit: 100,
-        ScanIndexForward: false
+        ProjectionExpression: "dayID, energyBought, energySold, earnings"
     };
 
-    const data = await dynamodb.scan(params).promise();
-    if (!data) {
-        return utils.buildResponse(503, 'Error getting trade log');
-    } else {
-        const sortedItems = data.Items.sort((a, b) => b.day - a.day);
-        const recentItems = sortedItems.slice(0, 90);
-        return utils.buildResponse(200, recentItems);
+    try {
+        const data = await dynamodb.scan(params).promise();
+        if (!data) {
+            return utils.buildResponse(503, 'Error getting trade log');
+        } else {
+            return utils.buildResponse(200, data.Items);
+        }
+    } catch (error) {
+        console.error('Error getting trade log: ', error);
+        return utils.buildResponse(500, 'Error getting trade log');
     }
 }
 
 async function addTradeLog(tradeLogInfo){
-    const day = tradeLogInfo.day;
+    const dayID = tradeLogInfo.dayID;
     const energyBought = tradeLogInfo.energyBought;
     const energySold = tradeLogInfo.energySold;
     const earnings = tradeLogInfo.earnings;
+    const addedAt = Math.floor(Date.now() / 1000);
+    const expiresAt = addedAt + (500 * 60);
+    // 500 minutes for expire time
 
-    if (!day || !energyBought || !energySold || !earnings) {
+    if (!dayID || !energyBought || !energySold || !earnings) {
         return utils.buildResponse(401, 'Invalid trade log');
     }
 
-    if (typeof day !== 'number' || typeof energyBought !== 'number' || typeof energySold !== 'number' || typeof earnings !== 'number') {
+    if (typeof dayID !== 'number' || typeof energyBought !== 'number' || typeof energySold !== 'number' || typeof earnings !== 'number') {
         return utils.buildResponse(401, 'Invalid trade log');
     }
 
     const params = {
         TableName: tradeTable,
         Item: {
-            day: day,
+            dayID: dayID,
             energyBought: energyBought,
             energySold: energySold,
-            earnings: earnings
+            earnings: earnings,
+            addedAt: addedAt,
+            expiresAt: expiresAt
         }
     };
     try {

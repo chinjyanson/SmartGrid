@@ -12,7 +12,8 @@ const usageTable = 'usage-log';
 async function getUsageLog(){
     const params = {
         TableName: usageTable,
-        Limit: 90
+        ProjectionExpression: 'dayID, energyUsed',
+        // Limit: 90
         // at maximum we take the most recent 90 entries
     };
     const result = await dynamodb.scan(params).promise();
@@ -24,14 +25,16 @@ async function getUsageLog(){
 }
 
 async function addUsageLog(usageLogInfo){
-    const day = usageLogInfo.day;
+    const dayID = usageLogInfo.dayID;
     let energyUsed = usageLogInfo.energyUsed;
+    const addedAt = Math.floor(Date.now() / 1000);
+    const expiresAt = addedAt + (500 * 60);
 
-    if (!day || !energyUsed) {
+    if (!dayID || !energyUsed) {
         return utils.buildResponse(401, 'Invalid usage log');
     }
 
-    if (typeof day !== 'number' || typeof energyUsed !== 'number') {
+    if (typeof dayID !== 'number' || typeof energyUsed !== 'number') {
         return utils.buildResponse(401, 'Invalid usage log');
     }
 
@@ -40,8 +43,10 @@ async function addUsageLog(usageLogInfo){
     const params = {
         TableName: usageTable,
         Item: {
-            day: day,
-            energyUsed: energyUsed
+            dayID: dayID,
+            energyUsed: energyUsed,
+            addedAt: addedAt,
+            expiresAt: expiresAt
         }
     };
 

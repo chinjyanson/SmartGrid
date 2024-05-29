@@ -12,8 +12,8 @@ if response.status_code != 200:
 
 # Extract the values from the API response
 data = response.json()
-data.sort(key=lambda item: item['day'])
-x_values = [item['day'] for item in data]
+data.sort(key=lambda item: item['dayID'])
+x_values = [item['dayID'] for item in data]
 y_values = [item['energyProduced'] for item in data]
 avg_sun_irradiance = [item['avgSunIrradiance'] for item in data]
 
@@ -28,7 +28,7 @@ plt.show()
 # Create a list of rows for the table
 table_data = []
 for item in data:
-    table_data.append([item['day'], item['energyProduced'], item['avgSunIrradiance']])
+    table_data.append([item['dayID'], item['energyProduced'], item['avgSunIrradiance']])
 
 # Display the table in the terminal
 print(tabulate(table_data, headers=['Day', 'Energy Produced', 'Average Sun Irradiance']))
@@ -44,7 +44,7 @@ plt.show()
 # Create a list of rows for the table
 table_data = []
 for item in data:
-    table_data.append([item['day'], item['energyProduced']])
+    table_data.append([item['dayID'], item['energyProduced']])
 
 # Display the table in the terminal
 print(tabulate(table_data, headers=['Day', 'Energy Produced']))

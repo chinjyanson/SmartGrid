@@ -14,7 +14,7 @@ class EnergyLogTester:
 
     def test_api_post(self, day, avgSunIrradiance, energyProduced):
         data = {
-            "day": day,
+            "dayID": day,
             "avgSunIrradiance": avgSunIrradiance,
             "energyProduced": energyProduced
         }

@@ -13,8 +13,8 @@ if response.status_code != 200:
 
 # Extract the values from the API response
 data = response.json()
-data.sort(key=lambda item: item['day'])
-day = [item['day'] for item in data]
+data.sort(key=lambda item: item['dayID'])
+day = [item['dayID'] for item in data]
 earnings = [item['earnings'] for item in data]
 energy_bought = [item['energyBought'] for item in data]
 energy_sold = [item['energySold'] for item in data]
@@ -39,7 +39,7 @@ plt.show()
 # # Create a list of rows for the table
 table_data = []
 for item in data:
-    table_data.append([item['day'], item['earnings'], item['energyBought'], item['energySold']])
+    table_data.append([item['dayID'], item['earnings'], item['energyBought'], item['energySold']])
 
 # Display the table in the terminal
 print(tabulate(table_data, headers=['Day', 'Earnings', 'Energy Bought', 'Energy Sold']))

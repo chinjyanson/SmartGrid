@@ -14,8 +14,8 @@ const energyTable = 'energy-log';
 async function getEnergyLog() {
     const params = {
         TableName: energyTable,
-        Limit: 90
-        // at maximum we take the most recent 90 entries
+        ProjectionExpression: 'dayID, avgSunIrradiance, energyProduced',
+        // Limit: 90,
     };
     const result = await dynamodb.scan(params).promise();
     if (!result) {
@@ -26,24 +26,28 @@ async function getEnergyLog() {
 }
 
 async function addEnergyLog(energyLogInfo) {
-    const day = energyLogInfo.day;
+    const dayID = energyLogInfo.dayID;
     const avgSunIrradiance = energyLogInfo.avgSunIrradiance;
     const energyProduced = energyLogInfo.energyProduced;
+    const addedAt = Math.floor(Date.now() / 1000);
+    const expiresAt = addedAt + (500 * 60);
 
-    if (!day || !avgSunIrradiance || !energyProduced) {
+    if (!dayID || !avgSunIrradiance || !energyProduced) {
         return utils.buildResponse(401, 'Invalid energy log');
     }
 
-    if (typeof day !== 'number' || typeof avgSunIrradiance !== 'number' || typeof energyProduced !== 'number') {
+    if (typeof dayID !== 'number' || typeof avgSunIrradiance !== 'number' || typeof energyProduced !== 'number') {
         return utils.buildResponse(401, 'Invalid energy log');
     }
 
     const params = {
         TableName: energyTable,
         Item: {
-            day: day,
+            dayID: dayID,
             avgSunIrradiance: avgSunIrradiance,
-            energyProduced: energyProduced
+            energyProduced: energyProduced,
+            addedAt: addedAt,
+            expiresAt: expiresAt
         }
     };
 
