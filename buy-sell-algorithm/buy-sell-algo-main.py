@@ -3,7 +3,6 @@ from scipy.optimize import minimize
 import time
 import matplotlib as plt
 import data.server_data as data
-
 from predictions.train import Train
 
 def maximize_profit_mpc(initial_buffer_level, max_buffer_capacity, predicted_buy_prices, predicted_sell_prices, time_step=5, horizon=10):
@@ -122,7 +121,11 @@ def get_current_buy_sell_prices():
     current_sell_price = serve.parsed_data['sell_price']
     return current_buy_price, current_sell_price
 
-train = Train()
+serve = data.server_data()
+serve.set_historical_prices()
+
+train = Train(elitism=0.2, mutation_prob=0.08, mutation_power=0.1, max_epochs=65, num_of_histories=5, 
+            data_batch_size=15, nn_batch_size=60, parsed_data=serve.parsed_data)
 
 # Example data
 predicted_buy_prices = train.query_model('buy_price')
