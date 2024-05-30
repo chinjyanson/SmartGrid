@@ -10,7 +10,7 @@ class server_data:
         self.tick = 0
 
     def set_json(self, endpoint) -> None:
-        print(self.url+endpoint)
+        # print(self.url+endpoint)
         try:
             self.json = requests.get(self.url+endpoint).json()
         except:
