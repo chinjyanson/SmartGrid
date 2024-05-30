@@ -17,9 +17,9 @@ const Usage = () => {
       const data = response.data;
 
       // Sort data by day in ascending order
-      const sortedData = data.sort((a, b) => new Date(a.day) - new Date(b.day));
+      const sortedData = data.sort((a, b) => new Date(a.dayID) - new Date(b.dayID));
 
-      const days = sortedData.map(entry => entry.day);
+      const days = sortedData.map(entry => entry.dayID);
       const energyUsed = sortedData.map(entry => entry.energyUsed);
 
       setUsageData({
@@ -44,9 +44,9 @@ const Usage = () => {
       const data = response.data;
 
       // Sort data by day in ascending order
-      const sortedData = data.sort((a, b) => new Date(a.day) - new Date(b.day));
+      const sortedData = data.sort((a, b) => new Date(a.dayID) - new Date(b.dayID));
 
-      const days = sortedData.map(entry => entry.day);
+      const days = sortedData.map(entry => entry.dayID);
       const energyProduced = sortedData.map(entry => entry.energyProduced);
       const avgSunIrradiance = sortedData.map(entry => entry.avgSunIrradiance);
 

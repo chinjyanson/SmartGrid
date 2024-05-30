@@ -14,9 +14,9 @@ const Money = () => {
       const data = response.data;
 
       // Sort data by day in ascending order
-      const sortedData = data.sort((a, b) => new Date(a.day) - new Date(b.day));
+      const sortedData = data.sort((a, b) => new Date(a.dayID) - new Date(b.dayID));
 
-      const days = sortedData.map(entry => entry.day);
+      const days = sortedData.map(entry => entry.dayID);
       const energyBought = sortedData.map(entry => entry.energyBought);
       const energySold = sortedData.map(entry => entry.energySold);
       const earnings = sortedData.map(entry => entry.earnings);
