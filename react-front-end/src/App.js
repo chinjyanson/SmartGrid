@@ -1,10 +1,11 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
-import Home from './pages/Home';
-import Money from './pages/Money';
-import Usage from './pages/Usage';
-import './App.css';
+import Home from './routes/landing/landing';
+import Money from './routes/finances/finances';
+import Usage from './routes/consumption/consumption';
+// import NotFound from './pages/NotFound';
+import './core-ui/App.css';
 
 const App = () => {
   return (
@@ -15,6 +16,7 @@ const App = () => {
           <Route path="/" element={<Home />} />
           <Route path="/money" element={<Money />} />
           <Route path="/usage" element={<Usage />} />
+          {/* <Route path="*" element={<NotFound />} /> */}
         </Routes>
       </div>
     </div>

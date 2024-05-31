@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Line } from 'react-chartjs-2';
 import 'chart.js/auto';
-import Battery from '../components/Battery'; // Adjust the path as necessary
+import Battery from '../../components/Battery'; // Adjust the path as necessary
 
 const Usage = () => {
   const [usageData, setUsageData] = useState(null);
