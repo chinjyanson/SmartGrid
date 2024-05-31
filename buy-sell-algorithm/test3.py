@@ -4,26 +4,36 @@ import time
 import data.server_data as data
 #from predictions.train import Train
 
-def maximize_profit_mpc(initial_storage_level, max_storage_capacity, predicted_buy_prices, predicted_sell_prices, predicted_demand, time_step=5, horizon=15):
-    
-    storage = initial_storage_level
+def maximize_profit_mpc(initial_storage_level, max_storage_capacity, predicted_buy_prices, predicted_sell_prices, time_step=1, horizon=15):
+
+    initial_storage = initial_storage_level
     total_profit = 0
     n = len(predicted_buy_prices)
-    
-    for t in range(0, n - horizon, time_step):
+
+    for t in range(0, n-horizon, time_step):
         start_time = time.time()
 
         # Simulate real-time change
         energy_in = get_current_energy_in()
         energy_used = get_current_energy_used()
         current_buy_price, current_sell_price = get_current_buy_sell_prices()
-        
-        # Update storage with net input energy at the beginning of the cycle
-        storage2 = storage
-        net_input = energy_in - energy_used
-        storage += net_input
-        storage = min(max(storage, 0), max_storage_capacity)
-        
+         
+
+        print(f"  Get Energy In: {energy_in} kWh")
+        print(f"  Get Energy Used: {energy_used} kWh")
+        print(f"  Get Buy Price: {current_buy_price} £/kWh")
+        print(f"  Get Sell Price: {current_sell_price} £/kWh")
+
+        if t == 0:
+            storage = initial_storage
+        else:
+            storage = storage
+
+        # Update storage with net input energy
+        # net_input = energy_in - energy_used
+        # storage += net_input
+        # storage = min(max(storage, 0), max_storage_capacity)
+
         # Define optimization variables
         energy_transactions = cp.Variable(horizon)
         storage_transactions = cp.Variable(horizon)
@@ -38,69 +48,83 @@ def maximize_profit_mpc(initial_storage_level, max_storage_capacity, predicted_b
         neg_storage_transactions = cp.Variable(horizon, nonneg=True)
 
         # Objective function
-        profit = cp.sum(cp.multiply(neg_energy_transactions, predicted_sell_prices[t:t + horizon]) - cp.multiply(pos_energy_transactions, predicted_buy_prices[t:t + horizon]) - cp.multiply(demand, predicted_demand[t:t + horizon]))
+        profit = cp.sum(cp.multiply(neg_energy_transactions, predicted_sell_prices[t:t + horizon]) - cp.multiply(pos_energy_transactions, predicted_buy_prices[t:t + horizon]))
 
         # Constraints
         constraints = [
-            storage_level[0] == storage,  # Initial storage level
+            storage_level[0] == storage,  # storage level currently
             solar_energy[0] == energy_in,
             demand[0] == energy_used,
-            pos_energy_transactions >= 0,
             energy_transactions == pos_energy_transactions - neg_energy_transactions,
             storage_transactions == pos_storage_transactions - neg_storage_transactions,
-            solar_energy - demand + energy_transactions + storage_transactions == 0,
+            #solar_energy - demand + energy_transactions >= 0,
+            solar_energy - demand - energy_transactions >= 0,
+            energy_transactions + storage_transactions + solar_energy - demand >= 0
         ]
 
         for i in range(horizon):
             constraints += [
-                storage_level[i + 1] == storage_level[i] + storage_transactions[i],
-                storage_level[i] + storage_transactions[i] >= 0,
-                storage_level[i] + storage_transactions[i] <= max_storage_capacity,
+                storage_level[i + 1] == storage_level[i] - storage_transactions[i],
                 storage_level[i + 1] <= max_storage_capacity,
                 storage_level[i + 1] >= 0,
-
-                neg_energy_transactions[i] <= storage_level[i],  # Can only sell if we have enough in the storage
+                #solar_energy[i] == 0,
+                #demand[i] == predicted_demand[i],
+                neg_energy_transactions[i] <= storage_level[i], # Can only sell if we have enough in the storage
                 pos_energy_transactions[i] <= max_storage_capacity - storage_level[i],  # Can only buy if we have enough storage capacity
             ]
-        
+
         # Define problem
         problem = cp.Problem(cp.Maximize(profit), constraints)
-        
+
         # Solve problem
-        problem.solve(solver=cp.CBC)  # Using CBC mixed-integer solver
-        
-        if problem.status == cp.OPTIMAL or problem.status == cp.FEASIBLE:
-            optimal_energy_transaction = energy_transactions.value[0]
+        problem.solve(solver=cp.CBC)  # Using CBC mixed-integer solver (Coin-or branch and cut)
+
+        if problem.status == cp.INFEASIBLE:
+            print(f" energy_transactions.value: {energy_transactions.value}")
+            print(f" storage_transactions.value: {storage_transactions.value}")
+            print(f" solar_energy: {solar_energy.value}")
+            print(f" demand: {demand.value}")
+            print(f" storage: {storage_level.value}")
+            print("Infeasible")
+        elif problem.status == cp.OPTIMAL or problem.status == cp.FEASIBLE:
+            optimal_energy_transaction = energy_transactions.value[0]   
             optimal_storage_transaction = storage_transactions.value[0]
-            
+
             # Update storage and profit based on actual prices
-            storage += optimal_storage_transaction - optimal_energy_transaction
-            storage = min(max(storage, 0), max_storage_capacity)
+            #storage += optimal_storage_transaction - optimal_energy_transaction
             if optimal_energy_transaction < 0:
                 total_profit -= optimal_energy_transaction * current_sell_price 
             elif optimal_energy_transaction > 0:
                 total_profit -= optimal_energy_transaction * current_buy_price
-            
+
+            #storage = min(max(storage, 0), max_storage_capacity)
+
             print(f"Cycle {t//time_step + 1}:")
             print(f"  Energy Transaction: {optimal_energy_transaction} kWh")
             print(f"  Storage Transaction: {optimal_storage_transaction} kWh")
-            print(f"  Energy in storage before transaction: {storage2} kWh")
-            print(f"  Energy in storage after transaction: {storage} kWh")
+            print(f"  Energy Currently in storage: {storage} kWh")
             print(f"  Energy Used: {energy_used} kWh")
             print(f"  Solar Energy: {energy_in} kWh")
             print(f"  Current Buy Price: {current_buy_price} £/kWh")
             print(f"  Current Sell Price: {current_sell_price} £/kWh")
+            print(f" energy_transactions.value: {energy_transactions.value}")
+            print(f" storage_transactions.value: {storage_transactions.value}")
+            print(f" solar_energy: {solar_energy.value}")
+            print(f" demand: {demand.value}")
+            print(f" storage: {storage_level.value}")
+
+            storage -= optimal_storage_transaction 
         else:
             print(f"Cycle {t//time_step + 1}: Optimization failed")
             print(problem.status)
-        
+
         # Factor in the code time taken into the sleep time (call every 5 seconds regardless of code)
         end_time = time.time()
         execution_time = end_time - start_time
-        print(f"Execution Time: {execution_time}")
+        print(execution_time)
         sleep_time = max(0, time_step - execution_time)
-        time.sleep(sleep_time)
-    
+        #time.sleep(sleep_time)
+
     return total_profit
 
 # Example usage with mock functions for current energy
@@ -124,24 +148,6 @@ def get_current_buy_sell_prices():
     current_buy_price = serve.parsed_data['buy_price']
     current_sell_price = serve.parsed_data['sell_price']
     return current_buy_price, current_sell_price
-
-# serve = data.server_data()
-# trainer = Train(elitism = 0.2, mutation_prob=0.08, mutation_power = 0.1, max_epochs=65, 
-#                 num_of_histories= 5, data_batch_size=15, nn_batch_size=60, parsed_data=serve.parsed_data)
-
-# #at each day:
-# serve.set_historical_prices()
-# trainer.change_historical_data(serve.parsed_data)
-
-# predictions = {}
-# for data in ['buy_price', 'sell_price', 'demand']:
-#             if(len(trainer.histories_buffer[data]) == 0):
-#                 print(f"Not enough histories for {data}, need to synthesize 5 histories for training")
-#                 previous, most_recent = trainer.get_synthetic_data(data)
-#                 trainer.histories_buffer[data] = previous[1:] + [most_recent]
-#                 predictions[data] = most_recent
-#             else:
-#                 predictions[data] = trainer.query_model(data)
 
 predicted_buy_prices = [0.97884838, 0.89573551, 0.75651526, 0.36626735, 0.09419675, 0.54257027, 
  0.68039317, 0.87333353, 0.19739547, 0.72302134, 0.67173916, 0.48412507, 
@@ -177,9 +183,8 @@ predicted_demand = [0.68930846, 0.7082086 , 0.63636331, 0.5988409 , 0.30544195, 
  0.98911537, 0.68811079, 0.68311063, 0.29208098, 0.40444325, 0.71085552, 
  0.40141714, 0.74311895, 0.07343258, 0.62053059, 0.10417085, 0.90518443, 
  0.18302153, 0.70323316, 0.33956219, 0.20709873, 0.08862838, 0.14611133]
-
 initial_storage_level = 0
 max_storage_capacity = 50
 
-max_profit = maximize_profit_mpc(initial_storage_level, max_storage_capacity, predicted_buy_prices, predicted_sell_prices, predicted_demand)
+max_profit = maximize_profit_mpc(initial_storage_level, max_storage_capacity, predicted_buy_prices, predicted_sell_prices)
 print(f"Maximum Profit: {max_profit}")
