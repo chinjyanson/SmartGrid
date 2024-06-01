@@ -48,7 +48,7 @@ class server_data:
 
     def get_ticks(self):
         self.set_json('/sun')
-        self.tick = self.json['tick']
+        self.parsed_data['tick'] = self.json['tick']
 
 if (__name__ == "__main__"):
     serve = server_data()

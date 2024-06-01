@@ -146,12 +146,14 @@ def naive_smart_grid_optimizer():
         print(f"Time {t}: Demand={actual_demand}, Solar={solar_energy}, Storage={current_storage}, Buy Price={buy_price}, Sell Price={sell_price}")
         print(f"Total Profit={total_profit}")
 
+    return total_profit
+
 
 def get_total_profit():
     return total_profit
 
 # Run the optimizer
-naive_smart_grid_optimizer()
+print(naive_smart_grid_optimizer())
 
 # Get the total profit
 print("Total Profit: ", get_total_profit())

@@ -16,7 +16,6 @@ def maximize_profit_mpc(initial_storage_level, max_storage_capacity, predicted_b
         energy_in = get_current_energy_in()
         energy_used = get_current_energy_used()
         current_buy_price, current_sell_price = get_current_buy_sell_prices()
-        tick = get_tick()
 
         print(f"  Get Energy In: {energy_in} kWh")
         print(f"  Get Energy Used: {energy_used} kWh")
@@ -51,9 +50,8 @@ def maximize_profit_mpc(initial_storage_level, max_storage_capacity, predicted_b
             demand[0] == energy_used,
             energy_transactions == pos_energy_transactions - neg_energy_transactions,
             storage_transactions == pos_storage_transactions - neg_storage_transactions,
-            pos_energy_transactions + solar_energy - demand - neg_energy_transactions >= 0,
-            energy_transactions + storage_transactions + solar_energy - demand >= 0,
-            solar_energy[0] - demand[0] <= -energy_transactions[0] - storage_transactions[0], 
+            solar_energy - demand - energy_transactions >= 0,
+            energy_transactions + storage_transactions + solar_energy - demand >= 0
         ]
 
         for i in range(horizon):
@@ -63,13 +61,13 @@ def maximize_profit_mpc(initial_storage_level, max_storage_capacity, predicted_b
                 storage_level[i + 1] >= 0,
                 neg_energy_transactions[i] <= storage_level[i], # Can only sell if we have enough in the storage
                 pos_energy_transactions[i] <= max_storage_capacity - storage_level[i],  # Can only buy if we have enough storage capacity
+                solar_energy[i] >= 0,  # Ensure non-negativity of solar energy
             ]
-        
+
         for i in range(1, horizon):  # Starting from 1 since solar_energy[0] is fixed to energy_in
             constraints += [
                 solar_energy[i] == 0,  # Worst-case scenario
-                demand[i] == predicted_demand[i],  # Predicted demand
-                #storage_level[i] == storage_level[i-1] - storage_transactions[i-1],
+                demand[i] == predicted_demand[i]  # Predicted demand
             ]
 
         # Define problem
@@ -79,8 +77,6 @@ def maximize_profit_mpc(initial_storage_level, max_storage_capacity, predicted_b
         problem.solve(solver=cp.CBC)  # Using CBC mixed-integer solver (Coin-or branch and cut)
 
         if problem.status == cp.INFEASIBLE:
-            print(f"Cycle {t//time_step + 1}:")
-            print(f"Tick: {tick}")
             print(f" energy_transactions.value: {energy_transactions.value}")
             print(f" storage_transactions.value: {storage_transactions.value}")
             print(f" solar_energy: {solar_energy.value}")
@@ -92,7 +88,7 @@ def maximize_profit_mpc(initial_storage_level, max_storage_capacity, predicted_b
             optimal_storage_transaction = storage_transactions.value[0]
 
             # Update storage and profit based on actual prices
-            if optimal_energy_transaction < 0:  
+            if optimal_energy_transaction < 0:
                 total_profit -= optimal_energy_transaction * current_sell_price 
             elif optimal_energy_transaction > 0:
                 total_profit -= optimal_energy_transaction * current_buy_price
@@ -102,7 +98,6 @@ def maximize_profit_mpc(initial_storage_level, max_storage_capacity, predicted_b
             storage = min(max(storage, 0), max_storage_capacity)
 
             print(f"Cycle {t//time_step + 1}:")
-            print(f"Tick: {tick}")
             print(f"  Energy Transaction: {optimal_energy_transaction} kWh")
             print(f"  Storage Transaction: {optimal_storage_transaction} kWh")
             print(f"  Energy Currently in storage: {storage} kWh")
@@ -116,7 +111,7 @@ def maximize_profit_mpc(initial_storage_level, max_storage_capacity, predicted_b
             print(f" demand: {demand.value}")
             print(f" storage: {storage_level.value}")
 
-            #storage -= optimal_storage_transaction 
+            storage -= optimal_storage_transaction 
         else:
             print(f"Cycle {t//time_step + 1}: Optimization failed")
             print(problem.status)
@@ -151,12 +146,6 @@ def get_current_buy_sell_prices():
     current_buy_price = serve.parsed_data['buy_price']
     current_sell_price = serve.parsed_data['sell_price']
     return current_buy_price, current_sell_price
-
-def get_tick():
-    serve = data.server_data()
-    serve.get_ticks()
-    tick = serve.parsed_data['tick']
-    return tick
 
 predicted_buy_prices = [0.97884838, 0.89573551, 0.75651526, 0.36626735, 0.09419675, 0.54257027, 
  0.68039317, 0.87333353, 0.19739547, 0.72302134, 0.67173916, 0.48412507, 
