@@ -1,7 +1,10 @@
 import socket
-from threading import Thread
+from concurrent.futures import ThreadPoolExecutor
 
 connected_clients = []
+
+# using a thread pool to avoid endless thread creation
+pool = ThreadPoolExecutor(max_workers=6)
 
 def handle_client(client_socket):
     """Function to handle client connections."""
@@ -27,8 +30,7 @@ def start_server():
     while True:
         client_socket, addr = server.accept()
         print(f"Accepted connection from {addr}")
-        client_handler = Thread(target=handle_client, args=(client_socket, ))
-        client_handler.start()
+        pool.submit(handle_client, client_socket)
 
 if __name__ == "__main__":
     start_server()

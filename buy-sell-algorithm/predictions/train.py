@@ -10,6 +10,9 @@ import numpy as np
 from utils.helper import module_from_file, mse, plot_datas, save_population, get_population, add_noise, batch_up
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
 import time
+import asyncio
+from threading import Thread
+from threading import current_thread
 
 m_server = module_from_file("server_data", "buy-sell-algorithm/data/server_data.py")
 m_made = module_from_file("Data", "buy-sell-algorithm/data/datavis.py")
@@ -20,7 +23,6 @@ class Train:
     """
         Train models using a genetic algorithm to synthesize data if needed, and predict data in a cycle
     """
-    call_counter = 0
 
     def __init__(self, elitism, mutation_prob, mutation_power, max_epochs, num_of_histories, data_batch_size, nn_batch_size, parsed_data) -> None:
         self.histories_buffer = {'buy_price':[], 'sell_price':[], 'demand':[]}
@@ -62,12 +64,15 @@ class Train:
         out = []
         amount = min(self.num_of_histories, 10)
 
-        pop = Population(4, 4, pop_size=10, input_nodes=2, output_nodes=1, mutation_prob=self.mutation_prob, mutation_power=self.mutation_power, elitism=self.elitism)
+        pop = Population(2, pop_size=5, input_nodes=2, output_nodes=1, mutation_prob=self.mutation_prob, mutation_power=self.mutation_power, elitism=self.elitism)
         best_model = None
         data_points = 60
+        epochs = 20
+        checkpoints = list(map(lambda x : (x[0]+x[1]) // 2, batch_up((0,epochs), epochs//self.num_of_histories)))
+        check_counter = 0
 
         # training
-        for epoch in range(50):
+        for epoch in range(epochs):
             synthetics = []
             
             for model in pop.models:
@@ -84,9 +89,12 @@ class Train:
                 synthetics.append(synth)
 
             best_model = np.argmax(pop.fitnesses)
-            
-            if(not(epoch % 10) and len(out) < amount):
+        
+        
+            if(check_counter < self.num_of_histories and checkpoints[check_counter] == epoch):
                 out.append(synthetics[best_model])
+                check_counter += 1
+
 
             pop = Population(old_pop=pop)
         
@@ -101,29 +109,14 @@ class Train:
                 try:
                     input.append(histories[i][j])
                 except IndexError as e:
-                    print(e, ", index: ", j) 
+                    print(histories, i, j)
+                    print(e)
                     sys.exit(1)  
 
             prediction.append(model.query(input)[0][0])
 
         return prediction
-    
-    def train_in_parallel(self, batches, model, histories):
-        tasks = []
-
-        for batch in batches:
-            tasks.append((*batch, model, histories))
-
-        prediction = []
-
-        with ThreadPoolExecutor(max_workers=4) as executor:
-            future_to_prediction = [executor.submit(self.make_prediction, *task) for task in tasks]
-
-            for future in as_completed(future_to_prediction):
-                prediction += future.result()
-
-        return prediction
-    
+        
     def train_models(self, models : neural_net, histories : list[list[float]], most_recent : list[float], start_index : int, end_index : int) -> tuple[list[float], list[float]]:
         """
             Train models on a set of histories and return a tuple lists of each model's fitness, and each model's prediction 
@@ -144,8 +137,6 @@ class Train:
             prediction = self.make_prediction(start_index, end_index, model, histories)
             predictions.append(prediction)
             
-            # prediction = self.train_in_parallel(batches, model, histories)
-
             fitnesses.append(1 / mse(most_recent, prediction))
 
         return fitnesses, prediction
@@ -191,12 +182,7 @@ class Train:
             most_recent_pop = pop
             pop = Population(old_pop=pop)
         
-        #plot_datas([best_pred, most_recent], "Best prediction of most recent cycle", "Data")
-
-        # save the best population when this is called. when this function gets called again, it will start from this population of genomes instead of starting randomly
-        # save based on a checkpoint, saves every time this function is called by default
-        if((Train.call_counter % self.save_checkpoint) == 0):
-            save_population(most_recent_pop, file_name)   
+        save_population(most_recent_pop, file_name)   
 
         self.data_fitnesses[data] = best_fitness
 
@@ -214,10 +200,10 @@ class Train:
         if(data_name in self.histories_buffer):
             previous = self.histories_buffer[data_name] #self.parsed_data[data_name]
 
-            if(start_index == 0):
-                self.histories_buffer[data_name] = previous[1:] + [most_recent]
-            else:
-                self.histories_buffer[data_name][-1] += most_recent
+            #if(start_index == 0):
+            #    self.histories_buffer[data_name] = previous[1:] + [most_recent]
+            #else:
+            #    self.histories_buffer[data_name][-1] += most_recent
             
             if(self.data_fitnesses[data_name] != 0): self.fitness_threshold = min(add_noise(self.data_fitnesses[data_name], 2), 100)
 
@@ -262,81 +248,162 @@ if __name__ == "__main__":
         In reality, we want to use the live buffers for training, and update them at the relevant time steps
     """
 
-    trainer = Train(elitism=0.2, mutation_prob=0.08, mutation_power=0.1, max_epochs=65, num_of_histories=5, 
+    trainer = Train(elitism=0.2, mutation_prob=0.08, mutation_power=0.1, max_epochs=20, num_of_histories=5, 
                 data_batch_size=15, nn_batch_size=60, parsed_data=serve.parsed_data)
+    loop = asyncio.get_event_loop()
     
-    cycles = sum([[i for i in range(60)] for _ in range(3)], [])
+    def new_cycle(data_buffers, predictions, next_predictions):
+        """
+            - Set prediction of current cycle to be the most recent history if this is first call to trainer at tick 0
+            - If this is not first call to trainer at tick 0, then next predictions should become current predictions
+            - Empty data and next predictions buffers, add current values into data buffers to begin with
+        """
+        start = time.time()
 
-    data_buffers = {'buy_price':[], 'sell_price':[], 'demand':[]}
-    predictions = {'buy_price':[], 'sell_price':[], 'demand':[]}
-    next_predictions = {'buy_price':[], 'sell_price':[], 'demand':[]}
+        # at start of new cycle, prepare predictions for current cycle, and set correct historical data
+        serve.set_historical_prices()
+        trainer.change_historical_data(serve.parsed_data)
 
-    cycle_count = 0
-    
-    for i in cycles:
-
-        if(i == 0):
-            # at start of new cycle, prepare predictions for current cycle, and set correct historical data
-            cycle_count += 1
-
-            print("Cycle ", cycle_count)
-            print()
-
-            serve.set_historical_prices()
-            trainer.change_historical_data(serve.parsed_data)
-
-            if(trainer.first_call()):
-                print("First call, assume predictions for all data is most recent cycle")
-                
-                for data_name in ['buy_price', 'sell_price', 'demand']:
-                    previous, most_recent = trainer.get_synthetic_data(data_name)
-                    trainer.histories_buffer[data_name] = previous[1:] + [most_recent]
-                    predictions[data_name] = most_recent
-                
+        if(trainer.first_call()):
+            print("First call, assume predictions for all data is most recent cycle")
+            
+            for data_name, _ in trainer.histories_buffer.items():
+                previous, most_recent = trainer.get_synthetic_data(data_name)
+                trainer.histories_buffer[data_name] = previous[1:] + [most_recent]
+                predictions[data_name] = most_recent
+            
+        else:
+            print("Current predictions are ready")
+            if any([len(n) == 0 for n in next_predictions.values()]):
+                predictions = trainer.histories_buffer
             else:
-                print("Current predictions are ready")
                 predictions = next_predictions.copy()
 
-            # empty data and next prediction buffers and add the current live values
-            """
-            serve.live_prices()
-            serve.live_demand()
-            """
-            for data_name in ['buy_price', 'sell_price', 'demand']:
-                data_buffers[data_name] = []
-                next_predictions[data_name] = []
-                data_buffers[data_name].append(serve.parsed_data[data_name])
-            
-            for d, pred in predictions.items():
-                plot_datas([pred, serve.parsed_data[d]], "Prediction of current cycle vs prev cycle", "All")
-
-        elif((i % 15) == 0 or (i == 59)):
-            # prepare next predictions for next batch each time we are at tick 15, 30, 45, 60
-            # start a new thread that does this batch while another thread continues on with the for loop
-            if(i == 59):
-                x, y = 45, 60
-            else:
-                x, y = batch_up((i-15, i), 15)[0]
-
-            """ 
-            serve.live_prices()
-            serve.live_demand()
-            """
-            for data_name in ['buy_price', 'sell_price', 'demand']:
-                data_buffers[data_name].append(serve.parsed_data[data_name])
+        # empty data and next prediction buffers and add the current live values
+        serve.live_data()
         
-            for data_name in ['buy_price', 'sell_price', 'demand']:
-                print(x, y)
-                #next_predictions[data_name] += trainer.query_model(data_name, x, y, data_buffers[data_name][x:y])
-                next_predictions[data_name] += trainer.query_model(data_name, x, y, serve.parsed_data[data_name][x:y])
+        for data_name in ['buy_price', 'sell_price', 'demand']:
+            data_buffers[data_name] = []
+            next_predictions[data_name] = []
+            data_buffers[data_name].append(serve.parsed_data[data_name])
 
-        else:
-            # do something else, must include filling data buffers
-            """
-            serve.live_prices()
-            serve.live_demand()
-            """
+        for n, p in predictions.items():
+            plot_datas([p], "Prediction", n)
+
+        return time.time() - start
+    
+    def prepare_next(i, starting_i, data_buffers, next_predictions):
+        """
+            - Prepare predictions for the next cycle using the data buffers you have so far
+            - Also add value at current tick into data buffer
+        """
+        start = time.time()
+        # prepare next predictions for next batch each time we are at tick 15, 30, 45, 60
+        # start a new thread that does this batch while another thread continues on with the for loop
+        
+        serve.live_data()
+
+        for data_name in ['buy_price', 'sell_price', 'demand']:
+            data_buffers[data_name].append(serve.parsed_data[data_name])
+        
+        # if we started at new cycle, then get nexts
+        # if we didn't 
+        if(not ((starting_i % 15 == 0) and (trainer.first_call())) or starting_i < 30):
+            if(0 < i  - starting_i < 15):
+                dist = i - starting_i
+            else:
+                dist = 15
+
+            if(i == 59):
+                x, y = 60-dist, 60
+            else:
+                x, y = batch_up((i-dist, i), dist)[0]
+
+
             for data_name in ['buy_price', 'sell_price', 'demand']:
-                data_buffers[data_name].append(serve.parsed_data[data_name])
+                # print(x, y, data_buffers[data_name][x:y+1])   
+
+                if(next_predictions[data_name] == [] and x != 0):
+                    next_predictions[data_name] = trainer.histories_buffer[data_name][-1][:x]
+                    #print(trainer.histories_buffer[data_name], data_name)
+
+                next_predictions[data_name] += trainer.query_model(data_name, x, y, data_buffers[data_name][x:y+1])
+                #next_predictions[data_name] += trainer.query_model(data_name, x, y, serve.parsed_data[data_name][x:y])
+
+                print(len(next_predictions[data_name]))
+                assert(len(next_predictions[data_name]) % 15 == 0)
+
+                # print(x, y, time.time()-start)
+
+        return time.time()-start, next_predictions, data_buffers
+
+    def something_else(data_buffers, predictions):
+        start = time.time()
+        # do something else, must include filling data buffers
+
+        if(trainer.first_call()):
+            serve.set_historical_prices()
+            trainer.change_historical_data(serve.parsed_data)
+            
+            for data_name in ['buy_price', 'sell_price', 'demand']:
+                previous, most_recent = trainer.get_synthetic_data(data_name)
+                trainer.histories_buffer[data_name] = previous[1:] + [most_recent]
+                predictions[data_name] = most_recent
+
+        serve.live_data()
+        
+        print("doing some other stuff")
+
+        for data_name in ['buy_price', 'sell_price', 'demand']:
+            data_buffers[data_name].append(serve.parsed_data[data_name])
+
+        return time.time() - start
+        
+    def main():
+        data_buffers = {'buy_price':[], 'sell_price':[], 'demand':[]}
+        predictions = {'buy_price':[], 'sell_price':[], 'demand':[]}
+        next_predictions = {'buy_price':[], 'sell_price':[], 'demand':[]}
+
+        cycle_count = 0
+        
+        starting_i = serve.starting_tick()
+        i = starting_i
+
+        if(starting_i != 0):
+            for k, v in data_buffers.items():
+                data_buffers[k] = [0] * starting_i
+
+        print("Started at tick ", starting_i)
+
+        while True:
+            if(i == 0):
+                cycle_count += 1
+
+                print("Cycle ", cycle_count)
+                print()
+
+                time_taken = new_cycle(data_buffers, predictions, next_predictions)
+
+            elif((i % 15) == 0 or (i == 59)):
+                time_taken, next_predictions, data_buffers = prepare_next(i, starting_i, data_buffers, next_predictions)
+
+                print("Preparation took ", time_taken)
+            
+            else:
+                # trainer has not been called yet at this point => server didn't start at 0
+                # need to set predictions to be entire previous cycle
+                time_taken = something_else(data_buffers, predictions)
+                print("Something else took ", time_taken)
+ 
+            if(5-time_taken < 0):
+                print("Something took too much time ", time_taken)
+                sys.exit(1)
+            else:
+                time.sleep(5-time_taken)
+                i = (i + 1) % 60           
+            print("Current tick ", i)
+
+    main()
+
 
 
