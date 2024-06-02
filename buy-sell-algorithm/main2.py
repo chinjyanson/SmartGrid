@@ -102,11 +102,11 @@ class Algorithm:
                 if(self.next_predictions[data_name] == [] and x != 0):
                     self.next_predictions[data_name] = self.trainer.histories_buffer[data_name][-1][:x]
                 
-                self.next_predictions[data_name] += self.trainer.query_model(data_name, x, y+1, self.data_buffers[data_name][x:y+1])
+                self.next_predictions[data_name] += self.trainer.query_model(data_name, x, y, self.data_buffers[data_name][x:y])
+
+                assert(len(self.next_predictions[data_name]) % 15 == 0)
 
                 print(x, y, len(self.next_predictions[data_name]))
-
-                assert((len(self.next_predictions[data_name]) - 1) % 15 == 0)
 
         return time.time()-start
 
@@ -139,6 +139,7 @@ class Algorithm:
         remainder = 0
 
         while True:
+            print(f"Current tick {self.tick}")
             if(self.tick == 0):
                 self.cycle_count += 1
 
@@ -168,8 +169,6 @@ class Algorithm:
             else:
                 time.sleep(remainder)
                 self.tick = (self.tick + 1) % 60   
-
-            print(f"Current tick {self.tick}")
 
 if __name__ == "__main__":
     algo = Algorithm()
