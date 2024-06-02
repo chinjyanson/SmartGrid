@@ -117,7 +117,6 @@ class server_data:
         self.json = response.json()
 
         self.parsed_data['deferables'] = self.json  
-        self.tick = self.json['tick']
 
 if (__name__ == "__main__"):
     serve = server_data()
