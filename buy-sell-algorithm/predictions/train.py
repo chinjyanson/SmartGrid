@@ -8,11 +8,6 @@ if train_root not in sys.path:
 from neural_net import Population, neural_net
 import numpy as np
 from utils.helper import module_from_file, mse, plot_datas, save_population, get_population, add_noise, batch_up
-from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
-import time
-import asyncio
-from threading import Thread
-from threading import current_thread
 
 m_server = module_from_file("server_data", "buy-sell-algorithm/data/server_data.py")
 m_made = module_from_file("Data", "buy-sell-algorithm/data/datavis.py")

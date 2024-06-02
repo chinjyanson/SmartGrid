@@ -4,162 +4,172 @@ import asyncio
 import time
 from predictions.utils.helper import plot_datas, batch_up
 import sys
+from colorama import Fore, Back, Style, init
 
-serve = server_data()
+# Initialize colorama
+init(autoreset=True)
 
-trainer = Train(elitism=0.2, mutation_prob=0.08, mutation_power=0.1, max_epochs=20, num_of_histories=5, 
-            data_batch_size=15, nn_batch_size=60, parsed_data=serve.parsed_data)
-loop = asyncio.get_event_loop()
+class Algorithm:
+    def __init__(self) -> None:
+        self.serve = server_data()
+        self.trainer = Train(elitism=0.2, mutation_prob=0.08, mutation_power=0.1, max_epochs=20, num_of_histories=5, 
+                data_batch_size=15, nn_batch_size=60, parsed_data=self.serve.parsed_data)
+        self.event_loop = asyncio.get_event_loop()
 
-def add_to_data_buffers(data_buffers):
-    start = time.time()
-    serve.live_data()
-    for data_name in ['buy_price', 'sell_price', 'demand', 'sun']:
-        data_buffers[data_name].append(serve.parsed_data[data_name])
+        self.data_buffers = {'buy_price':[], 'sell_price':[], 'demand':[], 'sun':[]}
+        self.predictions = {'buy_price':[], 'sell_price':[], 'demand':[]}
+        self.next_predictions = {'buy_price':[], 'sell_price':[], 'demand':[]}
 
-    return time.time() - start
-
-def new_cycle(data_buffers, predictions, next_predictions):
-    """
-        - Set prediction of current cycle to be the most recent history if this is first call to trainer at tick 0
-        - If this is not first call to trainer at tick 0, then next predictions should become current predictions
-        - Empty data and next predictions buffers, add current values into data buffers to begin with
-    """
-    start = time.time()
-
-    # at start of new cycle, prepare predictions for current cycle, and set correct historical data
-    serve.set_historical_prices()
-    trainer.change_historical_data(serve.parsed_data)
-
-    if(trainer.first_call()):
-        print("First call, assume predictions for all data is most recent cycle")
+        self.cycle_count = 0
         
-        for data_name, _ in trainer.histories_buffer.items():
-            previous, most_recent = trainer.get_synthetic_data(data_name)
-            trainer.histories_buffer[data_name] = previous[1:] + [most_recent]
-            predictions[data_name] = most_recent
-        
-    else:
-        print("Current predictions are ready")
-        if any([len(n) == 0 for n in next_predictions.values()]):
-            predictions = trainer.histories_buffer
-        else:
-            predictions = next_predictions.copy()
+        self.starting_tick = self.serve.starting_tick()
+        self.tick = self.starting_tick
 
-    # empty data and next prediction buffers and add the current live values
-    serve.live_data()
-    
-    for data_name in ['buy_price', 'sell_price', 'demand']:
-        next_predictions[data_name] = []
-        data_buffers[data_name] = []
-        data_buffers[data_name].append(serve.parsed_data[data_name])
+    def add_to_data_buffers(self):
+        start = time.time()
+        self.serve.live_data()
+        for data_name, data in self.data_buffers.items():
+            data.append(self.serve.parsed_data[data_name])
 
-    data_buffers['sun'] = []
-    data_buffers['sun'].append(serve.parsed_data['sun'])
+        return time.time() - start
 
-    for n, p in predictions.items():
-        plot_datas([p], "Prediction", n)
+    def new_cycle(self):
+        """
+            - Set prediction of current cycle to be the most recent history if this is first call to trainer at tick 0
+            - If this is not first call to trainer at tick 0, then next predictions should become current predictions
+            - Empty data and next predictions buffers, add current values into data buffers to begin with
+        """
+        start = time.time()
 
-    return time.time() - start
+        # at start of new cycle, prepare predictions for current cycle, and set correct historical data
+        self.serve.set_historical_prices()
+        self.trainer.change_historical_data(self.serve.parsed_data)
 
-def prepare_next(i, starting_i, data_buffers, next_predictions):
-    """
-        - Prepare predictions for the next cycle using the data buffers you have so far
-        - Also add value at current tick into data buffer
-    """
-    start = time.time()
-    # prepare next predictions for next batch each time we are at tick 15, 30, 45, 60
-   
-    time_taken1 = add_to_data_buffers(data_buffers)
-    
-    if(not ((starting_i % 15 == 0) and (trainer.first_call())) or (starting_i < 30)):
-        if(0 < i  - starting_i < 15):
-            dist = i - starting_i
-        else:
-            dist = 15
-
-        if(i == 59):
-            x, y = 60-dist, 60
-        else:
-            x, y = batch_up((i-dist, i), dist)[0]
-
-
-        for data_name in ['buy_price', 'sell_price', 'demand']:
-
-            if(next_predictions[data_name] == [] and x != 0):
-                next_predictions[data_name] = trainer.histories_buffer[data_name][-1][:x]
+        if(self.trainer.first_call()):
+            print("First call, assume predictions for all data is most recent cycle")
             
-            next_predictions[data_name] += trainer.query_model(data_name, x, y, data_buffers[data_name][x:y+1])
-          
-            print(len(next_predictions[data_name]))
-            assert(len(next_predictions[data_name]) % 15 == 0)
+            for data_name, _ in self.trainer.histories_buffer.items():
+                previous, most_recent = self.trainer.get_synthetic_data(data_name)
+                self.trainer.histories_buffer[data_name] = previous[1:] + [most_recent]
+                predictions[data_name] = most_recent
+            
+        else:
+            print("Current predictions are ready")
+            if any([len(n) == 0 for n in self.next_predictions.values()]):
+                predictions = self.trainer.histories_buffer
+            else:
+                predictions = self.next_predictions.copy()
 
-    return time.time()-start + time_taken1, next_predictions, data_buffers
-
-def something_else(predictions):
-    start = time.time()
-    # do something else, must include filling data buffers
-
-    if(trainer.first_call()):
-        serve.set_historical_prices()
-        trainer.change_historical_data(serve.parsed_data)
+        # empty data and next prediction buffers and add the current live values
+        self.serve.live_data()
         
         for data_name in ['buy_price', 'sell_price', 'demand']:
-            previous, most_recent = trainer.get_synthetic_data(data_name)
-            trainer.histories_buffer[data_name] = previous[1:] + [most_recent]
-            predictions[data_name] = most_recent
-    
-    print("doing some other stuff")
+            self.next_predictions[data_name] = []
+            self.data_buffers[data_name] = []
+            self.data_buffers[data_name].append(self.serve.parsed_data[data_name])
 
-    # decision from Anson's algorithm   
+        self.data_buffers['sun'] = []
+        self.data_buffers['sun'].append(self.serve.parsed_data['sun'])
 
-    return time.time() - start
-    
-def main():
-    data_buffers = {'buy_price':[], 'sell_price':[], 'demand':[], 'sun':[]}
-    predictions = {'buy_price':[], 'sell_price':[], 'demand':[]}
-    next_predictions = {'buy_price':[], 'sell_price':[], 'demand':[]}
+        for n, p in self.predictions.items():
+            plot_datas([p], "Prediction", n)
 
-    cycle_count = 0
-    
-    starting_i = serve.starting_tick()
-    i = starting_i
+        return time.time() - start
 
-    if(starting_i != 0):
-        for k, v in data_buffers.items():
-            data_buffers[k] = [0] * starting_i
-
-    print("Started at tick ", starting_i)
-
-    while True:
-        if(i == 0):
-            cycle_count += 1
-
-            print("Cycle ", cycle_count)
-            print()
-
-            time_taken = new_cycle(data_buffers, predictions, next_predictions)
-
-        elif((i % 15) == 0 or (i == 59)):
-            time_taken1 = something_else(predictions)
-            time_taken2, next_predictions, data_buffers = prepare_next(i, starting_i, data_buffers, next_predictions)
-            time_taken = time_taken1 + time_taken2
-            print("Preparation and decision took ", time_taken)
+    def prepare_next(self):
+        """
+            - Prepare predictions for the next cycle using the data buffers you have so far
+            - Also add value at current tick into data buffer
+        """
+        start = time.time()
+        # prepare next predictions for next batch each time we are at tick 15, 30, 45, 60
         
-        else:
-            time_taken1 = add_to_data_buffers(data_buffers)
-            time_taken2 = something_else(predictions)
-            time_taken = time_taken1 + time_taken2
-            print("Something else and adding to data buffers took ", time_taken)
+        if(not ((self.starting_tick % 15 == 0) and (self.trainer.first_call())) or (self.starting_tick < 30)):
+            if(0 < self.tick  - self.starting_tick < 15):
+                dist = self.tick - self.starting_tick
+            else:
+                dist = 15
 
-        if(5-time_taken < 0):
-            print("Something took too much time ", time_taken)
-            sys.exit(1)
-        else:
-            time.sleep(5-time_taken)
-            i = (i + 1) % 60           
-        print("Current tick ", i)
+            if(self.tick == 59):
+                x, y = 60-dist, 60
+            else:
+                x, y = batch_up((self.tick-dist, self.tick), dist)[0]
+
+
+            for data_name in ['buy_price', 'sell_price', 'demand']:
+
+                if(self.next_predictions[data_name] == [] and x != 0):
+                    self.next_predictions[data_name] = self.trainer.histories_buffer[data_name][-1][:x]
+                
+                self.next_predictions[data_name] += self.trainer.query_model(data_name, x, y, self.data_buffers[data_name][x:y+1])
+
+                assert(len(self.next_predictions[data_name]) % 15 == 0)
+
+        return time.time()-start
+
+    def something_else(self):
+        start = time.time()
+        # do something else, must include filling data buffers
+
+        time_taken = self.add_to_data_buffers()
+
+        if(self.trainer.first_call()):
+            self.serve.set_historical_prices()
+            self.trainer.change_historical_data(self.serve.parsed_data)
+            
+            for data_name in ['buy_price', 'sell_price', 'demand']:
+                previous, most_recent = self.trainer.get_synthetic_data(data_name)
+                self.trainer.histories_buffer[data_name] = previous[1:] + [most_recent]
+                self.predictions[data_name] = most_recent
+        
+        print("doing some other stuff")
+
+        # decision from Anson's algorithm   
+
+        return time.time() - start + time_taken
+    
+    def driver(self):
+        if(self.starting_tick != 0):
+            for k, v in self.data_buffers.items():
+                self.data_buffers[k] = [0] * self.starting_tick
+
+        print("Started at tick ", self.starting_tick)
+        remainder = 0
+
+        while True:
+            if(self.tick == 0):
+                self.cycle_count += 1
+
+                print("Cycle ", self.cycle_count)
+                print()
+
+                time_taken = self.new_cycle()
+                remainder = 5-time_taken
+                print(Fore.MAGENTA + "Setting up new cycle took ", time_taken, Fore.GREEN + f"Window [{remainder}]")
+
+            elif((self.tick % 15) == 0 or (self.tick == 59)):
+                time_taken1 = self.something_else()
+                time_taken2 = self.prepare_next()
+                time_taken = time_taken1 + time_taken2
+                remainder = 5-time_taken
+                print(Fore.YELLOW + "Preparation and decision took ", time_taken, Fore.GREEN + f"Window [{remainder}]")
+            
+            else:
+                time_taken = self.something_else()
+                remainder = 5-time_taken
+                print(Fore.BLUE + "Something else and adding to data buffers took ", time_taken, Fore.GREEN + f"Window [{remainder}]")
+
+            if(5-time_taken < 0):
+                print(Fore.RED + "Something took too much time ", time_taken)
+                print(Fore.RED + "Final tick was ", self.tick)
+                sys.exit(1)
+            else:
+                time.sleep(5-time_taken)
+                self.tick = (self.tick + 1) % 60   
+
+            print("Current tick ", self.tick)
 
 if __name__ == "__main__":
-    main()
+    algo = Algorithm()
+    algo.driver()
 
