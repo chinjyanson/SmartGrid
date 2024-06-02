@@ -84,13 +84,11 @@ class server_data:
                 self.cache = self.parsed_data
 
         except aiohttp.ClientError as e:
-            print(f"CLient Error: {e}, Using cache")
-            self.tick += 1
+            print(f"Client Error: {e} Using cache")
             self.parsed_data = self.cache
         
         except asyncio.TimeoutError as e:
-            print(f"Timeout Error: {e}, Using cache")
-            self.tick += 1
+            print(f"Timeout Error: {e} Using cache")
             self.parsed_data = self.cache
 
         finally:
@@ -117,13 +115,3 @@ class server_data:
         self.json = response.json()
 
         self.parsed_data['deferables'] = self.json  
-
-if (__name__ == "__main__"):
-    serve = server_data()
-
-    while True:
-        time.sleep(5)
-        serve.live_data()
-
-        print(serve.parsed_data, " ", serve.tick)
- 
