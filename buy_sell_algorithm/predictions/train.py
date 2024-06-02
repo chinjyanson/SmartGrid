@@ -250,8 +250,6 @@ class Train:
 
             prediction = []
 
-            if(end_index == 60): end_index -= 1
-
             for j in range(start_index, end_index):
                 input = []
                 for i in range(self.num_of_histories):
