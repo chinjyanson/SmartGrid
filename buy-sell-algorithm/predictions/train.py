@@ -80,7 +80,12 @@ class Train:
             
                     synth.append(model.query(input)[0][0])
 
-                pop.fitnesses.append(1 / mse(h_data, synth))
+                _mse = mse(h_data, synth)
+                if(_mse):
+                    pop.fitnesses.append(1 / mse(h_data, synth))
+                else:
+                    pop.fitnesses.append(100000)
+
                 synthetics.append(synth)
 
             best_model = np.argmax(pop.fitnesses)
@@ -124,8 +129,13 @@ class Train:
         for model in models:
             prediction = self.make_prediction(start_index, end_index, model, histories)
             predictions.append(prediction)
-            
-            fitnesses.append(1 / mse(most_recent, prediction))
+
+            _mse = mse(most_recent, prediction)
+
+            if(_mse):
+                fitnesses.append(1 / mse(most_recent, prediction))
+            else:
+                fitnesses.append(100000)
 
         return fitnesses, predictions
     
