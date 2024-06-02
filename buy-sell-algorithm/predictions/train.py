@@ -199,6 +199,9 @@ class Train:
             best_model = self.train_on_histories(previous, most_recent, data_name, start_index, end_index)
 
             prediction = []
+
+            if(end_index == 60): end_index -= 1
+
             for j in range(start_index, end_index):
                 input = []
                 for i in range(self.num_of_histories):
