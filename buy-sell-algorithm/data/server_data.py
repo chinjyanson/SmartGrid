@@ -1,5 +1,6 @@
 import requests
 import sys
+import time
 
 class server_data:
     def __init__(self) -> None:
@@ -40,20 +41,28 @@ class server_data:
         self.parsed_data['demand'] = self.json['demand']
         self.tick = self.json['tick']
 
+    # deferables is not working (parsing wrong data)
     def deferables(self):
         self.set_json('/deferables')
-        self.parsed_data['start'] = self.json['start']
-        self.parsed_data['end'] = self.json['end']
-        self.parsed_data['energy'] = self.json['energy']
+        for s in ['start', 'end', 'energy']:
+            self.parsed_data[s] = []
+            for i in range(3):
+                self.parsed_data[s].append(self.json[i][s])
+        #self.parsed_data['deferables'] = self.json
 
     def get_ticks(self):
         self.set_json('/sun')
         self.parsed_data['tick'] = self.json['tick']
 
 if (__name__ == "__main__"):
-    serve = server_data()
-    serve.live_demand()
-
-    print(serve.parsed_data['demand'])
+    while True:
+        serve = server_data()
+        serve.deferables()
+        print(serve.parsed_data['start'])
+        print(serve.parsed_data['end'])
+        print(serve.parsed_data['energy'])
+        serve.get_ticks()
+        print(serve.parsed_data['tick'])
+        time.sleep(5)
 
     

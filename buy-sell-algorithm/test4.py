@@ -17,6 +17,7 @@ def maximize_profit_mpc(initial_storage_level, max_storage_capacity, predicted_b
         energy_used = get_current_energy_used()
         current_buy_price, current_sell_price = get_current_buy_sell_prices()
         tick = get_tick()
+        #start, end, energy = get_deferables()
 
         print(f"  Get Energy In: {energy_in} kWh")
         print(f"  Get Energy Used: {energy_used} kWh")
@@ -158,6 +159,15 @@ def get_tick():
     tick = serve.parsed_data['tick']
     return tick
 
+def get_deferables():
+    serve = data.server_data()
+    serve.deferables()
+    start = serve.parsed_data['start']
+    end = serve.parsed_data['end']
+    energy = serve.parsed_data['energy']
+    return start, end, energy
+
+
 predicted_buy_prices = [0.97884838, 0.89573551, 0.75651526, 0.36626735, 0.09419675, 0.54257027, 
  0.68039317, 0.87333353, 0.19739547, 0.72302134, 0.67173916, 0.48412507, 
  0.64624241, 0.71897936, 0.98373854, 0.06747502, 0.31398806, 0.41772002, 
@@ -195,5 +205,6 @@ predicted_demand = [0.68930846, 0.7082086 , 0.63636331, 0.5988409 , 0.30544195, 
 initial_storage_level = 0
 max_storage_capacity = 50
 
-max_profit = maximize_profit_mpc(initial_storage_level, max_storage_capacity, predicted_buy_prices, predicted_sell_prices, predicted_demand)
-print(f"Maximum Profit: {max_profit}")
+if __name__ == '__main__':
+    max_profit = maximize_profit_mpc(initial_storage_level, max_storage_capacity, predicted_buy_prices, predicted_sell_prices, predicted_demand)
+    print(f"Maximum Profit: {max_profit}")
