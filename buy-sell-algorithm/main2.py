@@ -5,6 +5,7 @@ import time
 from predictions.utils.helper import plot_datas, batch_up
 import sys
 from colorama import Fore, Back, Style, init
+import optimization as opt
 
 # Initialize colorama
 init(autoreset=True)
@@ -124,9 +125,8 @@ class Algorithm:
                 self.trainer.histories_buffer[data_name] = previous[1:] + [most_recent]
                 self.predictions[data_name] = most_recent
         
-        print("doing some other stuff")
-
-        # decision from Anson's algorithm   
+        print("Running Ansons Code")
+        opt.maximize_profit_mpc(0, 50, self.data_buffers, self.predictions, self.tick)
 
         return time.time() - start + time_taken
     
