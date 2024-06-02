@@ -4,6 +4,7 @@ import asyncio
 import time
 from predictions.utils.helper import plot_datas, batch_up
 import sys
+import optimization as opt
 
 serve = server_data()
 
@@ -69,9 +70,7 @@ def prepare_next(i, starting_i, data_buffers, next_predictions):
     """
     start = time.time()
     # prepare next predictions for next batch each time we are at tick 15, 30, 45, 60
-   
-    time_taken1 = add_to_data_buffers(data_buffers)
-    
+
     if(not ((starting_i % 15 == 0) and (trainer.first_call())) or (starting_i < 30)):
         if(0 < i  - starting_i < 15):
             dist = i - starting_i
@@ -94,11 +93,13 @@ def prepare_next(i, starting_i, data_buffers, next_predictions):
             print(len(next_predictions[data_name]))
             assert(len(next_predictions[data_name]) % 15 == 0)
 
-    return time.time()-start + time_taken1, next_predictions, data_buffers
+    return time.time()-start, next_predictions, data_buffers
 
-def something_else(predictions):
+def something_else(predictions, data_buffers):
     start = time.time()
     # do something else, must include filling data buffers
+
+    time_taken1 = add_to_data_buffers(data_buffers)
 
     if(trainer.first_call()):
         serve.set_historical_prices()
@@ -109,11 +110,14 @@ def something_else(predictions):
             trainer.histories_buffer[data_name] = previous[1:] + [most_recent]
             predictions[data_name] = most_recent
     
+
+    opt.maximize_profit_mpc(0, 50, data_buffers, predictions)
+
     print("doing some other stuff")
 
     # decision from Anson's algorithm   
 
-    return time.time() - start
+    return time.time() - start + time_taken1
     
 def main():
     data_buffers = {'buy_price':[], 'sell_price':[], 'demand':[], 'sun':[]}
@@ -141,15 +145,13 @@ def main():
             time_taken = new_cycle(data_buffers, predictions, next_predictions)
 
         elif((i % 15) == 0 or (i == 59)):
-            time_taken1 = something_else(predictions)
+            time_taken1 = something_else(predictions, data_buffers)
             time_taken2, next_predictions, data_buffers = prepare_next(i, starting_i, data_buffers, next_predictions)
             time_taken = time_taken1 + time_taken2
             print("Preparation and decision took ", time_taken)
         
         else:
-            time_taken1 = add_to_data_buffers(data_buffers)
-            time_taken2 = something_else(predictions)
-            time_taken = time_taken1 + time_taken2
+            time_taken = something_else(predictions, data_buffers)
             print("Something else and adding to data buffers took ", time_taken)
 
         if(5-time_taken < 0):
