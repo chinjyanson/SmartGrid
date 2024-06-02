@@ -52,14 +52,14 @@ class Algorithm:
             for data_name, _ in self.trainer.histories_buffer.items():
                 previous, most_recent = self.trainer.get_synthetic_data(data_name)
                 self.trainer.histories_buffer[data_name] = previous[1:] + [most_recent]
-                predictions[data_name] = most_recent
+                self.predictions[data_name] = most_recent
             
         else:
             print("Current predictions are ready")
             if any([len(n) == 0 for n in self.next_predictions.values()]):
-                predictions = self.trainer.histories_buffer
+                self.predictions = self.trainer.histories_buffer
             else:
-                predictions = self.next_predictions.copy()
+                self.predictions = self.next_predictions.copy()
 
         # empty data and next prediction buffers and add the current live values
         self.serve.live_data()
@@ -102,11 +102,11 @@ class Algorithm:
                 if(self.next_predictions[data_name] == [] and x != 0):
                     self.next_predictions[data_name] = self.trainer.histories_buffer[data_name][-1][:x]
                 
-                self.next_predictions[data_name] += self.trainer.query_model(data_name, x, y, self.data_buffers[data_name][x:y+1])
+                self.next_predictions[data_name] += self.trainer.query_model(data_name, x, y+1, self.data_buffers[data_name][x:y+1])
 
-                print(x, y)
+                print(x, y, len(self.next_predictions[data_name]))
 
-                assert(len(self.next_predictions[data_name]) % 15 == 0)
+                assert((len(self.next_predictions[data_name]) - 1) % 15 == 0)
 
         return time.time()-start
 
