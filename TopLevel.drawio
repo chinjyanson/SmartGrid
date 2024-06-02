@@ -1,6 +1,6 @@
-<mxfile host="app.diagrams.net" modified="2024-06-02T10:39:10.129Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36" etag="dyxCDm7kLF8LPCrX2ddy" version="24.4.13" type="github">
+<mxfile host="app.diagrams.net" modified="2024-06-02T18:22:24.548Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36" etag="uoXfmBBw8zL5QxNqVItv" version="24.4.13" type="github">
   <diagram name="Page-1" id="5d7acffa-a066-3a61-03fe-96351882024d">
-    <mxGraphModel dx="1050" dy="668" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" background="#ffffff" math="0" shadow="0">
+    <mxGraphModel dx="1434" dy="738" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" background="#ffffff" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -269,10 +269,10 @@
             </Array>
           </mxGeometry>
         </mxCell>
-        <mxCell id="gM_SMo16ki_0aqtKTnfX-89" value="Fetches data every..." style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
-          <mxGeometry x="940" y="189" width="120" height="30" as="geometry" />
+        <mxCell id="gM_SMo16ki_0aqtKTnfX-89" value="We decided to have 3 separate tables within AWS for rapid access and each correlating to a different page within the webserver. Lambda and DynamoDB was chosen as it was simple to host and trace errors in API development.&amp;nbsp;" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+          <mxGeometry x="880" y="189" width="220" height="94" as="geometry" />
         </mxCell>
-        <mxCell id="tbWjV2BsAmesTfMCvsu3-2" value="We decided to host the webserver and the Buy-Sell Algoriithm on the laptop since we were worried about overworking the Microcontroller, and would also be computed faster in the laptop. On top of this the ML model needs to store data locally, which is ultimately why we stuck to this design" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+        <mxCell id="tbWjV2BsAmesTfMCvsu3-2" value="We decided to host the webserver and the Buy-Sell Algoriithm on the laptop since we were worried about overworking the Microcontroller, and would also be computed faster in the laptop. On top of this the ML model needs to store data locally, which is ultimately why we stuck to this design" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="50" y="265.5" width="220" height="169" as="geometry" />
         </mxCell>
       </root>
