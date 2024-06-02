@@ -157,7 +157,7 @@ class Train:
             pop.fitnesses = fitnesses
 
             best_model_index = np.argmax(pop.fitnesses)
-            best_pred = predictions[best_model_index]
+            #best_pred = predictions[best_model_index]
             best_fitness = pop.fitnesses[best_model_index]
 
             if ((self.fitness_threshold != 0) and (best_fitness > self.fitness_threshold)):
