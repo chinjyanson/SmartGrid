@@ -3,7 +3,7 @@ import cvxpy as cp
 import time
 import data.server_data as data
 
-def maximize_profit_mpc(initial_storage_level, max_storage_capacity, predicted_buy_prices, predicted_sell_prices, predicted_demand, time_step=1, horizon=15):
+def maximize_profit_mpc(initial_storage_level, max_storage_capacity, predicted_buy_prices, predicted_sell_prices, predicted_demand, time_step=1, horizon=10):
 
     initial_storage = initial_storage_level
     total_profit = 0
@@ -88,6 +88,31 @@ def maximize_profit_mpc(initial_storage_level, max_storage_capacity, predicted_b
             print(f" demand: {demand.value}")
             print(f" storage: {storage_level.value}")
             print("Infeasible")
+
+            #use naive solution if solution is infeasible
+            if energy_in >= energy_used:
+                energy_in -= energy_used
+                energy_used = 0
+            else:
+                energy_used -= energy_in
+                energy_in = 0
+
+            if energy_used > 0:
+                if storage >= energy_used:
+                    storage -= energy_used
+                    energy_used = 0
+                else:
+                    energy_used -= storage
+                    storage = 0
+            
+            if energy_in > 0:
+                if storage + energy_in <= max_storage_capacity:
+                    storage += energy_in
+                else:
+                    excess_energy = storage + energy_in - max_storage_capacity
+                    total_profit += excess_energy * current_sell_price
+                    storage = max_storage_capacity
+            
         elif problem.status == cp.OPTIMAL or problem.status == cp.FEASIBLE:
             optimal_energy_transaction = energy_transactions.value[0]   
             optimal_storage_transaction = storage_transactions.value[0]
@@ -206,5 +231,35 @@ initial_storage_level = 0
 max_storage_capacity = 50
 
 if __name__ == '__main__':
+    #  while True:
+    #         if(i == 0):
+    #             cycle_count += 1
+
+    #             print("Cycle ", cycle_count)
+    #             print()
+
+    #             time_taken = new_cycle(data_buffers, predictions, next_predictions)
+
+    #         elif((i % 15) == 0 or (i == 59)):
+    #             time_taken, next_predictions, data_buffers = prepare_next(i, starting_i, data_buffers, next_predictions)
+
+    #             print("Preparation took ", time_taken)
+            
+    #         else:
+    #             # trainer has not been called yet at this point => server didn't start at 0
+    #             # need to set predictions to be entire previous cycle
+    #             time_taken = something_else(data_buffers, predictions)
+    #             print("Something else took ", time_taken)
+ 
+    #         if(5-time_taken < 0):
+    #             print("Something took too much time ", time_taken)
+    #             sys.exit(1)
+    #         else:
+    #             time.sleep(5-time_taken)
+    #             i = (i + 1) % 60           
+    #         print("Current tick ", i)
+
+    # main()
+
     max_profit = maximize_profit_mpc(initial_storage_level, max_storage_capacity, predicted_buy_prices, predicted_sell_prices, predicted_demand)
     print(f"Maximum Profit: {max_profit}")
