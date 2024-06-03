@@ -4,7 +4,7 @@ import Navbar from './components/Navbar';
 import Home from './routes/landing/landing';
 import Money from './routes/finances/finances';
 import Usage from './routes/consumption/consumption';
-// import NotFound from './pages/NotFound';
+import NotFound from './routes/not-found/not-found';
 import './core-ui/App.css';
 
 const App = () => {
@@ -16,7 +16,7 @@ const App = () => {
           <Route path="/" element={<Home />} />
           <Route path="/money" element={<Money />} />
           <Route path="/usage" element={<Usage />} />
-          {/* <Route path="*" element={<NotFound />} /> */}
+          <Route path="*" element={<NotFound />} />
         </Routes>
       </div>
     </div>
