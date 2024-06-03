@@ -18,6 +18,7 @@ class Algorithm:
         self.event_loop = asyncio.get_event_loop()
 
         self.data_buffers = {'buy_price':[], 'sell_price':[], 'demand':[], 'sun':[]}
+        self.old_predictions = {'buy_price':[], 'sell_price':[], 'demand':[]}
         self.predictions = {'buy_price':[], 'sell_price':[], 'demand':[]}
         self.next_predictions = {'buy_price':[], 'sell_price':[], 'demand':[]}
 
@@ -53,9 +54,11 @@ class Algorithm:
                 previous, most_recent = self.trainer.get_synthetic_data(data_name)
                 self.trainer.histories_buffer[data_name] = previous[1:] + [most_recent]
                 self.predictions[data_name] = most_recent
+                self.old_predictions[data_name] = most_recent
             
         else:
             print("Current predictions are ready")
+            self.old_predictions = self.predictions
             if any([len(n) == 0 for n in self.next_predictions.values()]):
                 self.predictions = self.trainer.histories_buffer
             else:
@@ -63,6 +66,11 @@ class Algorithm:
 
         # empty data and next prediction buffers and add the current live values
         self.serve.live_data()
+
+        if(self.data_buffers != {'buy_price':[], 'sell_price':[], 'demand':[], 'sun':[]}):
+            # previous cycle data buffers are full, we also have what we predicted in self.old_predictions
+            for n, p in self.old_predictions.items():
+                plot_datas([p, self.data_buffers[data_name]], "Prediction of previous cycle vs Actual data", n)
         
         for data_name in ['buy_price', 'sell_price', 'demand']:
             self.next_predictions[data_name] = []
@@ -72,8 +80,8 @@ class Algorithm:
         self.data_buffers['sun'] = []
         self.data_buffers['sun'].append(self.serve.parsed_data['sun'])
 
-        # for n, p in self.predictions.items():
-        #     plot_datas([p], "Prediction", n)
+        #for n, p in self.predictions.items():
+        #    plot_datas([p], "Prediction", n)
 
         return time.time() - start
 
