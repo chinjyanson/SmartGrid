@@ -4,7 +4,7 @@ import time
 import data.server_data as data
 import predictions.train as train
 
-def maximize_profit_mpc(initial_storage_level, max_storage_capacity, data_buffers, predictions_buffer, t, time_step=1, horizon=10):
+def maximize_profit_mpc(initial_storage_level, max_storage_capacity, data_buffers, predictions_buffer, t, time_step, horizon):
 
     #print(predictions_buffer)
     predicted_buy_prices = predictions_buffer['buy_price']
