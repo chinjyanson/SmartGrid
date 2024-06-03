@@ -85,7 +85,7 @@ class Algorithm:
         # prepare next predictions for next batch each time we are at tick 15, 30, 45, 60
         
         if(not ((self.starting_tick % 15 == 0) and self.trainer.first_call())):
-            if(0 < self.tick  - self.starting_tick < 15):
+            if((0 < self.tick  - self.starting_tick < 15) and self.trainer.first_call()):
                 dist = self.tick - self.starting_tick
             else:
                 dist = 15
