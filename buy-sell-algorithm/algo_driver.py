@@ -72,8 +72,8 @@ class Algorithm:
         self.data_buffers['sun'] = []
         self.data_buffers['sun'].append(self.serve.parsed_data['sun'])
 
-        for n, p in self.predictions.items():
-            plot_datas([p], "Prediction", n)
+        # for n, p in self.predictions.items():
+        #     plot_datas([p], "Prediction", n)
 
         return time.time() - start
 
@@ -126,7 +126,11 @@ class Algorithm:
                 self.predictions[data_name] = most_recent
         
         print("Running Ansons Code")
-        opt.maximize_profit_mpc(0, 50, self.data_buffers, self.predictions, self.tick)
+        # this if else statement changes the prediction horizon when tick > 50 (if horizon = 10)
+        if self.tick >= 50:
+            opt.maximize_profit_mpc(0, 50, self.data_buffers, self.predictions, self.tick, 1, 60-self.tick)
+        else:
+            opt.maximize_profit_mpc(0, 50, self.data_buffers, self.predictions, self.tick, 1, 10)
 
         return time.time() - start + time_taken
     
@@ -171,6 +175,7 @@ class Algorithm:
                 self.tick = (self.tick + 1) % 60   
 
 if __name__ == "__main__":
-    algo = Algorithm()
-    algo.driver()
+    while True:
+        algo = Algorithm()
+        algo.driver()
 
