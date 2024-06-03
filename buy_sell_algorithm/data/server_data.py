@@ -55,7 +55,7 @@ class server_data:
     
     async def create_session(self):
         if(not self.session or self.session.closed):
-            timeout = aiohttp.ClientTimeout(total=1)
+            timeout = aiohttp.ClientTimeout(total=0.5)
             self.session = aiohttp.ClientSession(timeout=timeout)
 
     async def close_session(self):
