@@ -80,7 +80,12 @@ class Train:
             
                     synth.append(model.query(input)[0][0])
 
-                pop.fitnesses.append(1 / mse(h_data, synth))
+                _mse = mse(h_data, synth)
+                if(_mse):
+                    pop.fitnesses.append(1 / mse(h_data, synth))
+                else:
+                    pop.fitnesses.append(100000)
+
                 synthetics.append(synth)
 
             best_model = np.argmax(pop.fitnesses)
@@ -120,21 +125,17 @@ class Train:
         predictions = []
 
         for model in models:
-            # run different copies of the model in parallel on different batches of the histories to make predictions
-            # full range is 0->60, make in batches of 15
-
-            #batches = batch_up((0, 60), self.data_batch_size)
-            prediction = []
-
-            #for batch in batches:
-            #   prediction += self.make_prediction(*batch, model, histories)
-
             prediction = self.make_prediction(start_index, end_index, model, histories)
             predictions.append(prediction)
-            
-            fitnesses.append(1 / mse(most_recent, prediction))
 
-        return fitnesses, prediction
+            _mse = mse(most_recent, prediction)
+
+            if(_mse):
+                fitnesses.append(1 / mse(most_recent, prediction))
+            else:
+                fitnesses.append(100000)
+
+        return fitnesses, predictions
     
     def train_on_histories(self, histories : list[list[float]], most_recent : list[float], data : str, start_index : int, end_index : int) -> neural_net:
         """
@@ -164,7 +165,7 @@ class Train:
             pop.fitnesses = fitnesses
 
             best_model_index = np.argmax(pop.fitnesses)
-            # best_pred = all_predictions[best_model_index]
+            #best_pred = predictions[best_model_index]
             best_fitness = pop.fitnesses[best_model_index]
 
             if ((self.fitness_threshold != 0) and (best_fitness > self.fitness_threshold)):
@@ -181,6 +182,8 @@ class Train:
 
         self.data_fitnesses[data] = best_fitness
 
+        # plot_datas([best_pred, most_recent], "Comparing most recent actual with prediction", "Data", start_index, end_index)
+
         return pop.models[best_model_index]
 
     def query_model(self, data_name : str, start_index : int, end_index:int, most_recent : list[float]) -> list[int] | None:
@@ -193,12 +196,7 @@ class Train:
         """
         print()
         if(data_name in self.histories_buffer):
-            previous = self.histories_buffer[data_name] #self.parsed_data[data_name]
-
-            #if(start_index == 0):
-            #    self.histories_buffer[data_name] = previous[1:] + [most_recent]
-            #else:
-            #    self.histories_buffer[data_name][-1] += most_recent
+            previous = self.histories_buffer[data_name]
             
             if(self.data_fitnesses[data_name] != 0): self.fitness_threshold = min(add_noise(self.data_fitnesses[data_name], 2), 100)
 
@@ -209,6 +207,7 @@ class Train:
             best_model = self.train_on_histories(previous, most_recent, data_name, start_index, end_index)
 
             prediction = []
+
             for j in range(start_index, end_index):
                 input = []
                 for i in range(self.num_of_histories):

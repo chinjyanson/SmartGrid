@@ -52,14 +52,14 @@ class Algorithm:
             for data_name, _ in self.trainer.histories_buffer.items():
                 previous, most_recent = self.trainer.get_synthetic_data(data_name)
                 self.trainer.histories_buffer[data_name] = previous[1:] + [most_recent]
-                predictions[data_name] = most_recent
+                self.predictions[data_name] = most_recent
             
         else:
             print("Current predictions are ready")
             if any([len(n) == 0 for n in self.next_predictions.values()]):
-                predictions = self.trainer.histories_buffer
+                self.predictions = self.trainer.histories_buffer
             else:
-                predictions = self.next_predictions.copy()
+                self.predictions = self.next_predictions.copy()
 
         # empty data and next prediction buffers and add the current live values
         self.serve.live_data()
@@ -85,8 +85,8 @@ class Algorithm:
         start = time.time()
         # prepare next predictions for next batch each time we are at tick 15, 30, 45, 60
         
-        if(not ((self.starting_tick % 15 == 0) and (self.trainer.first_call())) or (self.starting_tick < 30)):
-            if(0 < self.tick  - self.starting_tick < 15):
+        if(not ((self.starting_tick % 15 == 0) and self.trainer.first_call())):
+            if((0 < self.tick  - self.starting_tick < 15) and self.trainer.first_call()):
                 dist = self.tick - self.starting_tick
             else:
                 dist = 15
@@ -94,7 +94,7 @@ class Algorithm:
             if(self.tick == 59):
                 x, y = 60-dist, 60
             else:
-                x, y = batch_up((self.tick-dist, self.tick), dist)[0]
+                x, y = self.tick-dist, self.tick
 
 
             for data_name in ['buy_price', 'sell_price', 'demand']:
@@ -102,9 +102,11 @@ class Algorithm:
                 if(self.next_predictions[data_name] == [] and x != 0):
                     self.next_predictions[data_name] = self.trainer.histories_buffer[data_name][-1][:x]
                 
-                self.next_predictions[data_name] += self.trainer.query_model(data_name, x, y, self.data_buffers[data_name][x:y+1])
+                self.next_predictions[data_name] += self.trainer.query_model(data_name, x, y, self.data_buffers[data_name][x:y])
 
                 assert(len(self.next_predictions[data_name]) % 15 == 0)
+
+                print(x, y, len(self.next_predictions[data_name]))
 
         return time.time()-start
 
@@ -137,6 +139,7 @@ class Algorithm:
         remainder = 0
 
         while True:
+            print(f"Current tick {self.tick}")
             if(self.tick == 0):
                 self.cycle_count += 1
 
@@ -145,29 +148,27 @@ class Algorithm:
 
                 time_taken = self.new_cycle()
                 remainder = 5-time_taken
-                print(Fore.MAGENTA + "Setting up new cycle took ", time_taken, Fore.GREEN + f"Window [{remainder}]")
+                print(Fore.MAGENTA + f"Setting up new cycle took {time_taken}s", (Fore.GREEN if remainder > 1.5 else Fore.LIGHTRED_EX) + f"Window [{remainder}s]")
 
             elif((self.tick % 15) == 0 or (self.tick == 59)):
                 time_taken1 = self.something_else()
                 time_taken2 = self.prepare_next()
                 time_taken = time_taken1 + time_taken2
                 remainder = 5-time_taken
-                print(Fore.YELLOW + "Preparation and decision took ", time_taken, Fore.GREEN + f"Window [{remainder}]")
+                print(Fore.YELLOW + f"Preparation and decision took {time_taken}s", (Fore.GREEN if remainder > 1.5 else Fore.LIGHTRED_EX) + f"Window [{remainder}s]")
             
             else:
                 time_taken = self.something_else()
                 remainder = 5-time_taken
-                print(Fore.BLUE + "Something else and adding to data buffers took ", time_taken, Fore.GREEN + f"Window [{remainder}]")
+                print(Fore.BLUE + f"Something else and adding to data buffers took {time_taken}s", (Fore.GREEN if remainder > 1.5 else Fore.LIGHTRED_EX) + f"Window [{remainder}s]")
 
-            if(5-time_taken < 0):
+            if(remainder < 0):
                 print(Fore.RED + "Something took too much time ", time_taken)
                 print(Fore.RED + "Final tick was ", self.tick)
                 sys.exit(1)
             else:
-                time.sleep(5-time_taken)
+                time.sleep(remainder)
                 self.tick = (self.tick + 1) % 60   
-
-            print("Current tick ", self.tick)
 
 if __name__ == "__main__":
     algo = Algorithm()
