@@ -11,11 +11,8 @@ def maximize_profit_mpc(initial_storage_level, max_storage_capacity, data_buffer
     predicted_sell_prices = predictions_buffer['sell_price']
     predicted_demand = predictions_buffer['demand']
 
-    initial_storage = initial_storage_level
+    storage = initial_storage_level
     total_profit = 0
-
-
-    # for t in range(0, n-horizon, time_step):
 
     # Simulate real-time change
     energy_in = data_buffers['sun'][-1]
@@ -34,12 +31,6 @@ def maximize_profit_mpc(initial_storage_level, max_storage_capacity, data_buffer
     print(f"  Get Energy Used: {energy_used} kWh")
     print(f"  Get Buy Price: {current_buy_price} £/kWh")
     print(f"  Get Sell Price: {current_sell_price} £/kWh")
-
-    # if t == 0:
-    #     storage = initial_storage
-    # else:
-        #storage = storage
-    storage = initial_storage
 
     # Define optimization variables
     energy_transactions = cp.Variable(horizon)
@@ -92,8 +83,6 @@ def maximize_profit_mpc(initial_storage_level, max_storage_capacity, data_buffer
     problem.solve(solver=cp.CBC)  # Using CBC mixed-integer solver (Coin-or branch and cut)
 
     if problem.status == cp.INFEASIBLE:
-        #print(f"Cycle {t//time_step + 1}:")
-        #print(f"Tick: {tick}")
         print(f" energy_transactions.value: {energy_transactions.value}")
         print(f" storage_transactions.value: {storage_transactions.value}")
         print(f" solar_energy: {solar_energy.value}")
@@ -139,8 +128,6 @@ def maximize_profit_mpc(initial_storage_level, max_storage_capacity, data_buffer
         storage -= optimal_storage_transaction
         storage = min(max(storage, 0), max_storage_capacity)
 
-        #print(f"Cycle {t//time_step + 1}:")
-        #print(f"Tick: {tick}")
         print(f"  Energy Transaction: {optimal_energy_transaction} kWh")
         print(f"  Storage Transaction: {optimal_storage_transaction} kWh")
         print(f"  Energy Currently in storage: {storage} kWh")
@@ -153,6 +140,8 @@ def maximize_profit_mpc(initial_storage_level, max_storage_capacity, data_buffer
         print(f" solar_energy: {solar_energy.value}")
         print(f" demand: {demand.value}")
         print(f" storage: {storage_level.value}")
+        print(f" Predicted Buy Prices: {predicted_buy_prices[t:t + horizon]}")
+        print(f" Predicted Sell Prices: {predicted_sell_prices[t:t + horizon]}")
 
     else:
         print(f"   Optimization failed")
@@ -164,35 +153,3 @@ def maximize_profit_mpc(initial_storage_level, max_storage_capacity, data_buffer
 
 if __name__ == '__main__':
     print("Running optimization")
-    #  while True:
-    #         if(i == 0):
-    #             cycle_count += 1
-
-    #             print("Cycle ", cycle_count)
-    #             print()
-
-    #             time_taken = new_cycle(data_buffers, predictions, next_predictions)
-
-    #         elif((i % 15) == 0 or (i == 59)):
-    #             time_taken, next_predictions, data_buffers = prepare_next(i, starting_i, data_buffers, next_predictions)
-
-    #             print("Preparation took ", time_taken)
-            
-    #         else:
-    #             # trainer has not been called yet at this point => server didn't start at 0
-    #             # need to set predictions to be entire previous cycle
-    #             time_taken = something_else(data_buffers, predictions)
-    #             print("Something else took ", time_taken)
- 
-    #         if(5-time_taken < 0):
-    #             print("Something took too much time ", time_taken)
-    #             sys.exit(1)
-    #         else:
-    #             time.sleep(5-time_taken)
-    #             i = (i + 1) % 60           
-    #         print("Current tick ", i)
-
-    # main()
-
-    # max_profit = maximize_profit_mpc(initial_storage_level, max_storage_capacity, data_buffers)
-    # print(f"Maximum Profit: {max_profit}")

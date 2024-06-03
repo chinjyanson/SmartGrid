@@ -72,8 +72,8 @@ class Algorithm:
         self.data_buffers['sun'] = []
         self.data_buffers['sun'].append(self.serve.parsed_data['sun'])
 
-        for n, p in self.predictions.items():
-            plot_datas([p], "Prediction", n)
+        # for n, p in self.predictions.items():
+        #     plot_datas([p], "Prediction", n)
 
         return time.time() - start
 

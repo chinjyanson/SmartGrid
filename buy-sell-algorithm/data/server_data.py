@@ -57,7 +57,7 @@ class server_data:
     
     async def create_session(self):
         if(not self.session or self.session.closed):
-            timeout = aiohttp.ClientTimeout(total=0.5)
+            timeout = aiohttp.ClientTimeout(total=1)
             self.session = aiohttp.ClientSession(timeout=timeout)
 
     async def close_session(self):
@@ -84,11 +84,13 @@ class server_data:
                 self.cache = self.parsed_data
 
         except aiohttp.ClientError as e:
-            print(f"Client Error: {e} Using cache")
+            print(f"CLient Error: {e}, Using cache")
+            self.tick += 1
             self.parsed_data = self.cache
         
         except asyncio.TimeoutError as e:
-            print(f"Timeout Error: {e} Using cache")
+            print(f"Timeout Error: {e}, Using cache")
+            self.tick += 1
             self.parsed_data = self.cache
 
         finally:
@@ -115,3 +117,13 @@ class server_data:
         self.json = response.json()
 
         self.parsed_data['deferables'] = self.json  
+        
+if (__name__ == "__main__"):
+    serve = server_data()
+
+    while True:
+        time.sleep(5)
+        serve.live_data()
+
+        print(serve.parsed_data, " ", serve.tick)
+ 
