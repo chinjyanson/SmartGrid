@@ -81,8 +81,9 @@ class Train:
                     synth.append(model.query(input)[0][0])
 
                 _mse = mse(h_data, synth)
+
                 if(_mse):
-                    pop.fitnesses.append(1 / mse(h_data, synth))
+                    pop.fitnesses.append(1 / _mse)
                 else:
                     pop.fitnesses.append(100000)
 
@@ -90,11 +91,9 @@ class Train:
 
             best_model = np.argmax(pop.fitnesses)
         
-        
             if(check_counter < self.num_of_histories and checkpoints[check_counter] == epoch):
                 out.append(synthetics[best_model])
                 check_counter += 1
-
 
             pop = Population(old_pop=pop)
         
@@ -131,7 +130,7 @@ class Train:
             _mse = mse(most_recent, prediction)
 
             if(_mse):
-                fitnesses.append(1 / mse(most_recent, prediction))
+                fitnesses.append(1 / _mse)
             else:
                 fitnesses.append(100000)
 
@@ -165,7 +164,7 @@ class Train:
             pop.fitnesses = fitnesses
 
             best_model_index = np.argmax(pop.fitnesses)
-            #best_pred = predictions[best_model_index]
+            # best_pred = predictions[best_model_index]
             best_fitness = pop.fitnesses[best_model_index]
 
             if ((self.fitness_threshold != 0) and (best_fitness > self.fitness_threshold)):
