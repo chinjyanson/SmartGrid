@@ -1,8 +1,8 @@
 import numpy as np
 import cvxpy as cp
 import time
-import data.server_data as data
-import predictions.train as train
+import server_data_test as data
+import train_test as train
 
 def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer, t, horizon):
 
