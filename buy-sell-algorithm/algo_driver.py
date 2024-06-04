@@ -7,6 +7,7 @@ import sys
 from colorama import Fore, Back, Style, init
 import optimization as opt
 import naive_solution as naive
+import naive_solution as naive
 
 # Initialize colorama
 init(autoreset=True)
@@ -130,6 +131,7 @@ class Algorithm:
         # this if else statement changes the prediction horizon when tick > 50 (if horizon = 10)
         if self.tick >= 57:
             profit, storage = opt.maximize_profit_mpc(storage, self.data_buffers, self.predictions, self.tick, 60-self.tick)
+            profit, storage = opt.maximize_profit_mpc(storage, self.data_buffers, self.predictions, self.tick, 60-self.tick)
         else:
             profit, storage = opt.maximize_profit_mpc(storage, self.data_buffers, self.predictions, self.tick, 3)
 
@@ -145,7 +147,6 @@ class Algorithm:
         print("Started at tick ", self.starting_tick)
         remainder = 0
         storage = 0
-        naive_storage = 0
 
         while True:
             print(f"Current tick {self.tick}")
