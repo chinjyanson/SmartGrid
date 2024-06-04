@@ -5,6 +5,7 @@ import sys
 from colorama import Fore, Back, Style, init
 import optimization as opt
 import naive_solution as naive
+import naive_solution as naive
 
 # Initialize colorama
 init(autoreset=True)
@@ -138,9 +139,11 @@ class Algorithm:
         print("Running Ansons Code")
         # this if else statement changes the prediction horizon when tick > 50 (if horizon = 10)
         if self.tick >= 57:
-            profit, storage = opt.maximize_profit_mpc(storage, 50, self.data_buffers, self.predictions, self.tick, 1, 60-self.tick)
+            profit, storage = opt.maximize_profit_mpc(storage, self.data_buffers, self.predictions, self.tick, 60-self.tick)
         else:
-            profit, storage = opt.maximize_profit_mpc(storage, 50, self.data_buffers, self.predictions, self.tick, 1, 3)
+            profit, storage = opt.maximize_profit_mpc(storage, self.data_buffers, self.predictions, self.tick, 3)
+
+        print(profit)
 
         return time.time() - start + time_taken, storage
         return time.time() - start + time_taken, storage
@@ -156,6 +159,7 @@ class Algorithm:
         print("Started at tick ", self.starting_tick)
         remainder = 0
         storage = 0
+        naive_storage = 0
 
         while True:
             print(f"Current tick {self.tick}")
@@ -170,7 +174,7 @@ class Algorithm:
                 print(Fore.MAGENTA + f"Setting up new cycle took {time_taken}s", (Fore.GREEN if remainder > 1.5 else Fore.LIGHTRED_EX) + f"Window [{remainder}s]")
 
             elif((self.tick % 15) == 0 or (self.tick == 59)):
-                time_taken1, storage = self.something_else(storage)
+                time_taken1, storage, naive_storage = self.something_else(storage)
                 time_taken2 = self.prepare_next()
                 time_taken = time_taken1 + time_taken2
                 remainder = 5-time_taken
