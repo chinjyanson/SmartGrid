@@ -1,10 +1,10 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
-import Navbar from './components/Navbar';
+import Navbar from './components/navbar.js';
 import Home from './routes/landing/landing';
-import Money from './routes/finances/finances';
-import Usage from './routes/consumption/consumption';
-import NotFound from './routes/not-found/not-found';
+import Money from './routes/finances/finances.js';
+import Usage from './routes/consumption/consumption.js';
+import NotFound from './routes/not-found/not-found.js';
 import './core-ui/App.css';
 
 const App = () => {
