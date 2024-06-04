@@ -120,7 +120,7 @@ class Algorithm:
 
         return time.time()-start
 
-    def something_else(self):
+    def something_else(self, storage):
         start = time.time()
         # do something else, must include filling data buffers
 
@@ -137,12 +137,12 @@ class Algorithm:
         
         print("Running Ansons Code")
         # this if else statement changes the prediction horizon when tick > 50 (if horizon = 10)
-        if self.tick >= 50:
-            opt.maximize_profit_mpc(0, 50, self.data_buffers, self.predictions, self.tick, 1, 60-self.tick)
+        if self.tick >= 57:
+            profit, storage = opt.maximize_profit_mpc(storage, 50, self.data_buffers, self.predictions, self.tick, 1, 60-self.tick)
         else:
-            opt.maximize_profit_mpc(0, 50, self.data_buffers, self.predictions, self.tick, 1, 10)
+            profit, storage = opt.maximize_profit_mpc(storage, 50, self.data_buffers, self.predictions, self.tick, 1, 3)
 
-        return time.time() - start + time_taken
+        return time.time() - start + time_taken, storage
     
     def driver(self):
         if(self.starting_tick != 0):
@@ -154,6 +154,7 @@ class Algorithm:
 
         print("Started at tick ", self.starting_tick)
         remainder = 0
+        storage = 0
 
         while True:
             print(f"Current tick {self.tick}")
@@ -168,14 +169,14 @@ class Algorithm:
                 print(Fore.MAGENTA + f"Setting up new cycle took {time_taken}s", (Fore.GREEN if remainder > 1.5 else Fore.LIGHTRED_EX) + f"Window [{remainder}s]")
 
             elif((self.tick % 15) == 0 or (self.tick == 59)):
-                time_taken1 = self.something_else()
+                time_taken1, storage = self.something_else(storage)
                 time_taken2 = self.prepare_next()
                 time_taken = time_taken1 + time_taken2
                 remainder = 5-time_taken
                 print(Fore.YELLOW + f"Preparation and decision took {time_taken}s", (Fore.GREEN if remainder > 1.5 else Fore.LIGHTRED_EX) + f"Window [{remainder}s]")
             
             else:
-                time_taken = self.something_else()
+                time_taken, storage = self.something_else(storage)
                 remainder = 5-time_taken
                 print(Fore.BLUE + f"Something else and adding to data buffers took {time_taken}s", (Fore.GREEN if remainder > 1.5 else Fore.LIGHTRED_EX) + f"Window [{remainder}s]")
 
