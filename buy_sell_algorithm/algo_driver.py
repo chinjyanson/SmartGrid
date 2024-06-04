@@ -1,8 +1,6 @@
-from predictions.train import Train
-from data.server_data import server_data
 import asyncio
 import time
-from predictions.utils.helper import plot_datas, batch_up
+from predictions.utils import plot_datas, module_from_file
 import sys
 from colorama import Fore, Back, Style, init
 import optimization as opt
@@ -10,14 +8,18 @@ import optimization as opt
 # Initialize colorama
 init(autoreset=True)
 
+m_Train = module_from_file("Train", "buy_sell_algorithm/predictions/train.py")
+m_data = module_from_file("server_data", "buy_sell_algorithm/data/server_data.py")
+
 class Algorithm:
     def __init__(self) -> None:
-        self.serve = server_data()
-        self.trainer = Train(elitism=0.2, mutation_prob=0.08, mutation_power=0.1, max_epochs=20, num_of_histories=5, 
-                data_batch_size=15, nn_batch_size=60, parsed_data=self.serve.parsed_data)
+        self.serve = m_data.server_data()
+        self.trainer = m_Train.Train(elitism=0.2, mutation_prob=0.08, mutation_power=0.1, max_epochs=20, num_of_histories=5, 
+                pop_size=60, nn_batch_size=5, parsed_data=self.serve.parsed_data)
         self.event_loop = asyncio.get_event_loop()
 
         self.data_buffers = {'buy_price':[], 'sell_price':[], 'demand':[], 'sun':[]}
+        self.old_predictions = {'buy_price':[], 'sell_price':[], 'demand':[]}
         self.predictions = {'buy_price':[], 'sell_price':[], 'demand':[]}
         self.next_predictions = {'buy_price':[], 'sell_price':[], 'demand':[]}
 
@@ -53,9 +55,11 @@ class Algorithm:
                 previous, most_recent = self.trainer.get_synthetic_data(data_name)
                 self.trainer.histories_buffer[data_name] = previous[1:] + [most_recent]
                 self.predictions[data_name] = most_recent
+                self.old_predictions[data_name] = most_recent
             
         else:
             print("Current predictions are ready")
+            self.old_predictions = self.predictions
             if any([len(n) == 0 for n in self.next_predictions.values()]):
                 self.predictions = self.trainer.histories_buffer
             else:
@@ -63,6 +67,11 @@ class Algorithm:
 
         # empty data and next prediction buffers and add the current live values
         self.serve.live_data()
+
+        if(self.data_buffers != {'buy_price':[], 'sell_price':[], 'demand':[], 'sun':[]}):
+            # previous cycle data buffers are full, we also have what we predicted in self.old_predictions
+            for n, p in self.old_predictions.items():
+                plot_datas([p, self.data_buffers[n]], "Prediction of previous cycle vs Actual data", n)
         
         for data_name in ['buy_price', 'sell_price', 'demand']:
             self.next_predictions[data_name] = []
@@ -72,8 +81,8 @@ class Algorithm:
         self.data_buffers['sun'] = []
         self.data_buffers['sun'].append(self.serve.parsed_data['sun'])
 
-        # for n, p in self.predictions.items():
-        #     plot_datas([p], "Prediction", n)
+        #for n, p in self.predictions.items():
+        #    plot_datas([p], "Prediction", n)
 
         return time.time() - start
 
@@ -137,7 +146,10 @@ class Algorithm:
     def driver(self):
         if(self.starting_tick != 0):
             for k, v in self.data_buffers.items():
-                self.data_buffers[k] = [0] * self.starting_tick
+                if(self.trainer.parsed_data[k] != []):
+                    self.data_buffers[k] = self.trainer.parsed_data[k][:self.starting_tick]
+                else:
+                    self.data_buffers[k] = [0]*self.starting_tick
 
         print("Started at tick ", self.starting_tick)
         remainder = 0
@@ -172,10 +184,8 @@ class Algorithm:
                 sys.exit(1)
             else:
                 time.sleep(remainder)
-                self.tick = (self.tick + 1) % 60   
+                self.tick = (self.tick + 1) % 60  
 
 if __name__ == "__main__":
-    while True:
-        algo = Algorithm()
-        algo.driver()
-
+    algo = Algorithm()
+    algo.driver()
