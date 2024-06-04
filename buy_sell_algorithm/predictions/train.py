@@ -164,9 +164,6 @@ class Train:
 
         f, p = zip(*result)
 
-        pool.join()
-        pool.close()
-
         # serially
         """
         for x, y in self.nn_batches:

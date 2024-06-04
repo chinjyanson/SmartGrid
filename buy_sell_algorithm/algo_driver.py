@@ -4,19 +4,20 @@ from predictions.utils import plot_datas, module_from_file
 import sys
 from colorama import Fore, Back, Style, init
 import optimization as opt
+from predictions.train import Train
+from data.server_data import server_data
 
 # Initialize colorama
 init(autoreset=True)
 
-m_Train = module_from_file("Train", "buy_sell_algorithm/predictions/train.py")
-m_data = module_from_file("server_data", "buy_sell_algorithm/data/server_data.py")
+#m_Train = module_from_file("Train", "buy_sell_algorithm/predictions/train.py")
+#m_data = module_from_file("server_data", "buy_sell_algorithm/data/server_data.py")
 
 class Algorithm:
     def __init__(self) -> None:
-        self.serve = m_data.server_data()
-        self.trainer = m_Train.Train(elitism=0.2, mutation_prob=0.08, mutation_power=0.1, max_epochs=20, num_of_histories=5, 
-                pop_size=60, nn_batch_size=5, parsed_data=self.serve.parsed_data)
-        self.event_loop = asyncio.get_event_loop()
+        self.serve = server_data()
+        self.trainer = Train(elitism=0.2, mutation_prob=0.08, mutation_power=0.1, max_epochs=50, num_of_histories=5, 
+                pop_size=70, nn_batch_size=5, parsed_data=self.serve.parsed_data)
 
         self.data_buffers = {'buy_price':[], 'sell_price':[], 'demand':[], 'sun':[]}
         self.old_predictions = {'buy_price':[], 'sell_price':[], 'demand':[]}
