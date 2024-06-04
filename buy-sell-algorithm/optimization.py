@@ -147,7 +147,7 @@ def maximize_profit_mpc(initial_storage_level, max_storage_capacity, data_buffer
         print(f"   Optimization failed")
         print(problem.status)
 
-    return total_profit
+    return total_profit, storage
 
 
 
