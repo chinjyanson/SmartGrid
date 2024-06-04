@@ -7,19 +7,29 @@ if train_root not in sys.path:
 
 from neural_net import Population, neural_net
 import numpy as np
-from utils.helper import module_from_file, mse, plot_datas, save_population, get_population, add_noise, batch_up
+from utils import module_from_file, mse, save_population, get_population, add_noise, batch_up
+from multiprocessing import Pool
+from functools import partial
 
-m_server = module_from_file("server_data", "buy-sell-algorithm/data/server_data.py")
-m_made = module_from_file("Data", "buy-sell-algorithm/data/datavis.py")
+m_server = module_from_file("server_data", "buy_sell_algorithm/data/server_data.py")
+m_made = module_from_file("Data", "buy_sell_algorithm/data/datavis.py")
 
 serve = m_server.server_data()
+
+pool = None
+
+def av(r):
+    x, y = r
+    return (x+y)//2
 
 class Train:
     """
         Train models using a genetic algorithm to synthesize data if needed, and predict data in a cycle
     """
 
-    def __init__(self, elitism, mutation_prob, mutation_power, max_epochs, num_of_histories, data_batch_size, nn_batch_size, parsed_data) -> None:
+    def __init__(self, elitism, mutation_prob, mutation_power, max_epochs, num_of_histories, pop_size, nn_batch_size, parsed_data) -> None:
+        global pool
+        
         self.histories_buffer = {'buy_price':[], 'sell_price':[], 'demand':[]}
         self.data_fitnesses = {'buy_price':0, 'sell_price':0, 'demand':0}
         self.num_of_histories = num_of_histories
@@ -28,6 +38,8 @@ class Train:
         self.epsilon = 0.0001
         self.save_checkpoint = 1
         self.saved_pop_path = os.path.join(train_root, "saved_populations")
+        self.start_index = 0
+        self.end_index = 0
 
         self.elitism = elitism
         self.mutation_prob = mutation_prob
@@ -35,10 +47,14 @@ class Train:
 
         self.epochs = max_epochs
 
-        self.data_batch_size = data_batch_size
+        self.pop_size = pop_size
         self.nn_batch_size = nn_batch_size
 
+        self.nn_batches = batch_up((0, self.pop_size), self.nn_batch_size)
+        pool = Pool(processes=len(self.nn_batches))
+
         self.parsed_data = parsed_data
+        self.most_recent = None
 
         os.makedirs(self.saved_pop_path, exist_ok=True)
 
@@ -63,7 +79,8 @@ class Train:
         best_model = None
         data_points = 60
         epochs = 20
-        checkpoints = list(map(lambda x : (x[0]+x[1]) // 2, batch_up((0,epochs), epochs//self.num_of_histories)))
+
+        checkpoints = list(map(av, batch_up((0,epochs), epochs//self.num_of_histories)))
         check_counter = 0
 
         # training
@@ -98,36 +115,33 @@ class Train:
             pop = Population(old_pop=pop)
         
         return out, h_data
-    
-    def make_prediction(self, start_index, end_index, model, histories):
+        
+    def make_prediction(self, model):
         prediction = []
 
-        for j in range(start_index, end_index):
+        for j in range(self.start_index, self.end_index):
             input = []
             for i in range(self.num_of_histories):
                 try:
-                    input.append(histories[i][j])
+                    input.append(self.training_histories[i][j])
                 except IndexError as e:
-                    print(histories, i, j)
+                    print(self.training_histories, i, j)
                     print(e)
                     sys.exit(1)  
 
             prediction.append(model.query(input)[0][0])
 
         return prediction
-        
-    def train_models(self, models : neural_net, histories : list[list[float]], most_recent : list[float], start_index : int, end_index : int) -> tuple[list[float], list[float]]:
-        """
-            Train models on a set of histories and return a tuple lists of each model's fitness, and each model's prediction 
-        """
-        fitnesses = []
+    
+    def process_batch(self, batch):
         predictions = []
+        fitnesses = []
 
-        for model in models:
-            prediction = self.make_prediction(start_index, end_index, model, histories)
+        for model in batch:
+            prediction = self.make_prediction(model)
             predictions.append(prediction)
 
-            _mse = mse(most_recent, prediction)
+            _mse = mse(self.most_recent, prediction)
 
             if(_mse):
                 fitnesses.append(1 / _mse)
@@ -135,8 +149,35 @@ class Train:
                 fitnesses.append(100000)
 
         return fitnesses, predictions
+
+        
+    def train_models(self, models : neural_net) -> tuple[list[float], list[float]]:
+        """
+            Train models on a set of histories and return a tuple lists of each model's fitness, and each model's prediction 
+        """
+        global pool
+        
+        # concurrently
+        batches = [models[x:y] for x, y in self.nn_batches]
+
+        result = pool.map(self.process_batch, batches)
+
+        f, p = zip(*result)
+
+        pool.join()
+        pool.close()
+
+        # serially
+        """
+        for x, y in self.nn_batches:
+            p, f = self.process_batch(models[x:y], most_recent)
+            predictions += p
+            fitnesses += f
+        """
+
+        return sum(f, []), sum(p, [])
     
-    def train_on_histories(self, histories : list[list[float]], most_recent : list[float], data : str, start_index : int, end_index : int) -> neural_net:
+    def train_on_histories(self, data_name : str) -> neural_net:
         """
             given a set of histories, and the most recent history, train to predict the cycle of the 
             most recent history
@@ -145,14 +186,14 @@ class Train:
         best_fitness = None
         most_recent_pop = None
 
-        file_name = os.path.join(self.saved_pop_path, data+".pop")
+        file_name = os.path.join(self.saved_pop_path, data_name+".pop")
         old_pop = get_population(file_name)
 
         if(old_pop):
             pop = Population(old_pop=old_pop)
             print("Loaded previous best population")
         else:
-            pop = Population(6, pop_size=50, input_nodes=self.num_of_histories, output_nodes=1, mutation_prob=self.mutation_prob, 
+            pop = Population(6, pop_size=self.pop_size, input_nodes=self.num_of_histories, output_nodes=1, mutation_prob=self.mutation_prob, 
                             elitism=self.elitism, mutation_power=self.mutation_power)
             
             print("Started from random population")
@@ -160,7 +201,7 @@ class Train:
         for epoch in range(self.epochs):
             print("Epoch: ", epoch+1)
 
-            fitnesses, predictions = self.train_models(pop.models, histories, most_recent, start_index, end_index)
+            fitnesses, predictions = self.train_models(pop.models)
             pop.fitnesses = fitnesses
 
             best_model_index = np.argmax(pop.fitnesses)
@@ -179,13 +220,13 @@ class Train:
         
         save_population(most_recent_pop, file_name)   
 
-        self.data_fitnesses[data] = best_fitness
+        self.data_fitnesses[data_name] = best_fitness
 
         # plot_datas([best_pred, most_recent], "Comparing most recent actual with prediction", "Data", start_index, end_index)
 
         return pop.models[best_model_index]
 
-    def query_model(self, data_name : str, start_index : int, end_index:int, most_recent : list[float]) -> list[int] | None:
+    def query_model(self, data_name : str, start_index : int, end_index : int, most_recent : list[float]) -> list[int] | None:
         """
         - this should be called at the beginning of each cycle to predict values for whole cycle
         - it takes some time:
@@ -202,8 +243,13 @@ class Train:
             print("Training on the historical data. Training to predict most recent cycle")
             print("Threshold: ", self.fitness_threshold)
 
+            self.start_index = start_index
+            self.end_index = end_index
+            self.training_histories = previous
+            self.most_recent = most_recent
+
             # train model to predict the most recent cycle given a set of previous cycles
-            best_model = self.train_on_histories(previous, most_recent, data_name, start_index, end_index)
+            best_model = self.train_on_histories(data_name)
 
             prediction = []
 
@@ -218,6 +264,7 @@ class Train:
 
         else:
             print("Training on this data not implemented yet")
+            sys.exit(1)
             return None
    
 
