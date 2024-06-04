@@ -1,5 +1,5 @@
-import data.server_data as data
-from predictions.train import Train
+import server_data_test as data
+from train_test import Train
 import time
 
 '''
