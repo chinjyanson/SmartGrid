@@ -1,12 +1,12 @@
-from predictions.train import Train
-from data.server_data import server_data
+from train_test import Train
+from server_data_test import server_data
 import asyncio
 import time
-from predictions.utils.helper import plot_datas, batch_up
+from helper_test import plot_datas, batch_up
 import sys
 from colorama import Fore, Back, Style, init
-import optimization as opt
-import naive_solution as naive
+import MPC_solution_test as opt
+import naive_solution_test as naive
 
 # Initialize colorama
 init(autoreset=True)
@@ -111,7 +111,7 @@ class Algorithm:
 
         return time.time()-start
 
-    def something_else(self, storage):
+    def something_else(self, storage, naive_storage):
         start = time.time()
         # do something else, must include filling data buffers
 
@@ -128,14 +128,18 @@ class Algorithm:
         
         print("Running Ansons Code")
         # this if else statement changes the prediction horizon when tick > 50 (if horizon = 10)
-        if self.tick >= 57:
+        if self.tick >= 50:
             profit, storage = opt.maximize_profit_mpc(storage, self.data_buffers, self.predictions, self.tick, 60-self.tick)
         else:
-            profit, storage = opt.maximize_profit_mpc(storage, self.data_buffers, self.predictions, self.tick, 3)
+            profit, storage = opt.maximize_profit_mpc(storage, self.data_buffers, self.predictions, self.tick, 10)
 
-        print(profit)
+        naive_profit, naive_storage = naive.naive_smart_grid_optimizer(self.data_buffers, self.tick, naive_storage)
 
-        return time.time() - start + time_taken, storage
+        profit_difference_tick = profit-naive_profit
+
+        print(f"DIFFERENCE IN PROFIT: {profit_difference_tick}")
+
+        return time.time() - start + time_taken, storage, naive_storage, profit_difference_tick
     
     def driver(self):
         if(self.starting_tick != 0):
@@ -146,6 +150,7 @@ class Algorithm:
         remainder = 0
         storage = 0
         naive_storage = 0
+        total_profit_difference = 0
 
         while True:
             print(f"Current tick {self.tick}")
@@ -160,14 +165,14 @@ class Algorithm:
                 print(Fore.MAGENTA + f"Setting up new cycle took {time_taken}s", (Fore.GREEN if remainder > 1.5 else Fore.LIGHTRED_EX) + f"Window [{remainder}s]")
 
             elif((self.tick % 15) == 0 or (self.tick == 59)):
-                time_taken1, storage, naive_storage = self.something_else(storage)
+                time_taken1, storage, naive_storage, profit_difference_tick = self.something_else(storage, naive_storage)
                 time_taken2 = self.prepare_next()
                 time_taken = time_taken1 + time_taken2
                 remainder = 5-time_taken
                 print(Fore.YELLOW + f"Preparation and decision took {time_taken}s", (Fore.GREEN if remainder > 1.5 else Fore.LIGHTRED_EX) + f"Window [{remainder}s]")
             
             else:
-                time_taken, storage, naive_storage = self.something_else(storage)
+                time_taken, storage, naive_storage, profit_difference_tick = self.something_else(storage, naive_storage)
                 remainder = 5-time_taken
                 print(Fore.BLUE + f"Something else and adding to data buffers took {time_taken}s", (Fore.GREEN if remainder > 1.5 else Fore.LIGHTRED_EX) + f"Window [{remainder}s]")
 
@@ -178,6 +183,9 @@ class Algorithm:
             else:
                 time.sleep(remainder)
                 self.tick = (self.tick + 1) % 60   
+
+            total_profit_difference += profit_difference_tick
+            print(f"**********************************{total_profit_difference}**********************************")
 
 if __name__ == "__main__":
     while True:
