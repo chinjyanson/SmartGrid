@@ -160,14 +160,14 @@ class Algorithm:
                 print(Fore.MAGENTA + f"Setting up new cycle took {time_taken}s", (Fore.GREEN if remainder > 1.5 else Fore.LIGHTRED_EX) + f"Window [{remainder}s]")
 
             elif((self.tick % 15) == 0 or (self.tick == 59)):
-                time_taken1, storage, naive_storage = self.something_else(storage)
+                time_taken1, storage= self.something_else(storage)
                 time_taken2 = self.prepare_next()
                 time_taken = time_taken1 + time_taken2
                 remainder = 5-time_taken
                 print(Fore.YELLOW + f"Preparation and decision took {time_taken}s", (Fore.GREEN if remainder > 1.5 else Fore.LIGHTRED_EX) + f"Window [{remainder}s]")
             
             else:
-                time_taken, storage, naive_storage = self.something_else(storage)
+                time_taken, storage = self.something_else(storage)
                 remainder = 5-time_taken
                 print(Fore.BLUE + f"Something else and adding to data buffers took {time_taken}s", (Fore.GREEN if remainder > 1.5 else Fore.LIGHTRED_EX) + f"Window [{remainder}s]")
 
