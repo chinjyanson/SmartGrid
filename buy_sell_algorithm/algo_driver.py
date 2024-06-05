@@ -17,8 +17,8 @@ init(autoreset=True)
 class Algorithm:
     def __init__(self) -> None:
         self.serve = server_data()
-        self.trainer = Train(elitism=0.2, mutation_prob=0.08, mutation_power=0.1, max_epochs=50, num_of_histories=5, 
-                pop_size=70, nn_batch_size=5, parsed_data=self.serve.parsed_data)
+        self.trainer = Train(elitism=0.2, mutation_prob=0.08, mutation_power=0.1, max_epochs=20, num_of_histories=5, 
+                pop_size=80, nn_batch_size=5, parsed_data=self.serve.parsed_data)
 
         self.data_buffers = {'buy_price':[], 'sell_price':[], 'demand':[], 'sun':[]}
         self.old_predictions = {'buy_price':[], 'sell_price':[], 'demand':[]}
