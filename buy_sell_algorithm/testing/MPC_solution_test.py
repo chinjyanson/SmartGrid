@@ -1,7 +1,7 @@
 import numpy as np
 import cvxpy as cp
-import data.server_data as data
-import predictions.train as train
+import server_data_test as data
+import train_test as train
 
 def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer, t, horizon):
 
@@ -18,7 +18,7 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
     energy_used = data_buffers['demand'][-1]
     current_buy_price = data_buffers['buy_price'][-1]
     current_sell_price = data_buffers['sell_price'][-1]
-    energy_in = energy_in * 0.1 
+    energy_in = energy_in / 30
 
     # Update predictions
     predicted_buy_prices[t] = current_buy_price

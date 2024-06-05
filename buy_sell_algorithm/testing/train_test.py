@@ -9,11 +9,6 @@ from neural_net_test import Population, neural_net
 import numpy as np
 from helper_test import module_from_file, mse, plot_datas, save_population, get_population, add_noise, batch_up
 
-m_server = module_from_file("server_data", "buy-sell-algorithm/data/server_data.py")
-m_made = module_from_file("Data", "buy-sell-algorithm/data/datavis.py")
-
-serve = m_server.server_data()
-
 class Train:
     """
         Train models using a genetic algorithm to synthesize data if needed, and predict data in a cycle

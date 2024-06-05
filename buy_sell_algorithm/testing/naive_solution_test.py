@@ -1,5 +1,5 @@
-import data.server_data as data
-from predictions.train import Train
+import server_data_test as data
+from train_test import Train
 import time
 
 '''
@@ -16,7 +16,7 @@ def naive_smart_grid_optimizer(data_buffers, t, current_storage):
     actual_demand = data_buffers['demand'][-1]
     buy_price = data_buffers['buy_price'][-1]
     sell_price = data_buffers['sell_price'][-1]
-    solar_energy = solar_energy * 0.1 
+    solar_energy = solar_energy / 30
 
     serve = data.server_data()
     serve.deferables()
