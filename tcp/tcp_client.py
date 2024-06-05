@@ -2,13 +2,12 @@ import socket
 import time
 import network
 import machine
+from credentials import SSID, PASSWORD
 
 """
     Functions to allow SMPS to make TCP connection to server, and send and recieve messages
 """
 # code that allows rapberry pi to connect to wlan given here: https://projects.raspberrypi.org/en/projects/get-started-pico-w/2
-ssid = 'iPhone (9)'
-password = 'canilikyx_#12'
 
 led = machine.Pin("LED", machine.Pin.OUT)
 
@@ -19,7 +18,7 @@ def connect():
     #Connect to WLAN
     wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
-    wlan.connect(ssid, password)
+    wlan.connect(SSID, PASSWORD)
     while wlan.isconnected() == False:
         print('Waiting for connection...')
         time.sleep(1)
