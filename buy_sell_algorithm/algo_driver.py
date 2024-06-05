@@ -6,7 +6,7 @@ from colorama import Fore, Back, Style, init
 import optimization as opt
 from predictions.train import Train
 from data.server_data import server_data
-import naive_solution as naive
+import test3 as test
 
 # Initialize colorama
 init(autoreset=True)
@@ -138,10 +138,7 @@ class Algorithm:
         
         print("Running Ansons Code")
         # this if else statement changes the prediction horizon when tick > 50 (if horizon = 10)
-        if self.tick >= 57:
-            profit, storage = opt.maximize_profit_mpc(storage, self.data_buffers, self.predictions, self.tick, 60-self.tick)
-        else:
-            profit, storage = opt.maximize_profit_mpc(storage, self.data_buffers, self.predictions, self.tick, 3)
+        profit, storage = test.maximize_profit_mpc(storage, self.data_buffers, self.predictions, self.tick, 60-self.tick)
 
         return time.time() - start + time_taken, storage
     

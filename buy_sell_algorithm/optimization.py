@@ -2,6 +2,7 @@ import numpy as np
 import cvxpy as cp
 import data.server_data as data
 import predictions.train as train
+import scheduling
 
 def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer, t, horizon):
 
@@ -19,6 +20,8 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
     current_buy_price = data_buffers['buy_price'][-1]
     current_sell_price = data_buffers['sell_price'][-1]
     energy_in = energy_in * 0.1 
+
+    #energy_used += scheduling.get_deferable_demand(t, data_buffers['deferables'])
 
     # Update predictions
     predicted_buy_prices[t] = current_buy_price
@@ -50,6 +53,10 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
     # Objective function
     profit = cp.sum(cp.multiply(neg_energy_transactions, predicted_buy_prices[t:t + horizon]) - cp.multiply(pos_energy_transactions, predicted_sell_prices[t:t + horizon]))
 
+    for ele in deferables: 
+        if ele["start"] <= t < ele["end"]:
+            demand += ele["energy"] / (ele["end"] - ele["start"])
+    
     # Constraints
     constraints = [
         storage_level[0] == storage,  # storage level currently
