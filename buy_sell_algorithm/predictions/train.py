@@ -214,6 +214,7 @@ class Train:
 
             most_recent_pop = pop
             pop = Population(old_pop=pop)
+            pop.elitism = (epoch+1 / self.epochs)
         
         save_population(most_recent_pop, file_name)   
 

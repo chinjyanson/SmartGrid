@@ -54,3 +54,6 @@ if __name__ == "__main__":
     connect()
     connect_to_server()
 
+    while True:
+        get_message()
+

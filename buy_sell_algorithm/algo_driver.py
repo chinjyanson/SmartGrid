@@ -7,6 +7,7 @@ import optimization as opt
 from predictions.train import Train
 from data.server_data import server_data
 import naive_solution as naive
+import json
 
 # Initialize colorama
 init(autoreset=True)
@@ -17,7 +18,7 @@ init(autoreset=True)
 class Algorithm:
     def __init__(self) -> None:
         self.serve = server_data()
-        self.trainer = Train(elitism=0.2, mutation_prob=0.08, mutation_power=0.1, max_epochs=20, num_of_histories=5, 
+        self.trainer = Train(elitism=0.0, mutation_prob=0.08, mutation_power=0.1, max_epochs=20, num_of_histories=5, 
                 pop_size=60, nn_batch_size=4, parsed_data=self.serve.parsed_data)
 
         self.data_buffers = {'buy_price':[], 'sell_price':[], 'demand':[], 'sun':[]}
@@ -155,9 +156,9 @@ class Algorithm:
 
         print("Started at tick ", self.starting_tick)
         remainder = 0
-
-        queue.put("Data")
         storage = 0
+
+        data = {"energy":134, "sell":True, "buy":False, "type":"cell"}
 
         while True:
             print(f"Current tick {self.tick}")
@@ -191,6 +192,11 @@ class Algorithm:
                 time.sleep(remainder)
                 self.tick = (self.tick + 1) % 60  
 
+            
+            queue.put(json.dumps(data))
+
 if __name__ == "__main__":
+    q = Queue()
+
     algo = Algorithm()
-    algo.driver()
+    algo.driver(q)
