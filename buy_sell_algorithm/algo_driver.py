@@ -158,7 +158,8 @@ class Algorithm:
         remainder = 0
         storage = 0
 
-        data = {"energy":134, "sell":True, "buy":False, "type":"cell"}
+        data1 = {"energy":134, "sell":True, "buy":False, "type":"cell"}
+        data2 = {"energy":40, "sell":False, "buy":False, "type":"flywheel"}
 
         while True:
             print(f"Current tick {self.tick}")
@@ -193,7 +194,8 @@ class Algorithm:
                 self.tick = (self.tick + 1) % 60  
 
             
-            queue.put(json.dumps(data))
+            queue.put(json.dumps(data1))
+            queue.put(json.dumps(data2))
 
 if __name__ == "__main__":
     q = Queue()
