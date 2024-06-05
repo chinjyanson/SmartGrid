@@ -12,25 +12,26 @@ class Tcp_server:
         self.server.bind(('0.0.0.0', self.port))
         self.picos = {"flywheel": None, "solar":None, "cell":None}
 
+    def init_pico(self, client_socket):
+        try: 
+            message = client_socket.recv(1024).decode('utf-8')
+
+            print(f"[{str(client_socket.getpeername())}] {message}")
+            client_socket.send("Message received".encode('utf-8'))
+
+            if(message == "cell" or message == "solar" or message == "flywheel"):
+                self.picos[message] = client_socket
+            else:
+                print(f"Message {message} is unknown")
+                                
+        except ConnectionResetError:
+            print("Connection has been reset")
+
     def handle_client(self, client_socket, queue):
         """Function to handle client connections."""
+        self.init_pico(client_socket)
+
         while True:
-            try: 
-                message = client_socket.recv(1024).decode('utf-8')
-
-                print(f"[{str(client_socket.getpeername())}] {message}")
-                client_socket.send("Message received".encode('utf-8'))
-
-                if not message:
-                    break
-                elif (message == "cell" or message == "solar" or message == "flywheel"):
-                    self.picos[message] = client_socket
-                else:
-                    print(f"Message {message} is unknown")
-                                 
-            except ConnectionResetError:
-                break
-            
             data = queue.get()
             _data = json.loads(data)
 
