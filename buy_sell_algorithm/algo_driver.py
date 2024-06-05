@@ -1,4 +1,4 @@
-import asyncio
+from queue import Queue 
 import time
 from predictions.utils import plot_datas, module_from_file
 import sys
@@ -7,6 +7,7 @@ import optimization as opt
 from predictions.train import Train
 from data.server_data import server_data
 import naive_solution as naive
+import json
 
 # Initialize colorama
 init(autoreset=True)
@@ -17,8 +18,8 @@ init(autoreset=True)
 class Algorithm:
     def __init__(self) -> None:
         self.serve = server_data()
-        self.trainer = Train(elitism=0.2, mutation_prob=0.08, mutation_power=0.1, max_epochs=50, num_of_histories=5, 
-                pop_size=70, nn_batch_size=5, parsed_data=self.serve.parsed_data)
+        self.trainer = Train(elitism=0.0, mutation_prob=0.08, mutation_power=0.1, max_epochs=20, num_of_histories=5, 
+                pop_size=60, nn_batch_size=4, parsed_data=self.serve.parsed_data)
 
         self.data_buffers = {'buy_price':[], 'sell_price':[], 'demand':[], 'sun':[]}
         self.old_predictions = {'buy_price':[], 'sell_price':[], 'demand':[]}
@@ -29,6 +30,7 @@ class Algorithm:
         
         self.starting_tick = self.serve.starting_tick()
         self.tick = self.starting_tick
+        self.data_batch_size = 15
 
     def add_to_data_buffers(self):
         start = time.time()
@@ -94,13 +96,12 @@ class Algorithm:
             - Also add value at current tick into data buffer
         """
         start = time.time()
-        # prepare next predictions for next batch each time we are at tick 15, 30, 45, 60
         
-        if(not ((self.starting_tick % 15 == 0) and self.trainer.first_call())):
-            if((0 < self.tick  - self.starting_tick < 15) and self.trainer.first_call()):
+        if(not ((self.starting_tick % self.data_batch_size == 0) and self.trainer.first_call())):
+            if((0 < self.tick  - self.starting_tick < self.data_batch_size) and self.trainer.first_call()):
                 dist = self.tick - self.starting_tick
             else:
-                dist = 15
+                dist = self.data_batch_size
 
             if(self.tick == 59):
                 x, y = 60-dist, 60
@@ -115,7 +116,7 @@ class Algorithm:
                 
                 self.next_predictions[data_name] += self.trainer.query_model(data_name, x, y, self.data_buffers[data_name][x:y])
 
-                assert(len(self.next_predictions[data_name]) % 15 == 0)
+                assert(len(self.next_predictions[data_name]) % self.data_batch_size == 0)
 
                 print(x, y, len(self.next_predictions[data_name]))
 
@@ -145,7 +146,7 @@ class Algorithm:
 
         return time.time() - start + time_taken, storage
     
-    def driver(self):
+    def driver(self, queue : Queue):
         if(self.starting_tick != 0):
             for k, v in self.data_buffers.items():
                 if(self.trainer.parsed_data[k] != []):
@@ -156,6 +157,8 @@ class Algorithm:
         print("Started at tick ", self.starting_tick)
         remainder = 0
         storage = 0
+
+        data = {"energy":134, "sell":True, "buy":False, "type":"cell"}
 
         while True:
             print(f"Current tick {self.tick}")
@@ -169,7 +172,7 @@ class Algorithm:
                 remainder = 5-time_taken
                 print(Fore.MAGENTA + f"Setting up new cycle took {time_taken}s", (Fore.GREEN if remainder > 1.5 else Fore.LIGHTRED_EX) + f"Window [{remainder}s]")
 
-            elif((self.tick % 15) == 0 or (self.tick == 59)):
+            elif((self.tick % self.data_batch_size) == 0 or (self.tick == 59)):
                 time_taken1, storage = self.something_else(storage)
                 time_taken2 = self.prepare_next()
                 time_taken = time_taken1 + time_taken2
@@ -189,6 +192,11 @@ class Algorithm:
                 time.sleep(remainder)
                 self.tick = (self.tick + 1) % 60  
 
+            
+            queue.put(json.dumps(data))
+
 if __name__ == "__main__":
+    q = Queue()
+
     algo = Algorithm()
-    algo.driver()
+    algo.driver(q)

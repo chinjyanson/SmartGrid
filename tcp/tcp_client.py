@@ -42,7 +42,7 @@ def get_message(socket):
     """
         Sends message to socket, and returns message from server
     """
-    message = "Hello from Pico"
+    message = "Hello from Pico"  # send particular message beased on which PICO this one is
     socket.send(message.encode('utf-8'))
     response = socket.recv(1024)
     # print(f"Received from server: {response.decode('utf-8')}")
@@ -53,4 +53,7 @@ if __name__ == "__main__":
     led.toggle()
     connect()
     connect_to_server()
+
+    while True:
+        get_message()
 

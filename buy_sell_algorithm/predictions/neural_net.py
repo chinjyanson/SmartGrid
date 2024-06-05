@@ -112,11 +112,11 @@ class Population:
                     for ind, col in enumerate(row):
                         if np.random.random() < self.mutation_prob:
                             row[ind] += np.random.uniform(-self.mutation_power, self.mutation_power)
+                
+                """
+                rands = np.random.uniform(-self.mutation_power, self.mutation_power, size=wm.shape)
+                mask = np.random.random(wm.shape) < self.mutation_prob
 
-
-                #rands = np.random.uniform(-mutation_power, mutation_power, size=wm.shape)
-                #mask = np.random.random(wm.shape) < mutation_prob
-
-                #wm = np.where(mask, wm + rands, wm)
-
+                wm = np.where(mask, wm + rands, wm)
+                """
 
