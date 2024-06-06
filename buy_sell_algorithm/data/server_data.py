@@ -34,7 +34,7 @@ class server_data:
         start = self.tick
         print(start)
 
-        while(self.tick != start):
+        while(self.tick == start):
             self.live_data(True)
 
         return self.tick
