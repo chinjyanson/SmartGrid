@@ -153,7 +153,8 @@ while True:
             v_err = v_ref - va  # calculate the error in voltage
             v_err_int += v_err  # add it to the integral error
             v_err_int = saturate(v_err_int, 10000, -10000)  # saturate the integral error
-            v_pi_out = (kp * v_err) + (ki * v_err_int)  # Calculate a PI controller output
+            v_pi_out = (kp * v_err) + (
+                ki * v_err_int)  # Calculate a PI controller output
             
             pwm_out = saturate(v_pi_out, max_pwm, min_pwm)  # Saturate that PI output
             duty = int(65536 - pwm_out)  # Invert because reasons
