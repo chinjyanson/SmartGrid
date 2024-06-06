@@ -1,8 +1,7 @@
 import numpy as np
 import cvxpy as cp
-import data.server_data as data
-import predictions.train as train
-import scheduling
+import server_data_test as data
+import train_test as train
 
 def allocate_deferable_demand_greedy(deferables, predicted_buy_prices, horizon, t):
     deferable_demand = np.zeros(horizon)
@@ -53,7 +52,7 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
 
     # Allocate deferable demand using a greedy algorithm
     deferable_demand = allocate_deferable_demand_greedy(deferables, predicted_buy_prices, horizon, t)
-    print(f"  ********************************************************Deferable Demand: {deferable_demand}")
+    print(f" Deferable Demand: {deferable_demand}")
 
     # Define optimization variables
     energy_transactions = cp.Variable(horizon)

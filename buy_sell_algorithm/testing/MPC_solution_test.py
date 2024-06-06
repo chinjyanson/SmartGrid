@@ -18,7 +18,9 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
     energy_used = data_buffers['demand'][-1]
     current_buy_price = data_buffers['buy_price'][-1]
     current_sell_price = data_buffers['sell_price'][-1]
-    energy_in = energy_in / 30
+    energy_in = energy_in * 0.1 
+
+    #energy_used += scheduling.get_deferable_demand(t, data_buffers['deferables'])
 
     # Update predictions
     predicted_buy_prices[t] = current_buy_price
@@ -49,12 +51,17 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
 
     # Objective function
     profit = cp.sum(cp.multiply(neg_energy_transactions, predicted_buy_prices[t:t + horizon]) - cp.multiply(pos_energy_transactions, predicted_sell_prices[t:t + horizon]))
+    deferable_demand = 0
 
+    for ele in deferables: 
+        if ele["start"] <= t < ele["end"]:
+            deferable_demand += ele["energy"] / (ele["end"] - ele["start"])
+    
     # Constraints
     constraints = [
         storage_level[0] == storage,  # storage level currently
         solar_energy[0] == energy_in,
-        demand[0] == energy_used,  # Set initial demand to energy used
+        demand[0] == energy_used + deferable_demand,  # Set initial demand to energy used
         energy_transactions == pos_energy_transactions - neg_energy_transactions,
         storage_transactions == pos_storage_transactions - neg_storage_transactions,
         pos_energy_transactions + solar_energy - demand - neg_energy_transactions >= 0,

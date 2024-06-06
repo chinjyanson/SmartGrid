@@ -5,7 +5,8 @@ import time
 from helper_test import plot_datas, batch_up
 import sys
 from colorama import Fore, Back, Style, init
-import MPC_solution_test as opt
+import MPC_solution_test as opt1
+import MPC_solution_test2 as opt2
 import naive_solution_test as naive
 
 # Initialize colorama
@@ -128,9 +129,10 @@ class Algorithm:
         
         print("Running Ansons Code")
         # this if else statement changes the prediction horizon when tick > 50 (if horizon = 10)
-        profit, storage = opt.maximize_profit_mpc(storage, self.data_buffers, self.predictions, self.tick, 60-self.tick)
+        profit, storage = opt1.maximize_profit_mpc(storage, self.data_buffers, self.predictions, self.tick, 60-self.tick)
 
-        naive_profit, naive_storage = naive.naive_smart_grid_optimizer(self.data_buffers, self.tick, naive_storage)
+        naive_profit, naive_storage = opt2.maximize_profit_mpc(naive_storage, self.data_buffers, self.predictions, self.tick, 60-self.tick)
+        #naive_profit, naive_storage = naive.naive_smart_grid_optimizer(self.data_buffers, self.tick, naive_storage)
 
         profit_difference_tick = profit-naive_profit
 
