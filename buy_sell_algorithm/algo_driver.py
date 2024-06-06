@@ -191,10 +191,10 @@ class Algorithm:
                 print(Fore.RED + "Final tick was ", self.tick)
                 sys.exit(1)
             else:
-                time.sleep(remainder)
-                self.tick = (self.tick + 1) % 60  
+                #time.sleep(remainder)
+                #self.tick = (self.tick + 1) % 60  
 
-                #self.tick = self.serve.starting_tick()
+                self.tick = self.serve.starting_tick()
 
             
             queue.put(json.dumps(data1))
