@@ -35,6 +35,7 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
     storage_transactions = cp.Variable(horizon)
     solar_energy = cp.Variable(horizon, nonneg=True)
     demand = cp.Variable(horizon, nonneg=True)
+    deferable_demand = cp.Variable((len(deferables), horizon), nonneg=True)
     storage_level = cp.Variable(horizon + 1, nonneg=True)  # Track storage level over time
 
     # Positive and negative parts of energy transactions
@@ -49,6 +50,18 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
     # Objective function
     profit = cp.sum(cp.multiply(neg_energy_transactions, predicted_buy_prices[t:t + horizon]) - cp.multiply(pos_energy_transactions, predicted_sell_prices[t:t + horizon]))
 
+    # Constraints for deferable demands
+    constraints = []
+    for idx, ele in enumerate(deferables):
+        constraints += [
+            cp.sum(deferable_demand[idx, ele["start"]:ele["end"]]) == ele["energy"],  # Ensure total energy demand is met within the allowed window
+        ]
+
+    # Other constraints
+    constraints += [
+        storage_level[0] == storage,  # Initial storage level
+        solar_energy[0] == energy_in,  # Initial solar energy input
+        demand[0] == energy_used,  # Initial demand is the current energy used
     # Constraints
     constraints = [
         storage_level[0] == storage,  # storage level currently
@@ -62,7 +75,9 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
     ]
 
     for i in range(horizon):
+        total_demand = demand[i] + cp.sum(deferable_demand[:, i])
         constraints += [
+            total_demand <= MAX_DEMAND_CAPACITY,
             storage_level[i + 1] == storage_level[i] - storage_transactions[i],
             storage_level[i + 1] <= MAX_STORAGE_CAPACITY,
             storage_level[i + 1] >= 0,
