@@ -41,7 +41,7 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
     storage_transactions = cp.Variable(horizon)
     solar_energy = cp.Variable(horizon, nonneg=True)
     demand = cp.Variable(horizon, nonneg=True)
-    deferable_demand = cp.Variable(60, nonneg=True)
+    deferable_demand = cp.Variable((len(deferables), horizon), nonneg=True)
     storage_level = cp.Variable(horizon + 1, nonneg=True)  # Track storage level over time
 
     # Positive and negative parts of energy transactions
@@ -55,12 +55,10 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
 
     # Constraints for deferable demands
     constraints = []
-    if t == 0:
-        for ele in deferables:
-            if ele["start"] >= t:
-                constraints += [
-                    cp.sum(deferable_demand[ele["start"]-t:ele["end"]-t]) >= ele["energy"],  # Ensure total energy demand is met within the allowed window
-                ]
+    for idx, ele in enumerate(deferables):
+        constraints += [
+            cp.sum(deferable_demand[idx, ele["start"]:ele["end"]]) == ele["energy"],  # Ensure total energy demand is met within the allowed window
+        ]
 
     # Other constraints
     constraints += [
@@ -69,14 +67,12 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
         demand[0] == energy_used,  # Initial demand is the current energy used
         energy_transactions == pos_energy_transactions - neg_energy_transactions,
         storage_transactions == pos_storage_transactions - neg_storage_transactions,
-        pos_energy_transactions + solar_energy - demand - deferable_demand[0] - neg_energy_transactions >= 0,
-        energy_transactions + storage_transactions + solar_energy - demand - deferable_demand[0] >= 0,
-        solar_energy[0] - demand[0] - deferable_demand[0] <= -energy_transactions[0] - storage_transactions[0],
     ]
 
     for i in range(horizon):
+        total_demand = demand[i] + cp.sum(deferable_demand[:, i])
         constraints += [
-            demand[i] + deferable_demand[t+i] <= MAX_DEMAND_CAPACITY,
+            total_demand <= MAX_DEMAND_CAPACITY,
             storage_level[i + 1] == storage_level[i] - storage_transactions[i],
             storage_level[i + 1] <= MAX_STORAGE_CAPACITY,
             storage_level[i + 1] >= 0,
