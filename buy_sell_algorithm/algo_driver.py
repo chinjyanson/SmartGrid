@@ -1,6 +1,6 @@
 from queue import Queue 
 import time
-from predictions.utils import plot_datas, module_from_file
+from predictions.utils import plot_datas, get_sunlight
 import sys
 from colorama import Fore, Back, Style, init
 import optimization as opt
@@ -23,15 +23,16 @@ class Algorithm:
                 pop_size=60, nn_batch_size=4, parsed_data=self.serve.parsed_data)
 
         self.data_buffers = {'buy_price':[], 'sell_price':[], 'demand':[], 'sun':[]}
-        self.old_predictions = {'buy_price':[], 'sell_price':[], 'demand':[]}
-        self.predictions = {'buy_price':[], 'sell_price':[], 'demand':[]}
-        self.next_predictions = {'buy_price':[], 'sell_price':[], 'demand':[]}
+        self.old_predictions = {'buy_price':[], 'sell_price':[], 'demand':[], 'sun':[]}
+        self.predictions = {'buy_price':[], 'sell_price':[], 'demand':[], 'sun':[]}
+        self.next_predictions = {'buy_price':[], 'sell_price':[], 'demand':[], 'sun':[]}
 
         self.cycle_count = 0
         
         self.starting_tick = self.serve.starting_tick()
         self.tick = self.starting_tick
         self.data_batch_size = 15
+        self.buy_to_sell_ratio = 0.5
 
     def add_to_data_buffers(self):
         start = time.time()
@@ -61,30 +62,32 @@ class Algorithm:
                 self.trainer.histories_buffer[data_name] = previous[1:] + [most_recent]
                 self.predictions[data_name] = most_recent
                 self.old_predictions[data_name] = most_recent
+
+            self.predictions['sun'] = get_sunlight()
+            self.old_predictions['sun'] = get_sunlight()
             
         else:
             print("Current predictions are ready")
             self.old_predictions = self.predictions
-            if any([len(n) == 0 for n in self.next_predictions.values()]):
-                self.predictions = self.trainer.histories_buffer
-            else:
-                self.predictions = self.next_predictions.copy()
-
-        # empty data and next prediction buffers and add the current live values
-        self.serve.live_data()
+            self.old_predictions['sun'] = self.data_buffers['sun']
+            self.predictions = self.next_predictions.copy()
+            self.predictions['sun'] = self.data_buffers['sun']
 
         if(self.data_buffers != {'buy_price':[], 'sell_price':[], 'demand':[], 'sun':[]}):
             # previous cycle data buffers are full, we also have what we predicted in self.old_predictions
             for n, p in self.old_predictions.items():
-                plot_datas([p, self.data_buffers[n]], "Prediction of previous cycle vs Actual data", n)
-        
-        for data_name in ['buy_price', 'sell_price', 'demand']:
-            self.next_predictions[data_name] = []
-            self.data_buffers[data_name] = []
-            self.data_buffers[data_name].append(self.serve.parsed_data[data_name])
+                try:
+                    plot_datas([p, self.data_buffers[n]], "Prediction of previous cycle vs Actual data", n)
+                except:
+                    print(self.data_buffers[n], p)
 
-        self.data_buffers['sun'] = []
-        self.data_buffers['sun'].append(self.serve.parsed_data['sun'])
+        # empty data and next prediction buffers and add the current live values
+        self.serve.live_data()
+        for data_name in ['buy_price', 'sell_price', 'demand', 'sun']:
+            self.next_predictions[data_name] = []
+            self.data_buffers[data_name] = [self.serve.parsed_data[data_name]]
+
+        # self.data_buffers['sun'] = [self.serve.parsed_data['sun']]
 
         #for n, p in self.predictions.items():
         #    plot_datas([p], "Prediction", n)
@@ -109,9 +112,7 @@ class Algorithm:
             else:
                 x, y = self.tick-dist, self.tick
 
-
-            for data_name in ['buy_price', 'sell_price', 'demand']:
-
+            for data_name in ['sell_price', 'demand']:
                 if(self.next_predictions[data_name] == [] and x != 0):
                     self.next_predictions[data_name] = self.trainer.histories_buffer[data_name][-1][:x]
                 
@@ -120,6 +121,8 @@ class Algorithm:
                 assert(len(self.next_predictions[data_name]) % self.data_batch_size == 0)
 
                 print(x, y, len(self.next_predictions[data_name]))
+
+            self.next_predictions['buy_price'] = list(map(lambda x : x*self.buy_to_sell_ratio, self.next_predictions['sell_price']))
 
         return time.time()-start
 
@@ -190,6 +193,8 @@ class Algorithm:
             else:
                 time.sleep(remainder)
                 self.tick = (self.tick + 1) % 60  
+
+                #self.tick = self.serve.starting_tick()
 
             
             queue.put(json.dumps(data1))

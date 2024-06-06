@@ -3,8 +3,12 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import importlib.util
 import pickle
+import math
 from types import ModuleType
 import os
+
+SUNRISE = 15    #Sunrise ticks after start of day
+DAY_LENGTH = 30 #Ticks between sunrise and sunset
 
 """
     Useful helper functions
@@ -124,3 +128,20 @@ def batch_up(_range, width):
 
     return out
 
+def get_sunlight():
+    """
+        Original: https://github.com/edstott/ICelec50015/blob/main/app.py
+
+        Get sunlight for a tick. To be used on first cycle where we don't have data buffers
+    """
+    sunlight = []
+
+    for tick in range(60):
+        if tick < SUNRISE:
+            sunlight.append(0)
+        elif tick < SUNRISE + DAY_LENGTH:
+            sunlight.append(int(math.sin((tick-SUNRISE)*math.pi/DAY_LENGTH)*100))
+        else:
+            sunlight.append(0)
+            
+    return sunlight
