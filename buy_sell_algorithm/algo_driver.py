@@ -78,19 +78,15 @@ class Algorithm:
             for n, p in self.old_predictions.items():
                 try:
                     plot_datas([p, self.data_buffers[n]], "Prediction of previous cycle vs Actual data", n)
-                except:
-                    print(self.data_buffers[n], p)
+                except Exception as e:
+                    print(f"Exception: {e}")
+                    print(len(self.data_buffers[n]), len(p))
 
         # empty data and next prediction buffers and add the current live values
         self.serve.live_data()
         for data_name in ['buy_price', 'sell_price', 'demand', 'sun']:
             self.next_predictions[data_name] = []
             self.data_buffers[data_name] = [self.serve.parsed_data[data_name]]
-
-        # self.data_buffers['sun'] = [self.serve.parsed_data['sun']]
-
-        #for n, p in self.predictions.items():
-        #    plot_datas([p], "Prediction", n)
 
         return time.time() - start
 
@@ -120,7 +116,7 @@ class Algorithm:
 
                 assert(len(self.next_predictions[data_name]) % self.data_batch_size == 0)
 
-                print(x, y, len(self.next_predictions[data_name]))
+                print(x, y, len(self.next_predictions[data_name]), data_name)
 
             self.next_predictions['buy_price'] = list(map(lambda x : x*self.buy_to_sell_ratio, self.next_predictions['sell_price']))
 
@@ -141,7 +137,6 @@ class Algorithm:
                 self.trainer.histories_buffer[data_name] = previous[1:] + [most_recent]
                 self.predictions[data_name] = most_recent
         
-        print("Running Ansons Code")
         # this if else statement changes the prediction horizon when tick > 50 (if horizon = 10)
         profit, storage = test.maximize_profit_mpc(storage, self.data_buffers, self.predictions, self.tick, 60-self.tick)
 
@@ -194,9 +189,8 @@ class Algorithm:
                 #time.sleep(remainder)
                 #self.tick = (self.tick + 1) % 60  
 
-                self.tick = self.serve.starting_tick()
+                self.tick = self.serve.starting_tick() % 60
 
-            
             queue.put(json.dumps(data1))
             queue.put(json.dumps(data2))
 
