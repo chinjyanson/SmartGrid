@@ -27,7 +27,7 @@ class Train:
         Train models using a genetic algorithm to synthesize data if needed, and predict data in a cycle
     """
 
-    def __init__(self, elitism, mutation_prob, mutation_power, max_epochs, num_of_histories, pop_size, nn_batch_size, parsed_data) -> None:
+    def __init__(self, elitism, mutation_prob, mutation_power, max_epochs, num_of_histories, pop_size, nn_batch_size, parsed_data, conc) -> None:
         global pool
         
         self.histories_buffer = {'buy_price':[], 'sell_price':[], 'demand':[]}
@@ -44,7 +44,7 @@ class Train:
         self.elitism = elitism
         self.mutation_prob = mutation_prob
         self.mutation_power = mutation_power
-
+        self.concurrent = conc
         self.epochs = max_epochs
 
         self.pop_size = pop_size
@@ -155,25 +155,32 @@ class Train:
         """
             Train models on a set of histories and return a tuple lists of each model's fitness, and each model's prediction 
         """
-        global pool
+
+        if(self.concurrent):
+            global pool
+            
+            # concurrently
+
+            batches = [models[x:y] for x, y in self.nn_batches]
+
+            result = pool.map(self.process_batch, batches)
+
+            f, p = zip(*result)
+
+            return sum(f, []), sum(p, [])
         
-        # concurrently
-        batches = [models[x:y] for x, y in self.nn_batches]
+        else:
+            # serially
+            predictions = []
+            fitnesses = []
 
-        result = pool.map(self.process_batch, batches)
+            for x, y in self.nn_batches:
+                f, p = self.process_batch(models[x:y])
+                predictions += p
+                fitnesses += f
 
-        f, p = zip(*result)
-
-        # serially
-        """
-        for x, y in self.nn_batches:
-            p, f = self.process_batch(models[x:y], most_recent)
-            predictions += p
-            fitnesses += f
-        """
-
-        return sum(f, []), sum(p, [])
-    
+            return fitnesses, predictions
+        
     def train_on_histories(self, data_name : str) -> neural_net:
         """
             given a set of histories, and the most recent history, train to predict the cycle of the 

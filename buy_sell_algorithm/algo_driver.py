@@ -20,7 +20,7 @@ class Algorithm:
     def __init__(self) -> None:
         self.serve = server_data()
         self.trainer = Train(elitism=0.0, mutation_prob=0.08, mutation_power=0.1, max_epochs=20, num_of_histories=5, 
-                pop_size=60, nn_batch_size=4, parsed_data=self.serve.parsed_data)
+                pop_size=60, nn_batch_size=4, parsed_data=self.serve.parsed_data, conc=True)
 
         self.data_buffers = {'buy_price':[], 'sell_price':[], 'demand':[], 'sun':[]}
         self.old_predictions = {'buy_price':[], 'sell_price':[], 'demand':[], 'sun':[]}
@@ -73,6 +73,7 @@ class Algorithm:
             self.predictions = self.next_predictions.copy()
             self.predictions['sun'] = self.data_buffers['sun']
 
+        """
         if(self.data_buffers != {'buy_price':[], 'sell_price':[], 'demand':[], 'sun':[]}):
             # previous cycle data buffers are full, we also have what we predicted in self.old_predictions
             for n, p in self.old_predictions.items():
@@ -81,12 +82,12 @@ class Algorithm:
                 except Exception as e:
                     print(f"Exception: {e}")
                     print(len(self.data_buffers[n]), len(p))
+        """
 
-        # empty data and next prediction buffers and add the current live values
-        self.serve.live_data()
+        # empty data and next prediction buffers
         for data_name in ['buy_price', 'sell_price', 'demand', 'sun']:
             self.next_predictions[data_name] = []
-            self.data_buffers[data_name] = [self.serve.parsed_data[data_name]]
+            self.data_buffers[data_name] = []
 
         return time.time() - start
 
@@ -138,7 +139,7 @@ class Algorithm:
                 self.predictions[data_name] = most_recent
         
         # this if else statement changes the prediction horizon when tick > 50 (if horizon = 10)
-        profit, storage = test.maximize_profit_mpc(storage, self.data_buffers, self.predictions, self.tick, 60-self.tick)
+        profit, storage = test.maximize_profit_mpc(storage, self.data_buffers, self.predictions, self.tick, 60-self.tick, )
 
         return time.time() - start + time_taken, storage
     
@@ -166,13 +167,14 @@ class Algorithm:
                 print()
 
                 time_taken = self.new_cycle()
-                remainder = 5-time_taken
+                tt, storage = self.something_else(storage)  # new cycle should always come before something_else such that data buffers get emptied
+                time_taken += tt
+                remainder = 5-time_taken 
                 print(Fore.MAGENTA + f"Setting up new cycle took {time_taken}s", (Fore.GREEN if remainder > 1.5 else Fore.LIGHTRED_EX) + f"Window [{remainder}s]")
 
             elif((self.tick % self.data_batch_size) == 0 or (self.tick == 59)):
-                time_taken1, storage = self.something_else(storage)
-                time_taken2 = self.prepare_next()
-                time_taken = time_taken1 + time_taken2
+                time_taken, storage = self.something_else(storage)
+                time_taken += self.prepare_next()
                 remainder = 5-time_taken
                 print(Fore.YELLOW + f"Preparation and decision took {time_taken}s", (Fore.GREEN if remainder > 1.5 else Fore.LIGHTRED_EX) + f"Window [{remainder}s]")
             
