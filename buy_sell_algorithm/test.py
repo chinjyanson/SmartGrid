@@ -1,142 +1,200 @@
 import numpy as np
 import cvxpy as cp
-import time
 import data.server_data as data
-from predictions.train import Train
+import predictions.train as train
+import scheduling
 
-def maximize_profit_mpc(initial_buffer_level, max_buffer_capacity, predicted_buy_prices, predicted_sell_prices, time_step=5, horizon=10):
+class Deferables:
+    def __init__(self, start, end, energyTotal, energyDone, idx) -> None:
+        self.start = start
+        self.end = end
+        self.energyDone = energyDone
+        self.energyTotal = energyTotal
+        self.idx = idx
     
-    buffer = initial_buffer_level
+
+def parseDeferables(deferables):
+    deferablesList = []
+    for idx, ele in enumerate(deferables):
+        deferablesList.append(Deferables(ele['start'], ele['end'], ele['energy'], 0, idx))
+    return deferablesList
+
+deferable_list = []
+
+def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer, t, horizon, deferables):
+    global deferable_list
+    if deferables:
+        deferable_list = parseDeferables(deferables)
+
+    MAX_POWER = 2000000000
+    MAX_STORAGE_CAPACITY = 50
+    predicted_buy_prices = predictions_buffer['buy_price']
+    predicted_sell_prices = predictions_buffer['sell_price']
+    predicted_demand = predictions_buffer['demand']
+
+    storage = initial_storage_level
     total_profit = 0
-    n = len(predicted_buy_prices)
-    
-    for t in range(0, n - horizon, time_step):
-        start_time = time.time()
 
-        # Simulate real-time change in energy_in and energy_used
-        energy_in = get_current_energy_in()
-        energy_used = get_current_energy_used()
-        
-        # Update buffer with net input energy
-        net_input = energy_in - energy_used
-        buffer += net_input
-        buffer = min(max(buffer, 0), max_buffer_capacity)
-        
-        # Get current buy and sell prices
-        current_buy_price, current_sell_price = get_current_buy_sell_prices()
-        
-        # Define optimization variables
-        print("horizon: " + str(horizon))
-        buy_sell_energy = cp.Variable(horizon)
-        solar_energy = cp.Parameter(horizon, nonneg=True)
-        buy_energy = cp.Variable(horizon, nonneg=True)
-        sell_energy = cp.Variable(horizon, nonneg=True)
-        store_energy = cp.Variable(horizon, nonneg=True)
-        use_stored_energy = cp.Variable(horizon, nonneg=True)
-        buffer_level = cp.Variable(horizon + 1, nonneg=True)  # Track buffer level over time
-        z_buy_sell = cp.Variable(horizon, boolean=True)  # Binary variable to enforce either buy or sell
-        z_store_use = cp.Variable(horizon, boolean=True)  # Binary variable to enforce either store or use stored energy
-        
-        # Objective function
-        profit = cp.sum(cp.multiply(sell_energy, predicted_sell_prices[t:t + horizon]) - cp.multiply(buy_energy, predicted_buy_prices[t:t + horizon]))
-        
-        # Constraints
-        constraints = [
-            buffer_level[0] == buffer,  # Initial buffer level
-            buy_energy + sell_energy <= max_buffer_capacity,
-            store_energy + use_stored_energy <= max_buffer_capacity,
-            buy_energy <= z_buy_sell * max_buffer_capacity,
-            sell_energy <= (1 - z_buy_sell) * max_buffer_capacity,
-            store_energy <= z_store_use * max_buffer_capacity,
-            use_stored_energy <= (1 - z_store_use) * max_buffer_capacity
+    # Simulate real-time change
+    energy_in = data_buffers['sun'][-1]
+    energy_used = data_buffers['demand'][-1]
+    current_buy_price = data_buffers['buy_price'][-1]
+    current_sell_price = data_buffers['sell_price'][-1]
+    energy_in = energy_in * 0.1
+
+    # Update predictions
+    predicted_buy_prices[t] = current_buy_price
+    predicted_sell_prices[t] = current_sell_price
+
+    # Define optimization variables
+    energy_transactions = cp.Variable(horizon)
+    storage_transactions = cp.Variable(horizon)
+    solar_energy = cp.Variable(horizon, nonneg=True)
+    demand = cp.Variable(horizon, nonneg=True)
+    storage_level = cp.Variable(horizon + 1, nonneg=True)  # Track storage level over time
+
+    # Positive and negative parts of energy transactions
+    pos_energy_transactions = cp.Variable(horizon, nonneg=True)
+    neg_energy_transactions = cp.Variable(horizon, nonneg=True)
+    pos_storage_transactions = cp.Variable(horizon, nonneg=True)
+    neg_storage_transactions = cp.Variable(horizon, nonneg=True)
+
+    # Deferable demand variables
+    deferable_demand = [cp.Variable(horizon, nonneg=True) for _ in deferable_list]
+
+    # Objective function
+    profit = cp.sum(cp.multiply(neg_energy_transactions, predicted_buy_prices[t:t + horizon]) - cp.multiply(pos_energy_transactions, predicted_sell_prices[t:t + horizon]))
+
+    # Constraints
+    constraints = [
+        storage_level[0] == storage,  # storage level currently
+        solar_energy[0] == energy_in,
+        demand[0] == energy_used,  # Set initial demand to energy used
+        energy_transactions == pos_energy_transactions - neg_energy_transactions,
+        storage_transactions == pos_storage_transactions - neg_storage_transactions,
+        pos_energy_transactions + solar_energy - demand - neg_energy_transactions >= 0,
+        energy_transactions + storage_transactions + solar_energy - demand >= 0,
+        solar_energy[0] - demand[0] <= -energy_transactions[0] - storage_transactions[0],
+    ]
+
+    for i in range(horizon):
+        constraints += [
+            storage_level[i + 1] == storage_level[i] - storage_transactions[i],
+            storage_level[i + 1] <= MAX_STORAGE_CAPACITY,
+            storage_level[i + 1] >= 0,
+            neg_energy_transactions[i] <= storage_level[i],  # Can only sell if we have enough in the storage
+            pos_energy_transactions[i] <= MAX_STORAGE_CAPACITY - storage_level[i],  # Can only buy if we have enough storage capacity
         ]
 
-        for i in range(horizon):
-            constraints += [
-                store_energy[i] == max(0, solar_energy - energy_used - buy_energy[i]),  # Store excess solar energy
-                buffer_level[i + 1] == buffer_level[i] + store_energy[i] - use_stored_energy[i],
-                buffer_level[i + 1] <= max_buffer_capacity,
-                buffer_level[i + 1] >= 0,
-                sell_energy[i] <= buffer_level[i],  # Can only sell if we have enough in the buffer
-                use_stored_energy[i] <= buffer_level[i],  # Can only use stored energy if we have enough in the buffer
-                store_energy[i] <= buffer_level[i] + buy_energy[i] - sell_energy[i]  # Can only store if there's enough capacity in the buffer
-            ]
-        
-        # Define problem
-        problem = cp.Problem(cp.Maximize(profit), constraints)
-        
-        # Solve problem
-        problem.solve(solver=cp.CBC)  # Using CBC mixed-integer solver
-        
-        if problem.status == cp.OPTIMAL or problem.status == cp.FEASIBLE:
-            optimal_buy_energy = buy_energy.value[0]
-            optimal_sell_energy = sell_energy.value[0]
-            optimal_store_energy = store_energy.value[0]
-            optimal_use_stored_energy = use_stored_energy.value[0]
-            
-            # Update buffer and profit based on actual prices
-            buffer += optimal_store_energy - optimal_use_stored_energy + optimal_buy_energy - optimal_sell_energy
-            
-            if buy_sell_energy > 0:
-                profit += buy_sell_energy * current_buy_price
-            if buy_sell_energy < 0:
-                profit -= buy_sell_energy * current_sell_price
-            
+    for i in range(1, horizon):  # Starting from 1 since solar_energy[0] is fixed to energy_in
+        constraints += [
+            solar_energy[i] == 0,  # Worst-case scenario
+            demand[i] == predicted_demand[t + i],  # Set subsequent demands to predicted demand
+        ]
+
+    for idx in range(len(deferable_list)):
+        start, end, energy = deferable_list[idx].start, deferable_list[idx].end, deferable_list[idx].energyTotal
+        if deferable_list[idx].energyDone < energy:
+            if start - t < 0:
+                constraints += [
+                    cp.sum(deferable_demand[idx][start-t:end-t]) == energy,  # Ensure total deferable demand is met
+                ]
+            elif end - t < 0:
+                print(f" Done with constraint {idx}")
+            else:
+                constraints += [
+                    cp.sum(deferable_demand[idx][start-t:end-t]) == energy - deferable_list[idx].energyDone,  # Ensure total deferable demand is met
+                ]
+            for i in range(horizon):
+                if i < start-t or i >= end-t:
+                    constraints += [
+                        deferable_demand[idx][i] == 0  # Set deferable demand to zero outside the specified time window
+                    ]
+                else:
+                    constraints += [
+                        deferable_demand[idx][i] <= (MAX_POWER - demand[i]),  # Ensure total demand + deferable demand does not exceed max power
+                        deferable_demand[idx][i] >= 0  # Ensure non-negativity
+                    ]
 
 
-            total_profit -= optimal_buy_energy * current_buy_price
-            total_profit += optimal_sell_energy * current_sell_price
-            buffer = min(max(buffer, 0), max_buffer_capacity)
-            
-            print(f"Cycle {t//time_step + 1}:")
-            print(f"  Energy Bought: {optimal_buy_energy} kWh")
-            print(f"  Energy Sold: {optimal_sell_energy} kWh")
-            print(f"  Energy Stored: {optimal_store_energy} kWh")
-            print(f"  Energy Used from Storage: {optimal_use_stored_energy} kWh")
-            print(f"  Energy Stored in Buffer: {buffer} kWh")
-            print(f"  Energy Used: {energy_used} kWh")
-            print(f"  Solar Energy: {energy_in} kWh")
-            print(f"  Current Buy Price: {current_buy_price} £/kWh")
-            print(f"  Current Sell Price: {current_sell_price} £/kWh")
+    # Define problem
+    problem = cp.Problem(cp.Maximize(profit), constraints)
+
+    # Solve problem
+    problem.solve(solver=cp.CBC)  # Using CBC mixed-integer solver (Coin-or branch and cut)
+
+    if problem.status == cp.INFEASIBLE:
+        print("INFEASIBLE SOLUTION")
+
+        # Use naive solution if solution is infeasible
+        if energy_in >= energy_used:
+            energy_in -= energy_used
+            energy_used = 0
         else:
-            print(f"Cycle {t//time_step + 1}: Optimization failed")
-            print(problem.status)
+            energy_used -= energy_in
+            energy_in = 0
+
+        if energy_used > 0:
+            if storage >= energy_used:
+                storage -= energy_used
+                energy_used = 0
+            else:
+                energy_used -= storage
+                storage = 0
         
-        # Factor in the code time taken into the sleep time (call every 5 seconds regardless of code)
-        end_time = time.time()
-        execution_time = end_time - start_time
-        sleep_time = max(0, time_step - execution_time)
-        time.sleep(sleep_time)
-    
-    return total_profit
+        if energy_in > 0:
+            if storage + energy_in <= MAX_STORAGE_CAPACITY:
+                storage += energy_in
+            else:
+                excess_energy = storage + energy_in - MAX_STORAGE_CAPACITY
+                total_profit += excess_energy * current_sell_price
+                storage = MAX_STORAGE_CAPACITY
 
-# Example usage with mock functions for current energy
-def get_current_energy_in():
-    serve = data.server_data()
-    serve.live_sunshine()
-    area = 10
-    sun_energy = serve.parsed_data['sun']
-    solar_energy = sun_energy / area
-    return solar_energy
+        print(f" Energy In: {energy_in} kWh")
+        print(f" Energy Used: {energy_used} kWh")
+        print(f" Energy Currently in storage: {storage} kWh")
+        print(f" Predicted Demand: {predicted_demand[t:t + horizon]}")
+        print(f" Predicted Buy Prices: {predicted_buy_prices[t:t + horizon]}")
+        print(f" Predicted Sell Prices: {predicted_sell_prices[t:t + horizon]}")
 
-def get_current_energy_used():
-    serve = data.server_data()
-    serve.live_demand()
-    energy_demand= serve.parsed_data['demand']
-    return energy_demand
+    elif problem.status == cp.OPTIMAL or problem.status == cp.FEASIBLE:
+        optimal_energy_transaction = energy_transactions.value[0]   
+        optimal_storage_transaction = storage_transactions.value[0]
+        for idx in range(len(deferable_list)):
+            deferable_list[idx].energyDone += deferable_demand[idx][0].value
 
-def get_current_buy_sell_prices():
-    serve = data.server_data()
-    serve.live_prices()
-    current_buy_price = serve.parsed_data['buy_price']
-    current_sell_price = serve.parsed_data['sell_price']
-    return current_buy_price, current_sell_price
+        # Update storage and profit based on actual prices
+        if optimal_energy_transaction < 0:  
+            total_profit -= optimal_energy_transaction * current_sell_price 
+        elif optimal_energy_transaction > 0:
+            total_profit -= optimal_energy_transaction * current_buy_price
 
-train = Train()
-predicted_buy_prices = train.query_model('buy_price')
-predicted_sell_prices = train.query_model('sell_price')
-initial_buffer_level = 0
-max_buffer_capacity = 50
+        # Ensure storage is within bounds after transactions
+        storage -= optimal_storage_transaction
+        storage = min(max(storage, 0), MAX_STORAGE_CAPACITY)
 
-max_profit = maximize_profit_mpc(initial_buffer_level, max_buffer_capacity, predicted_buy_prices, predicted_sell_prices)
-print(f"Maximum Profit: {max_profit}")
+        print(f"  Energy Transaction: {optimal_energy_transaction} kWh")
+        print(f"  Storage Transaction: {optimal_storage_transaction} kWh")
+        print(f"  Energy Currently in storage: {storage} kWh")
+        print(f"  Energy Used: {energy_used} kWh")
+        print(f"  Solar Energy: {energy_in} kWh")
+        print(f"  Current Buy Price: {current_buy_price} £/kWh")
+        print(f"  Current Sell Price: {current_sell_price} £/kWh")
+        print(f" energy_transactions.value: {energy_transactions.value}")
+        print(f" storage_transactions.value: {storage_transactions.value}")
+        print(f" solar_energy: {solar_energy.value}")
+        print(f" demand: {demand.value}")
+        print(f" storage: {storage_level.value}")
+        print(f" Predicted Demand: {predicted_demand[t:t + horizon]}")
+        print(f" Predicted Buy Prices: {predicted_buy_prices[t:t + horizon]}")
+        print(f" Predicted Sell Prices: {predicted_sell_prices[t:t + horizon]}")
+        for idx in range(len(deferable_list)):
+            print(f"  Deferable Demand {idx}: {deferable_demand[idx].value}")
+        for idx in range(len(deferable_list)):
+            print(f"  Deferables: {deferable_list[idx].start}, {deferable_list[idx].end}, {deferable_list[idx].energyTotal}, {deferable_list[idx].energyDone}")
+
+    else:
+        print(f"   Optimization failed")
+        print(problem.status)
+
+    return total_profit, storage

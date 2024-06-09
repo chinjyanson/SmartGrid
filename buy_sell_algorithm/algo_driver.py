@@ -26,6 +26,7 @@ class Algorithm:
         self.old_predictions = {'buy_price':[], 'sell_price':[], 'demand':[], 'sun':[]}
         self.predictions = {'buy_price':[], 'sell_price':[], 'demand':[], 'sun':[]}
         self.next_predictions = {'buy_price':[], 'sell_price':[], 'demand':[], 'sun':[]}
+        self.defs = None
 
         self.cycle_count = 0
         
@@ -87,6 +88,10 @@ class Algorithm:
             self.next_predictions[data_name] = []
             self.data_buffers[data_name] = [self.serve.parsed_data[data_name]]
 
+        self.serve.deferables()
+        self.defs = self.serve.parsed_data['deferables']
+
+
         # self.data_buffers['sun'] = [self.serve.parsed_data['sun']]
 
         #for n, p in self.predictions.items():
@@ -140,10 +145,15 @@ class Algorithm:
                 previous, most_recent = self.trainer.get_synthetic_data(data_name)
                 self.trainer.histories_buffer[data_name] = previous[1:] + [most_recent]
                 self.predictions[data_name] = most_recent
+
+            self.serve.deferables()
+            self.defs = self.serve.parsed_data['deferables']
+        else:
+            self.defs = None
         
         print("Running Ansons Code")
         # this if else statement changes the prediction horizon when tick > 50 (if horizon = 10)
-        profit, storage = test.maximize_profit_mpc(storage, self.data_buffers, self.predictions, self.tick, 60-self.tick)
+        profit, storage = test.maximize_profit_mpc(storage, self.data_buffers, self.predictions, self.tick, 60-self.tick, self.defs)
 
         return time.time() - start + time_taken, storage
     
