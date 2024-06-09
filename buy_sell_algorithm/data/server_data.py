@@ -77,7 +77,7 @@ class server_data:
                         self.parsed_data['buy_price'] = r["buy_price"]
                         self.parsed_data['sell_price'] = r["sell_price"]
                     else:
-                        self.parsed_data['demand'] = r["demand"]
+                        self.parsed_data['demand'] = float(r["demand"])*5.0
 
                 self.cache = self.parsed_data
 

@@ -6,3 +6,7 @@ aiohttp==3.9.5
 colorama==0.4.6
 cvxpy==1.5.1
 cylp==0.92.2
+asyncio==3.4.3
+pulp==2.8.0
+urllib3==2.2.1
+
