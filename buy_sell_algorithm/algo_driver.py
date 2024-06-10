@@ -30,7 +30,12 @@ class Algorithm:
 
         self.cycle_count = 0
         
-        self.starting_tick, _ = self.serve.starting_tick()
+        self.starting_tick, _ = self.serve.starting_tick(0)
+
+        if(self.serve.error):
+            print(Back.CYAN + "Tick value got is incorrect, start again")
+
+        self.window_allowance = 0.5
         self.tick = self.starting_tick
         self.data_batch_size = 15
         self.buy_to_sell_ratio = 0.5
@@ -130,6 +135,8 @@ class Algorithm:
 
         time_taken = self.add_to_data_buffers()
 
+        print(Fore.MAGENTA + "Adding to data buffers took ", time_taken)
+
         if(self.trainer.first_call()):
             self.serve.set_historical_prices()
             self.trainer.change_historical_data(self.serve.parsed_data)
@@ -184,16 +191,16 @@ class Algorithm:
                 remainder = 5-time_taken
                 print(Fore.BLUE + f"Something else and adding to data buffers took {time_taken}s", (Fore.GREEN if remainder > 1.5 else Fore.LIGHTRED_EX) + f"Window [{remainder}s]")
 
-            if(remainder < 0):
+            if(remainder < -self.window_allowance):
                 print(Fore.RED + "Something took too much time ", time_taken)
                 print(Fore.RED + "Final tick was ", self.tick)
                 sys.exit(1)
             else:
-                self.tick, old_tick = self.serve.starting_tick()
+                self.tick, old_tick = self.serve.starting_tick(self.tick)
 
                 if(self.tick == old_tick):
-                    print(Fore.LIGHTRED_EX + "Got an error when getting live tick, tick is changed after sleep")
-                    if(remainder - self.serve.live_timeout > 0):
+                    print(Back.GREEN + "Got an error when getting live tick, tick is changed after sleep")
+                    if(remainder - self.serve.live_timeout > -self.window_allowance):
                         time.sleep(remainder - self.serve.live_timeout)
                         self.tick = (self.tick + 1) % 60 
                     else:

@@ -25,20 +25,23 @@ class server_data:
         self.data_points = 60
         self.parsed_data = {'buy_price':[], 'demand':[], 'sell_price':[], 'sun':[], 'deferables':[]}
         self.tick = 0
-        self.live_timeout = 1
+        self.live_timeout = 0.5
 
         # fill cache with most recent history in case live data fails on first call
         self.init_cache_and_history()
 
-    def starting_tick(self):
+    def starting_tick(self, previous):
         self.live_data(True)  # call this just to get live tick
 
         start = self.tick
 
-        while(self.tick == start and not self.error):
-            self.live_data(True)
+        if(start == previous):
+            while(self.tick == start and not self.error):
+                self.live_data(True)
 
-        return self.tick, start
+            return self.tick, start
+        else:
+            return start, previous
 
     def init_cache_and_history(self):
         self.set_historical_prices()

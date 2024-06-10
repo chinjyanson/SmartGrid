@@ -51,7 +51,10 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
     neg_storage_transactions = cp.Variable(horizon, nonneg=True)
 
     # Objective function
-    profit = cp.sum(cp.multiply(neg_energy_transactions, predicted_sell_prices[t:t + horizon]) - cp.multiply(pos_energy_transactions, predicted_buy_prices[t:t + horizon]))
+    try:
+        profit = cp.sum(cp.multiply(neg_energy_transactions, predicted_sell_prices[t:t + horizon]) - cp.multiply(pos_energy_transactions, predicted_buy_prices[t:t + horizon]))
+    except:
+        print(pos_energy_transactions, neg_energy_transactions)
 
     # Constraints for deferable demands
     constraints = []
