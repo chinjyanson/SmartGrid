@@ -30,12 +30,12 @@ class Algorithm:
 
         self.cycle_count = 0
         
-        self.starting_tick, _ = self.serve.starting_tick(0)
+        self.starting_tick = self.serve.starting_tick(0)
 
         if(self.serve.error):
             print(Back.CYAN + "Tick value got is incorrect, start again")
 
-        self.window_allowance = 0.5
+        self.window_allowance = 4
         self.tick = self.starting_tick
         self.data_batch_size = 15
         self.buy_to_sell_ratio = 0.5
@@ -173,9 +173,10 @@ class Algorithm:
 
                 print("Cycle ", self.cycle_count)
                 print()
-
+                
+                # new cycle should always come before something_else such that data buffers get emptied
                 time_taken = self.new_cycle()
-                tt, storage = self.something_else(storage)  # new cycle should always come before something_else such that data buffers get emptied
+                tt, storage = self.something_else(storage)
                 time_taken += tt
                 remainder = 5-time_taken 
                 print(Fore.MAGENTA + f"Setting up new cycle took {time_taken}s", (Fore.GREEN if remainder > 1.5 else Fore.LIGHTRED_EX) + f"Window [{remainder}s]")
@@ -196,7 +197,8 @@ class Algorithm:
                 print(Fore.RED + "Final tick was ", self.tick)
                 sys.exit(1)
             else:
-                self.tick, old_tick = self.serve.starting_tick(self.tick)
+                old_tick = self.tick
+                self.tick = self.serve.starting_tick(self.tick)
 
                 if(self.tick == old_tick):
                     print(Back.GREEN + "Got an error when getting live tick, tick is changed after sleep")
@@ -206,6 +208,12 @@ class Algorithm:
                     else:
                         print(Fore.RED + "Something took too much time ", time_taken + self.serve.live_timeout)
                         sys.exit(1)
+
+                diff = old_tick - self.tick
+                
+                if(not(diff == -1 or diff == 59 or diff == self.tick)):
+                    print(Back.LIGHTYELLOW_EX + f"Tick mismatch old: {old_tick}, new: {self.tick}")
+                    self.tick = old_tick
 
             queue.put(json.dumps(data1))
             queue.put(json.dumps(data2))

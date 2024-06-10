@@ -25,7 +25,7 @@ class server_data:
         self.data_points = 60
         self.parsed_data = {'buy_price':[], 'demand':[], 'sell_price':[], 'sun':[], 'deferables':[]}
         self.tick = 0
-        self.live_timeout = 0.5
+        self.live_timeout = 1
 
         # fill cache with most recent history in case live data fails on first call
         self.init_cache_and_history()
@@ -39,9 +39,9 @@ class server_data:
             while(self.tick == start and not self.error):
                 self.live_data(True)
 
-            return self.tick, start
+            return self.tick
         else:
-            return start, previous
+            return start
 
     def init_cache_and_history(self):
         self.set_historical_prices()
@@ -105,21 +105,29 @@ class server_data:
     def set_historical_prices(self):
         url = self.get_url('/yesterday')
         http = self.other_pools[url]
-        response = http.request('GET', url, headers=self.headers)
 
-        self.json = response.json()
+        try:
+            response = http.request('GET', url, headers=self.headers)
 
-        for s in ['buy_price', 'demand', 'sell_price']:
-            self.parsed_data[s] = [self.json[i][s] for i in range(self.data_points)]
+            self.json = response.json()
+
+            for s in ['buy_price', 'demand', 'sell_price']:
+                self.parsed_data[s] = [self.json[i][s] for i in range(self.data_points)]
+        except:
+            print("Timeout when getting historical data")
     
     def deferables(self):
         url = self.get_url('/deferables')
         http = self.other_pools[url]
-        response = http.request('GET', url, headers=self.headers)
 
-        self.json = response.json()
+        try:
+            response = http.request('GET', url, headers=self.headers)
 
-        self.parsed_data['deferables'] = self.json  
+            self.json = response.json()
+
+            self.parsed_data['deferables'] = self.json  
+        except:
+            print("Timeout when getting deferables")
         
 if (__name__ == "__main__"):
     serve = server_data()
