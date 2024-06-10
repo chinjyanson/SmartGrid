@@ -194,7 +194,7 @@ class Algorithm:
                 if(self.tick == old_tick):
                     print(Fore.LIGHTRED_EX + "Got an error when getting live tick, tick is changed after sleep")
                     if(remainder - self.serve.live_timeout > 0):
-                        time.sleep(remainder)
+                        time.sleep(remainder - self.serve.live_timeout)
                         self.tick = (self.tick + 1) % 60 
                     else:
                         print(Fore.RED + "Something took too much time ", time_taken + self.serve.live_timeout)
