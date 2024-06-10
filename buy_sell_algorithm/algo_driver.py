@@ -27,6 +27,7 @@ class Algorithm:
         self.predictions = {'buy_price':[], 'sell_price':[], 'demand':[], 'sun':[]}
         self.next_predictions = {'buy_price':[], 'sell_price':[], 'demand':[], 'sun':[]}
         self.defs = None
+        self.defs = None
 
         self.cycle_count = 0
         
@@ -92,6 +93,10 @@ class Algorithm:
             self.data_buffers[data_name] = []
 =======
             self.data_buffers[data_name] = [self.serve.parsed_data[data_name]]
+
+        self.serve.deferables()
+        self.defs = self.serve.parsed_data['deferables']
+
 
         self.serve.deferables()
         self.defs = self.serve.parsed_data['deferables']
