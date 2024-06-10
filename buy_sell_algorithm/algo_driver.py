@@ -9,6 +9,7 @@ from data.server_data import server_data
 import naive_solution as naive
 import json
 import test3 as test
+from typing import Dict
 
 # Initialize colorama
 init(autoreset=True)
@@ -19,17 +20,17 @@ init(autoreset=True)
 class Algorithm:
     def __init__(self) -> None:
         self.serve = server_data()
-        self.trainer = Train(elitism=0.0, mutation_prob=0.08, mutation_power=0.1, max_epochs=20, num_of_histories=5, 
-                pop_size=60, nn_batch_size=4, parsed_data=self.serve.parsed_data, conc=True)
+        self.trainer = Train(elitism=0.2, mutation_prob=0.08, mutation_power=0.1, max_epochs=20, num_of_histories=5, 
+                pop_size=60, nn_batch_size=15, parsed_data=self.serve.parsed_data, conc=True)
 
-        self.data_buffers = {'buy_price':[], 'sell_price':[], 'demand':[], 'sun':[]}
-        self.old_predictions = {'buy_price':[], 'sell_price':[], 'demand':[], 'sun':[]}
-        self.predictions = {'buy_price':[], 'sell_price':[], 'demand':[], 'sun':[]}
-        self.next_predictions = {'buy_price':[], 'sell_price':[], 'demand':[], 'sun':[]}
+        self.data_buffers : Dict[str, list[float]] = {'buy_price':[], 'sell_price':[], 'demand':[], 'sun':[]}
+        self.old_predictions : Dict[str, list[float]] = {'buy_price':[], 'sell_price':[], 'demand':[], 'sun':[]}
+        self.predictions : Dict[str, list[float]] = {'buy_price':[], 'sell_price':[], 'demand':[], 'sun':[]}
+        self.next_predictions : Dict[str, list[float]] = {'buy_price':[], 'sell_price':[], 'demand':[], 'sun':[]}
 
         self.cycle_count = 0
         
-        self.starting_tick = self.serve.starting_tick()
+        self.starting_tick, _ = self.serve.starting_tick()
         self.tick = self.starting_tick
         self.data_batch_size = 15
         self.buy_to_sell_ratio = 0.5
@@ -188,10 +189,16 @@ class Algorithm:
                 print(Fore.RED + "Final tick was ", self.tick)
                 sys.exit(1)
             else:
-                #time.sleep(remainder)
-                #self.tick = (self.tick + 1) % 60  
+                self.tick, old_tick = self.serve.starting_tick()
 
-                self.tick = self.serve.starting_tick() % 60
+                if(self.tick == old_tick):
+                    print(Fore.LIGHTRED_EX + "Got an error when getting live tick, tick is changed after sleep")
+                    if(remainder - self.serve.live_timeout > 0):
+                        time.sleep(remainder)
+                        self.tick = (self.tick + 1) % 60 
+                    else:
+                        print(Fore.RED + "Something took too much time ", time_taken + self.serve.live_timeout)
+                        sys.exit(1)
 
             queue.put(json.dumps(data1))
             queue.put(json.dumps(data2))

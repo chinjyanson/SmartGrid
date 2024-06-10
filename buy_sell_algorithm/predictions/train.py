@@ -143,7 +143,12 @@ class Train:
 
             _mse = mse(self.most_recent, prediction)
 
-            if(_mse):
+            try:
+                assert(type(_mse) == np.float64)
+            except AssertionError:
+                print(_mse, type(_mse))
+
+            if(_mse != 0):
                 fitnesses.append(1 / _mse)
             else:
                 fitnesses.append(100000)
@@ -231,7 +236,7 @@ class Train:
 
         return pop.models[best_model_index]
 
-    def query_model(self, data_name : str, start_index : int, end_index : int, most_recent : list[float]) -> list[int] | None:
+    def query_model(self, data_name : str, start_index : int, end_index : int, most_recent : list[float]) -> list[float]:
         """
         - this should be called at the beginning of each cycle to predict values for whole cycle
         - it takes some time:
@@ -270,6 +275,5 @@ class Train:
         else:
             print("Training on this data not implemented yet")
             sys.exit(1)
-            return None
-   
+
 
