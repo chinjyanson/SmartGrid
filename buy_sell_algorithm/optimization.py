@@ -4,7 +4,27 @@ import data.server_data as data
 import predictions.train as train
 import scheduling
 
-def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer, t, horizon):
+class Deferables:
+    def __init__(self, start, end, energyTotal, energyDone, idx) -> None:
+        self.start = start
+        self.end = end
+        self.energyTotal = energyTotal
+        self.energyDone = energyDone
+        self.idx = idx
+
+def parseDeferables(deferables):
+    deferablesList = []
+    for idx, ele in enumerate(deferables):
+        deferablesList.append(Deferables(ele['start'], ele['end'], ele['energy'], 0, idx))
+    return deferablesList
+
+deferable_list = []
+
+def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer, t, horizon, deferables):
+
+    global deferable_list
+    if deferables:
+        deferable_list = parseDeferables(deferables)
 
     MAX_STORAGE_CAPACITY = 50
     predicted_buy_prices = predictions_buffer['buy_price']
@@ -27,11 +47,6 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
     predicted_buy_prices[t] = current_buy_price
     predicted_sell_prices[t] = current_sell_price
 
-    serve = data.server_data()
-    serve.deferables()
-    deferables = serve.parsed_data['deferables']
-    print(deferables)
-
     print(f"  Get Energy In: {energy_in} kWh")
     print(f"  Get Energy Used: {energy_used} kWh")
     print(f"  Get Buy Price: {current_buy_price} £/kWh")
@@ -52,10 +67,6 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
 
     # Objective function
     profit = cp.sum(cp.multiply(neg_energy_transactions, predicted_buy_prices[t:t + horizon]) - cp.multiply(pos_energy_transactions, predicted_sell_prices[t:t + horizon]))
-
-    for ele in deferables: 
-        if ele["start"] <= t < ele["end"]:
-            demand += ele["energy"] / (ele["end"] - ele["start"])
     
     # Constraints
     constraints = [
@@ -83,6 +94,11 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
             solar_energy[i] == 0,  # Worst-case scenario
             demand[i] == predicted_demand[t + i],  # Set subsequent demands to predicted demand
         ]
+
+    for idx in range(len(deferable_list)): 
+        start, end, energy = deferable_list[idx].start, deferable_list[idx].end, deferable_list[idx].energyTotal
+        if start <= t < end:
+            demand += energy / (end - start)
 
     # Define problem
     problem = cp.Problem(cp.Maximize(profit), constraints)

@@ -24,6 +24,10 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
     if deferables:
         deferable_list = parseDeferables(deferables)
 
+    if t == 0:
+        for idx in range(len(deferable_list)):
+            deferable_list[idx].energyDone = 0
+
     MAX_POWER = 40
     MAX_STORAGE_CAPACITY = 50
     predicted_buy_prices = predictions_buffer['buy_price']
@@ -53,15 +57,18 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
     # Positive and negative parts of energy transactions
     pos_energy_transactions = cp.Variable(horizon, nonneg=True)
     neg_energy_transactions = cp.Variable(horizon, nonneg=True)
+    pos_storage_transactions = cp.Variable(horizon, nonneg=True)
+    neg_storage_transactions = cp.Variable(horizon, nonneg=True)
 
-    # Deferable demand variables
+    # Deferable demand variables and slack variables
     deferable_demand = [cp.Variable(horizon, nonneg=True) for _ in deferable_list]
-
-    # Deferable demand variables
-    deferable_demand = [cp.Variable(horizon, nonneg=True) for _ in deferables]
+    penalty_deferable = [cp.Variable(horizon, nonneg=True) for _ in deferable_list]
 
     # Objective function
-    profit = cp.sum(cp.multiply(neg_energy_transactions, predicted_sell_prices[t:t + horizon]) - cp.multiply(pos_energy_transactions, predicted_buy_prices[t:t + horizon]))
+    profit = cp.sum(cp.multiply(neg_energy_transactions, predicted_buy_prices[t:t + horizon]) - cp.multiply(pos_energy_transactions, predicted_sell_prices[t:t + horizon]))
+    penalty_factor = 100.0  # Adjust based on importance of meeting deferable demands
+    penalty_term = cp.sum([cp.sum(penalty_deferable[idx]) for idx in range(len(deferable_list))])
+    profit -= penalty_term * penalty_factor
 
     # Constraints
     constraints = [
@@ -69,19 +76,20 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
         solar_energy[0] == energy_in,
         demand[0] == energy_used,
         energy_transactions == pos_energy_transactions - neg_energy_transactions,
-        pos_energy_transactions + solar_energy - demand - deferable_demand[0][0] - deferable_demand[1][0] - deferable_demand[2][0]- neg_energy_transactions >= 0,
-        # storage_transactions == storage_level[:-1] - storage_level[1:],
-        # energy_transactions + storage_transactions + solar_energy - demand >= 0,
-        solar_energy[0] - demand[0]- deferable_demand[0][0] - deferable_demand[1][0] - deferable_demand[2][0]  <= -energy_transactions[0] - storage_transactions[0],
+        storage_transactions == pos_storage_transactions - neg_storage_transactions,
+        energy_transactions + storage_transactions + solar_energy - demand - sum(deferable_demand[idx][0] for idx in range(len(deferable_list))) >= 0,
+        solar_energy[0] - demand[0] - sum(deferable_demand[idx][0] for idx in range(len(deferable_list))) <= -energy_transactions[0] - storage_transactions[0], 
+        pos_energy_transactions + solar_energy - demand - sum(deferable_demand[idx][0] for idx in range(len(deferable_list))) - neg_energy_transactions >= 0,
     ]
 
     for i in range(horizon):
-        total_demand = demand[i] + cp.sum(deferable_demand[:, i])
         constraints += [
+            storage_level[i + 1] == storage_level[i] - storage_transactions[i],
             storage_level[i + 1] <= MAX_STORAGE_CAPACITY,
             storage_level[i + 1] >= 0,
             neg_energy_transactions[i] <= storage_level[i],
             pos_energy_transactions[i] <= MAX_STORAGE_CAPACITY - storage_level[i],
+            solar_energy[i] >= 0,
         ]
 
     for i in range(1, horizon):
@@ -92,38 +100,24 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
 
     for idx, deferable in enumerate(deferable_list):
         start = max(deferable.start - t, 0)
-        end = max(deferable.end - t, 0)
+        end = min(deferable.end - t, horizon)
         energy_needed = deferable.energyTotal - deferable.energyDone
 
         constraints += [
             cp.sum(deferable_demand[idx][start:end]) == energy_needed
         ]
-        for i in range(horizon):
-            if i < start or i >= end:
-                constraints += [
-                    deferable_demand[idx][i] == 0
-                ]
-            else:
-                constraints += [
-                    deferable_demand[0][i] + deferable_demand[1][i] + deferable_demand[2][i] <= (MAX_POWER - demand[i]),
-                ]
 
-    for idx, ele in enumerate(deferables):
-        start, end, energy = ele['start'], ele['end'], ele['energy']
-        constraints += [
-            cp.sum(deferable_demand[idx][start:end]) == energy,  # Ensure total deferable demand is met
-        ]
-        for i in range(horizon):
-            if i < start or i >= end:
-                constraints += [
-                    deferable_demand[idx][i] == 0  # Set deferable demand to zero outside the specified time window
-                ]
-            else:
-                constraints += [
-                    deferable_demand[idx][i] <= (MAX_POWER - demand[i]),  # Ensure total demand + deferable demand does not exceed max power
-                    deferable_demand[idx][i] >= 0  # Ensure non-negativity
-                ]
-
+        for i in range(start, end):
+            time_remaining = end - i
+            penalty_multiplier = 1 / time_remaining  # Increase penalty as deadline approaches
+            min_energy_fulfilled = energy_needed / (end - start) * 0.8  # Ensure minimum energy allocation
+            constraints += [
+                deferable_demand[idx][i] >= min_energy_fulfilled,
+                deferable_demand[idx][i] <= MAX_POWER - demand[i],
+                penalty_deferable[idx][i] >= energy_needed / (end - start) - deferable_demand[idx][i],  # Penalty for not meeting demand
+                penalty_deferable[idx][i] >= 0  # Penalty must be non-negative
+            ]
+            profit -= penalty_multiplier * penalty_deferable[idx][i] * penalty_factor  # Time-dependent penalty
 
     # Define problem
     problem = cp.Problem(cp.Maximize(profit), constraints)
@@ -163,6 +157,9 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
         print(f" Predicted Demand: {predicted_demand[t:t + horizon]}")
         print(f" Predicted Buy Prices: {predicted_buy_prices[t:t + horizon]}")
         print(f" Predicted Sell Prices: {predicted_sell_prices[t:t + horizon]}")
+        for idx in range(len(deferable_list)):
+            print(f"  Deferables: {deferable_list[idx].start}, {deferable_list[idx].end}, {deferable_list[idx].energyTotal}, {deferable_list[idx].energyDone}")
+
 
     elif problem.status == cp.OPTIMAL or problem.status == cp.FEASIBLE:
         optimal_energy_transaction = energy_transactions.value[0]
@@ -172,9 +169,9 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
 
         # Update storage and profit based on actual prices
         if optimal_energy_transaction < 0:
-            total_profit -= optimal_energy_transaction * current_sell_price
-        elif optimal_energy_transaction > 0:
             total_profit -= optimal_energy_transaction * current_buy_price
+        elif optimal_energy_transaction > 0:
+            total_profit -= optimal_energy_transaction * current_sell_price
 
         # Ensure storage is within bounds after transactions
         storage -= optimal_storage_transaction
@@ -200,6 +197,7 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
         for idx in range(len(deferable_list)):
             print(f"  Deferables: {deferable_list[idx].start}, {deferable_list[idx].end}, {deferable_list[idx].energyTotal}, {deferable_list[idx].energyDone}")
 
+        print(f"total profit: {total_profit}")
     else:
         print(f"Optimization failed")
         print(problem.status)
