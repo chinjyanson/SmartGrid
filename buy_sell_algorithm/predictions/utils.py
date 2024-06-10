@@ -17,7 +17,7 @@ DAY_LENGTH = 30 #Ticks between sunrise and sunset
 def pad(array:list[int]) -> int:
     return [0]+array+[0]
 
-def mse(a:float, b:float) -> float:
+def mse(a:list[float], b:list[float]) -> float:
     """
         Mean squared error
     """
