@@ -9,6 +9,7 @@ from data.server_data import server_data
 import naive_solution as naive
 import json
 import test3 as test
+from typing import Dict
 
 # Initialize colorama
 init(autoreset=True)
@@ -19,18 +20,23 @@ init(autoreset=True)
 class Algorithm:
     def __init__(self) -> None:
         self.serve = server_data()
-        self.trainer = Train(elitism=0.0, mutation_prob=0.08, mutation_power=0.1, max_epochs=20, num_of_histories=5, 
-                pop_size=60, nn_batch_size=4, parsed_data=self.serve.parsed_data, conc=True)
+        self.trainer = Train(elitism=0.2, mutation_prob=0.08, mutation_power=0.1, max_epochs=20, num_of_histories=5, 
+                pop_size=60, nn_batch_size=15, parsed_data=self.serve.parsed_data, conc=True)
 
-        self.data_buffers = {'buy_price':[], 'sell_price':[], 'demand':[], 'sun':[]}
-        self.old_predictions = {'buy_price':[], 'sell_price':[], 'demand':[], 'sun':[]}
-        self.predictions = {'buy_price':[], 'sell_price':[], 'demand':[], 'sun':[]}
-        self.next_predictions = {'buy_price':[], 'sell_price':[], 'demand':[], 'sun':[]}
+        self.data_buffers : Dict[str, list[float]] = {'buy_price':[], 'sell_price':[], 'demand':[], 'sun':[]}
+        self.old_predictions : Dict[str, list[float]] = {'buy_price':[], 'sell_price':[], 'demand':[], 'sun':[]}
+        self.predictions : Dict[str, list[float]] = {'buy_price':[], 'sell_price':[], 'demand':[], 'sun':[]}
+        self.next_predictions : Dict[str, list[float]] = {'buy_price':[], 'sell_price':[], 'demand':[], 'sun':[]}
         self.defs = None
-        
+
         self.cycle_count = 0
         
-        self.starting_tick = self.serve.starting_tick()
+        self.starting_tick = self.serve.starting_tick(0)
+
+        if(self.serve.error):
+            print(Back.CYAN + "Tick value got is incorrect, start again")
+
+        self.window_allowance = 4
         self.tick = self.starting_tick
         self.data_batch_size = 15
         self.buy_to_sell_ratio = 0.5
@@ -139,6 +145,8 @@ class Algorithm:
 
         time_taken = self.add_to_data_buffers()
 
+        print(Fore.MAGENTA + "Adding to data buffers took ", time_taken)
+
         if(self.trainer.first_call()):
             self.serve.set_historical_prices()
             self.trainer.change_historical_data(self.serve.parsed_data)
@@ -185,9 +193,10 @@ class Algorithm:
 
                 print("Cycle ", self.cycle_count)
                 print()
-
+                
+                # new cycle should always come before something_else such that data buffers get emptied
                 time_taken = self.new_cycle()
-                tt, storage, total_profit = self.something_else(storage, total_profit)  # new cycle should always come before something_else such that data buffers get emptied
+                tt, storage = self.something_else(storage)
                 time_taken += tt
                 remainder = 5-time_taken 
                 print(Fore.MAGENTA + f"Setting up new cycle took {time_taken}s", (Fore.GREEN if remainder > 1.5 else Fore.LIGHTRED_EX) + f"Window [{remainder}s]")
@@ -203,15 +212,28 @@ class Algorithm:
                 remainder = 5-time_taken
                 print(Fore.BLUE + f"Something else and adding to data buffers took {time_taken}s", (Fore.GREEN if remainder > 1.5 else Fore.LIGHTRED_EX) + f"Window [{remainder}s]")
 
-            if(remainder < 0):
+            if(remainder < -self.window_allowance):
                 print(Fore.RED + "Something took too much time ", time_taken)
                 print(Fore.RED + "Final tick was ", self.tick)
                 sys.exit(1)
             else:
-                #time.sleep(remainder)
-                #self.tick = (self.tick + 1) % 60  
+                old_tick = self.tick
+                self.tick = self.serve.starting_tick(self.tick)
 
-                self.tick = self.serve.starting_tick() % 60
+                if(self.tick == old_tick):
+                    print(Back.GREEN + "Got an error when getting live tick, tick is changed after sleep")
+                    if(remainder - self.serve.live_timeout > -self.window_allowance):
+                        time.sleep(remainder - self.serve.live_timeout)
+                        self.tick = (self.tick + 1) % 60 
+                    else:
+                        print(Fore.RED + "Something took too much time ", time_taken + self.serve.live_timeout)
+                        sys.exit(1)
+
+                diff = old_tick - self.tick
+                
+                if(not(diff == -1 or diff == 59 or diff == self.tick)):
+                    print(Back.LIGHTYELLOW_EX + f"Tick mismatch old: {old_tick}, new: {self.tick}")
+                    self.tick = old_tick
 
             queue.put(json.dumps(data1))
             queue.put(json.dumps(data2))

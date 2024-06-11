@@ -143,7 +143,12 @@ class Train:
 
             _mse = mse(self.most_recent, prediction)
 
-            if(_mse):
+            try:
+                assert(type(_mse) == np.float64)
+            except AssertionError:
+                print(_mse, type(_mse))
+
+            if(_mse != 0):
                 fitnesses.append(1 / _mse)
             else:
                 fitnesses.append(100000)
@@ -191,6 +196,7 @@ class Train:
         most_recent_pop = None
 
         file_name = os.path.join(self.saved_pop_path, data_name+".pop")
+        
         old_pop = get_population(file_name)
 
         if(old_pop):
@@ -199,12 +205,10 @@ class Train:
         else:
             pop = Population(6, pop_size=self.pop_size, input_nodes=self.num_of_histories, output_nodes=1, mutation_prob=self.mutation_prob, 
                             elitism=self.elitism, mutation_power=self.mutation_power)
-            
+        
             print("Started from random population")
 
         for epoch in range(self.epochs):
-            print("Epoch: ", epoch+1)
-
             fitnesses, predictions = self.train_models(pop.models)
             pop.fitnesses = fitnesses
 
@@ -222,16 +226,13 @@ class Train:
             most_recent_pop = pop
             pop = Population(old_pop=pop)
             pop.elitism = (epoch+1 / self.epochs)
-        
+    
         save_population(most_recent_pop, file_name)   
-
         self.data_fitnesses[data_name] = best_fitness
-
-        # plot_datas([best_pred, most_recent], "Comparing most recent actual with prediction", "Data", start_index, end_index)
 
         return pop.models[best_model_index]
 
-    def query_model(self, data_name : str, start_index : int, end_index : int, most_recent : list[float]) -> list[int] | None:
+    def query_model(self, data_name : str, start_index : int, end_index : int, most_recent : list[float]) -> list[float]:
         """
         - this should be called at the beginning of each cycle to predict values for whole cycle
         - it takes some time:
@@ -270,6 +271,5 @@ class Train:
         else:
             print("Training on this data not implemented yet")
             sys.exit(1)
-            return None
-   
+
 
