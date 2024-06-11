@@ -5,6 +5,9 @@ import importlib.util
 import pickle
 import math
 from types import ModuleType
+import json
+from threading import Lock
+from typing import Dict
 import os
 
 SUNRISE = 15    #Sunrise ticks after start of day
@@ -145,6 +148,36 @@ def get_sunlight():
             sunlight.append(0)
             
     return sunlight
+
+def init_frontend_file():
+    try:
+        with open(json_path, "w") as f:
+            json.dump({"tcp": "", "algo": ""}, f)
+    except:
+        print("Error while creating front-end file")
+
+lock = Lock()
+project_dir = os.getcwd()
+json_path = os.path.join(project_dir, "react-front-end", "data.json")
+
+def add_data_to_frontend_file(source : str, data : Dict):
+    """
+        pass source ("tcp" or "algo") 
+        pass the data you want to be displayed on front end in Python dict
+    """
+    with lock:  # only one thread can access this at any one time
+        if(source == "tcp" or source == "algo"):
+            try:
+                with open(json_path, "r+") as f:
+                    d = json.load(f)
+                    d[source] = data
+                    f.truncate(0) # make file size 0, effectively clearing the file
+                    f.seek(0) # move cursor to beginning of file to overwrite
+                    json.dump(d, f)
+            except:
+                print("Error while writing to file")
+        else:
+            print("Use `tcp` for data from tcp server and `algo` for data from algorithm")
 
 
 if __name__ == "__main__":
