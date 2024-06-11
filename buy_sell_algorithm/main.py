@@ -25,7 +25,7 @@ def main():
     algo_thread.join()
     tcp_thread.join()
 
-def generate_json():
+def generate_json(data):
     json_path = os.path.join(project_dir, "react-front-end", "data.json")
 
     # Data to be written to the JSON file
