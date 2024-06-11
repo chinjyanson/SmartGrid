@@ -30,9 +30,16 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
 
     MAX_POWER = 30
     MAX_STORAGE_CAPACITY = 50
-    predicted_buy_prices = predictions_buffer['buy_price']
-    predicted_sell_prices = predictions_buffer['sell_price']
+    predicted_buy = predictions_buffer['buy_price']
+    predicted_sell = predictions_buffer['sell_price']
     predicted_demand = predictions_buffer['demand']
+    predicted_buy_prices = []
+    predicted_sell_prices = []
+
+    for ele in predicted_buy:
+        predicted_buy_prices.append(ele/100)
+    for ele in predicted_sell:
+        predicted_sell_prices.append(ele/100)
 
     storage = initial_storage_level
     total_profit = 0
@@ -40,12 +47,12 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
     # Simulate real-time change
     energy_in = data_buffers['sun'][-1] * 0.1
     energy_used = data_buffers['demand'][-1]
-    current_buy_price = data_buffers['buy_price'][-1]
-    current_sell_price = data_buffers['sell_price'][-1]
+    current_buy_price = data_buffers['buy_price'][-1] /100
+    current_sell_price = data_buffers['sell_price'][-1] /100
 
     # Update predictions
-    predicted_buy_prices[t] = current_buy_price
-    predicted_sell_prices[t] = current_sell_price
+    predicted_buy_prices[t] = current_buy_price 
+    predicted_sell_prices[t] = current_sell_price 
     predicted_sun = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 20, 30, 40, 49, 58, 66, 74, 80, 86, 91, 95, 97, 99, 100, 99, 97, 95, 91, 86, 80, 74, 66, 58, 49, 40, 30, 20, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
     # Define optimization variables
