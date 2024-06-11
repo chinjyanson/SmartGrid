@@ -196,7 +196,7 @@ class Algorithm:
                 
                 # new cycle should always come before something_else such that data buffers get emptied
                 time_taken = self.new_cycle()
-                tt, storage = self.something_else(storage)
+                tt, storage, total_profit = self.something_else(storage, total_profit)
                 time_taken += tt
                 remainder = 5-time_taken 
                 print(Fore.MAGENTA + f"Setting up new cycle took {time_taken}s", (Fore.GREEN if remainder > 1.5 else Fore.LIGHTRED_EX) + f"Window [{remainder}s]")
