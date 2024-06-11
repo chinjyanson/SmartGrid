@@ -218,16 +218,23 @@ class Algorithm:
                 sys.exit(1)
             else:
                 old_tick = self.tick
-                self.tick = self.serve.starting_tick(self.tick)
+                self.tick = self.serve.starting_tick(old_tick)
 
                 if(self.tick == old_tick):
+                    remainder -= self.serve.live_timeout
+                    time_taken += self.serve.live_timeout
+
                     print(Back.GREEN + "Got an error when getting live tick, tick is changed after sleep")
-                    if(remainder - self.serve.live_timeout > -self.window_allowance):
-                        time.sleep(remainder - self.serve.live_timeout)
+                    if(remainder > -self.window_allowance):
+                        time.sleep(remainder)
                         self.tick = (self.tick + 1) % 60 
                     else:
-                        print(Fore.RED + "Something took too much time ", time_taken + self.serve.live_timeout)
+                        print(Fore.RED + "Something took too much time ", time_taken)
                         sys.exit(1)
+
+                if (remainder < 0):
+                    # must have used the window allowace
+                    print(Back.LIGHTBLUE_EX + f"Next tick will lose out on {-remainder} seconds due to previous using window allowance")
 
                 diff = old_tick - self.tick
                 
