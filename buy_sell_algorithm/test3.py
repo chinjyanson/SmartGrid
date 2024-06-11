@@ -28,7 +28,7 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
         for idx in range(len(deferable_list)):
             deferable_list[idx].energyDone = 0
 
-    MAX_POWER = 40
+    MAX_POWER = 30
     MAX_STORAGE_CAPACITY = 50
     predicted_buy_prices = predictions_buffer['buy_price']
     predicted_sell_prices = predictions_buffer['sell_price']
@@ -46,6 +46,7 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
     # Update predictions
     predicted_buy_prices[t] = current_buy_price
     predicted_sell_prices[t] = current_sell_price
+    predicted_sun = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 20, 30, 40, 49, 58, 66, 74, 80, 86, 91, 95, 97, 99, 100, 99, 97, 95, 91, 86, 80, 74, 66, 58, 49, 40, 30, 20, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
     # Define optimization variables
     energy_transactions = cp.Variable(horizon)
@@ -94,7 +95,7 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
 
     for i in range(1, horizon):
         constraints += [
-            solar_energy[i] == 0,
+            solar_energy[i] == predicted_sun[t + i]/10,
             demand[i] == predicted_demand[t + i],
         ]
 

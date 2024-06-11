@@ -145,3 +145,7 @@ def get_sunlight():
             sunlight.append(0)
             
     return sunlight
+
+
+if __name__ == "__main__":
+    print(get_sunlight())
