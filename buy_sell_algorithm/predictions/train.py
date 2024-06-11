@@ -141,6 +141,14 @@ class Train:
             prediction = self.make_prediction(model)
             predictions.append(prediction)
 
+            try:
+                assert(isinstance(self.most_recent, list))
+                assert(isinstance(prediction, list))
+            except:
+                print("[ERROR] Inputs to MSE are wrong")
+                print(type(self.most_recent))
+                print(type(prediction))
+
             _mse = mse(self.most_recent, prediction)
 
             try:

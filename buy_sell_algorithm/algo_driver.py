@@ -94,16 +94,10 @@ class Algorithm:
         # empty data and next prediction buffers
         for data_name in ['buy_price', 'sell_price', 'demand', 'sun']:
             self.next_predictions[data_name] = []
-            self.data_buffers[data_name] = [self.serve.parsed_data[data_name]]
+            self.data_buffers[data_name] = []
 
         self.serve.deferables()
         self.defs = self.serve.parsed_data['deferables']
-
-
-        # self.data_buffers['sun'] = [self.serve.parsed_data['sun']]
-
-        #for n, p in self.predictions.items():
-        #    plot_datas([p], "Prediction", n)
 
         return time.time() - start
 
@@ -191,7 +185,6 @@ class Algorithm:
             if(self.tick == 0):
                 self.cycle_count += 1
 
-                print("Cycle ", self.cycle_count)
                 print()
                 
                 # new cycle should always come before something_else such that data buffers get emptied
@@ -199,17 +192,20 @@ class Algorithm:
                 tt, storage, total_profit = self.something_else(storage, total_profit)
                 time_taken += tt
                 remainder = 5-time_taken 
+                print("Cycle ", self.cycle_count)
                 print(Fore.MAGENTA + f"Setting up new cycle took {time_taken}s", (Fore.GREEN if remainder > 1.5 else Fore.LIGHTRED_EX) + f"Window [{remainder}s]")
 
             elif((self.tick % self.data_batch_size) == 0 or (self.tick == 59)):
                 time_taken, storage, total_profit = self.something_else(storage, total_profit)
                 time_taken += self.prepare_next()
                 remainder = 5-time_taken
+                print("Cycle ", self.cycle_count)
                 print(Fore.YELLOW + f"Preparation and decision took {time_taken}s", (Fore.GREEN if remainder > 1.5 else Fore.LIGHTRED_EX) + f"Window [{remainder}s]")
             
             else:
                 time_taken, storage, total_profit = self.something_else(storage, total_profit)
                 remainder = 5-time_taken
+                print("Cycle ", self.cycle_count)
                 print(Fore.BLUE + f"Something else and adding to data buffers took {time_taken}s", (Fore.GREEN if remainder > 1.5 else Fore.LIGHTRED_EX) + f"Window [{remainder}s]")
 
             if(remainder < -self.window_allowance):
