@@ -3,6 +3,7 @@ from concurrent.futures import ThreadPoolExecutor
 from queue import Queue 
 from threading import Thread
 import json
+from buy_sell_algorithm.predictions.utils import add_data_to_frontend_file
 
 class Tcp_server:
     def __init__(self) -> None:
@@ -36,6 +37,8 @@ class Tcp_server:
             _data = json.loads(data)
 
             print(_data)
+            # send data to front end file
+            add_data_to_frontend_file("tcp", _data)
 
             try:
                 socket = self.picos[_data["type"]]
