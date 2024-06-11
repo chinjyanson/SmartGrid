@@ -5,7 +5,8 @@ import time
 from helper_test import plot_datas, batch_up
 import sys
 from colorama import Fore, Back, Style, init
-import MPC_solution_test as opt
+import MPC_solution_test as opt1
+import MPC_solution_test2 as opt2
 import naive_solution_test as naive
 
 # Initialize colorama
@@ -23,6 +24,7 @@ class Algorithm:
         self.next_predictions = {'buy_price':[], 'sell_price':[], 'demand':[]}
 
         self.cycle_count = 0
+        self.defs = 0
         
         self.starting_tick = self.serve.starting_tick()
         self.tick = self.starting_tick
@@ -75,6 +77,8 @@ class Algorithm:
 
         # for n, p in self.predictions.items():
         #     plot_datas([p], "Prediction", n)
+        self.serve.deferables()
+        self.defs = self.serve.parsed_data['deferables']
 
         return time.time() - start
 
@@ -125,12 +129,16 @@ class Algorithm:
                 previous, most_recent = self.trainer.get_synthetic_data(data_name)
                 self.trainer.histories_buffer[data_name] = previous[1:] + [most_recent]
                 self.predictions[data_name] = most_recent
-        
+            self.serve.deferables()
+            self.defs = self.serve.parsed_data['deferables']
+        else: 
+            self.defs = None
         print("Running Ansons Code")
         # this if else statement changes the prediction horizon when tick > 50 (if horizon = 10)
-        profit, storage = opt.maximize_profit_mpc(storage, self.data_buffers, self.predictions, self.tick, 60-self.tick)
+        profit, storage = opt1.maximize_profit_mpc(storage, self.data_buffers, self.predictions, self.tick, 60-self.tick, self.defs)
 
-        naive_profit, naive_storage = naive.naive_smart_grid_optimizer(self.data_buffers, self.tick, naive_storage)
+        naive_profit, naive_storage = opt2.maximize_profit_mpc(naive_storage, self.data_buffers, self.predictions, self.tick, 60-self.tick, self.defs)
+        #naive_profit, naive_storage = naive.naive_smart_grid_optimizer(self.data_buffers, self.tick, naive_storage)
 
         profit_difference_tick = profit-naive_profit
 

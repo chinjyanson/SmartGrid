@@ -27,6 +27,7 @@ class Algorithm:
         self.old_predictions : Dict[str, list[float]] = {'buy_price':[], 'sell_price':[], 'demand':[], 'sun':[]}
         self.predictions : Dict[str, list[float]] = {'buy_price':[], 'sell_price':[], 'demand':[], 'sun':[]}
         self.next_predictions : Dict[str, list[float]] = {'buy_price':[], 'sell_price':[], 'demand':[], 'sun':[]}
+        self.defs = None
 
         self.cycle_count = 0
         
@@ -93,7 +94,16 @@ class Algorithm:
         # empty data and next prediction buffers
         for data_name in ['buy_price', 'sell_price', 'demand', 'sun']:
             self.next_predictions[data_name] = []
-            self.data_buffers[data_name] = []
+            self.data_buffers[data_name] = [self.serve.parsed_data[data_name]]
+
+        self.serve.deferables()
+        self.defs = self.serve.parsed_data['deferables']
+
+
+        # self.data_buffers['sun'] = [self.serve.parsed_data['sun']]
+
+        #for n, p in self.predictions.items():
+        #    plot_datas([p], "Prediction", n)
 
         return time.time() - start
 
@@ -129,7 +139,7 @@ class Algorithm:
 
         return time.time()-start
 
-    def something_else(self, storage):
+    def something_else(self, storage, total_profit):
         start = time.time()
         # do something else, must include filling data buffers
 
@@ -145,11 +155,20 @@ class Algorithm:
                 previous, most_recent = self.trainer.get_synthetic_data(data_name)
                 self.trainer.histories_buffer[data_name] = previous[1:] + [most_recent]
                 self.predictions[data_name] = most_recent
+
+            self.serve.deferables()
+            self.defs = self.serve.parsed_data['deferables']
+        else:
+            self.defs = None
         
         # this if else statement changes the prediction horizon when tick > 50 (if horizon = 10)
-        profit, storage = test.maximize_profit_mpc(storage, self.data_buffers, self.predictions, self.tick, 60-self.tick, )
+        profit, storage = test.maximize_profit_mpc(storage, self.data_buffers, self.predictions, self.tick, 60-self.tick, self.defs)
 
-        return time.time() - start + time_taken, storage
+        total_profit += profit
+
+        print(f" ********************************************{total_profit}*******************************************")
+
+        return time.time() - start + time_taken, storage, total_profit
     
     def driver(self, queue : Queue):
         if(self.starting_tick != 0):
@@ -162,6 +181,7 @@ class Algorithm:
         print("Started at tick ", self.starting_tick)
         remainder = 0
         storage = 0
+        total_profit = 0
 
         data1 = {"energy":134, "sell":True, "buy":False, "type":"cell"}
         data2 = {"energy":40, "sell":False, "buy":False, "type":"flywheel"}
@@ -182,13 +202,13 @@ class Algorithm:
                 print(Fore.MAGENTA + f"Setting up new cycle took {time_taken}s", (Fore.GREEN if remainder > 1.5 else Fore.LIGHTRED_EX) + f"Window [{remainder}s]")
 
             elif((self.tick % self.data_batch_size) == 0 or (self.tick == 59)):
-                time_taken, storage = self.something_else(storage)
+                time_taken, storage, total_profit = self.something_else(storage, total_profit)
                 time_taken += self.prepare_next()
                 remainder = 5-time_taken
                 print(Fore.YELLOW + f"Preparation and decision took {time_taken}s", (Fore.GREEN if remainder > 1.5 else Fore.LIGHTRED_EX) + f"Window [{remainder}s]")
             
             else:
-                time_taken, storage = self.something_else(storage)
+                time_taken, storage, total_profit = self.something_else(storage, total_profit)
                 remainder = 5-time_taken
                 print(Fore.BLUE + f"Something else and adding to data buffers took {time_taken}s", (Fore.GREEN if remainder > 1.5 else Fore.LIGHTRED_EX) + f"Window [{remainder}s]")
 

@@ -1,5 +1,3 @@
-import requests
-import sys
 import aiohttp
 import asyncio
 import time
@@ -21,7 +19,7 @@ class server_data:
         self.headers = {'Accept-Encoding':'gzip'}
         self.other_pools = {u:PoolManager(timeout=Timeout(connect=0.5, read=3)) for u in map(self.get_url, ['/deferables', '/yesterday'])}
         self.cache = {'buy_price':0, 'demand':0, 'sell_price':0, 'sun':0, 'deferables':0}
-        self.event_loop = asyncio.get_event_loop()
+        # self.event_loop = asyncio.get_event_loop()
 
         self.data_points = 60
         self.parsed_data = {'buy_price':[], 'demand':[], 'sell_price':[], 'sun':[], 'deferables':[]}
@@ -36,8 +34,8 @@ class server_data:
         start = self.tick
         print(start)
 
-        while(self.tick != start):
-            self.live_data()
+        while(self.tick == start):
+            self.live_data(True)
 
         return self.tick
 
@@ -79,7 +77,7 @@ class server_data:
                         self.parsed_data['buy_price'] = r["buy_price"]
                         self.parsed_data['sell_price'] = r["sell_price"]
                     else:
-                        self.parsed_data['demand'] = r["demand"]
+                        self.parsed_data['demand'] = float(r["demand"])*5.0
 
                 self.cache = self.parsed_data
 
@@ -97,7 +95,7 @@ class server_data:
             await self.close_session()
 
     def live_data(self, tick=False):
-        return self.event_loop.run_until_complete(self.get_live(tick))
+        return asyncio.run(self.get_live(tick))
 
     def set_historical_prices(self):
         url = self.get_url('/yesterday')
