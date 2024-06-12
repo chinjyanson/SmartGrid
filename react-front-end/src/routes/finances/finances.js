@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Line, Bar } from 'react-chartjs-2';
 import 'chart.js/auto';
 
-const Money = () => {
+const Finances = () => {
   const [topChartData, setTopChartData] = useState(null);
   const [bottomChartData, setBottomChartData] = useState(null);
   const [daysFilter, setDaysFilter] = useState(90);
@@ -57,6 +57,7 @@ const Money = () => {
   };
 
   useEffect(() => {
+    document.title = "Finances | Smart Grid";
     fetchData();
   }, []);
 
@@ -117,7 +118,7 @@ const Money = () => {
         <div className="w-1/2 text-white ml-8">
           <h2 className="text-xl mb-4">Analysis</h2>
           <p className="mb-4">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum vel dolor et diam gravida tempus.
+            {/* Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum vel dolor et diam gravida tempus.
             Integer ac interdum urna. Quisque pulvinar, nulla eu tristique vehicula, lorem eros aliquet turpis,
             vel luctus nisl mauris et turpis.
           </p>
@@ -127,7 +128,7 @@ const Money = () => {
           </p>
           <p className="mb-4">
             Suspendisse potenti. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas.
-            Fusce vehicula massa nec magna cursus, a tincidunt odio efficitur.
+            Fusce vehicula massa nec magna cursus, a tincidunt odio efficitur. */}
           </p>
         </div>
       </div>
@@ -135,4 +136,4 @@ const Money = () => {
   );
 };
 
-export default Money;
+export default Finances;

@@ -32,9 +32,9 @@ async function addEnergyLog(energyLogInfo) {
     const addedAt = Math.floor(Date.now() / 1000);
     const expiresAt = addedAt + (500 * 60);
 
-    if (!dayID || !avgSunIrradiance || !energyProduced) {
-        return utils.buildResponse(401, 'Invalid energy log');
-    }
+    // if (!dayID || !avgSunIrradiance || !energyProduced) {
+    //     return utils.buildResponse(401, 'Invalid energy log');
+    // }
 
     if (typeof dayID !== 'number' || typeof avgSunIrradiance !== 'number' || typeof energyProduced !== 'number') {
         return utils.buildResponse(401, 'Invalid energy log');

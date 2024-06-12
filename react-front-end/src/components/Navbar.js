@@ -6,7 +6,7 @@ import { ResetLocation } from '../helpers/reset-location.js';
 const Navbar = () => {
   return (
     <header>
-      <nav className="navbar h-16 w-full bg-gray-800 text-white flex items-center justify-start">
+      <nav className="navbar h-20 w-full bg-gray-800 text-white flex items-center justify-start">
         <NavLink
           onClick={() => {
             ResetLocation();
@@ -32,12 +32,12 @@ const Navbar = () => {
             </Link>
           </li>
           <li>
-            <Link to="/money" className="text-lg">
+            <Link to="/finances" className="text-lg">
               Finances
             </Link>
           </li>
           <li>
-            <Link to="/usage" className="text-lg">
+            <Link to="/consumption" className="text-lg">
               Consumption
             </Link>
           </li>

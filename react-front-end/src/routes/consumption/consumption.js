@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Line } from 'react-chartjs-2';
 import 'chart.js/auto';
-import Battery from '../../components/Battery'; // Adjust the path as necessary
+import Battery from '../../components/battery.js'; // Adjust the path as necessary
 
-const Usage = () => {
+const Consumption = () => {
   const [usageData, setUsageData] = useState(null);
   const [productionData, setProductionData] = useState(null);
   const [daysFilter, setDaysFilter] = useState(90);
@@ -73,6 +73,7 @@ const Usage = () => {
   };
 
   useEffect(() => {
+    document.title = 'Consumption | Smart Grid';
     fetchUsageData();
     fetchProductionData();
   }, []);
@@ -135,7 +136,7 @@ const Usage = () => {
           <h2 className="text-2xl mb-4">Your Green Score</h2>
           <h2 className="text-6xl font-bold mb-8">{bigNumber}</h2>
           <div className="text-left w-full px-4">
-            <p className="mb-4">
+            {/* <p className="mb-4">
               Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum vel dolor et diam gravida tempus.
               Integer ac interdum urna. Quisque pulvinar, nulla eu tristique vehicula, lorem eros aliquet turpis,
               vel luctus nisl mauris et turpis.
@@ -143,13 +144,13 @@ const Usage = () => {
             <p className="mb-4">
               Donec id augue vel nisl dignissim pharetra. Curabitur eget vehicula purus. Aliquam erat volutpat.
               Phasellus eu est at libero ullamcorper fringilla. Etiam a eros at ex convallis scelerisque.
-            </p>
+            </p> */}
           </div>
-          <Battery level={batteryLevel} label="Battery Storage Level" /> {/* Include the Battery component with a label */}
+          {/* <Battery level={batteryLevel} label="Battery Storage Level" /> Include the Battery component with a label */}
         </div>
       </div>
     </div>
   );
 };
 
-export default Usage;
+export default Consumption;

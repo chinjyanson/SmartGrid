@@ -30,9 +30,9 @@ async function addUsageLog(usageLogInfo){
     const addedAt = Math.floor(Date.now() / 1000);
     const expiresAt = addedAt + (500 * 60);
 
-    if (!dayID || !energyUsed) {
-        return utils.buildResponse(401, 'Invalid usage log');
-    }
+    // if (!dayID || !energyUsed) {
+    //     return utils.buildResponse(401, 'Invalid usage log');
+    // }
 
     if (typeof dayID !== 'number' || typeof energyUsed !== 'number') {
         return utils.buildResponse(401, 'Invalid usage log');
