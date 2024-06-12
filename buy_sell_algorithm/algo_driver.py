@@ -10,6 +10,8 @@ import naive_solution as naive
 import json
 import test3 as test
 from typing import Dict
+import requests
+
 
 # Initialize colorama
 init(autoreset=True)
@@ -41,6 +43,38 @@ class Algorithm:
         self.data_batch_size = 15
         self.buy_to_sell_ratio = 0.5
 
+        self.trade_url = "https://evuc3y0h1g.execute-api.eu-north-1.amazonaws.com/PROD/accessTradeLog"
+        self.energy_url = "https://evuc3y0h1g.execute-api.eu-north-1.amazonaws.com/PROD/accessEnergyLog"
+
+    def trade_api_post(self, day, earnings, energysold, energybought):
+        data = {
+            "dayID": day,
+            "earnings": earnings,
+            "energySold": energysold,
+            "energyBought": energybought
+        }
+
+        try:
+            response = requests.post(self.trade_url, json=data)
+            response.raise_for_status()  # Raise an exception if the request was unsuccessful
+            print("POST request successful!")
+        except requests.exceptions.RequestException as e:
+            print("POST reques failed:", e)
+
+    def energy_api_post(self, day, demand, energyProduced):
+        data = {
+            "dayID": day,
+            "energyUsed": demand,
+            "energyProduced": energyProduced
+        }
+
+        try:
+            response = requests.post(self.energy_url, json=data)
+            response.raise_for_status()  # Raise an exception if the request was unsuccessful
+            print("POST request successful!")
+        except requests.exceptions.RequestException as e:
+            print("POST request failed:", e)
+        
     def add_to_data_buffers(self):
         start = time.time()
         self.serve.live_data()
@@ -156,12 +190,24 @@ class Algorithm:
             self.defs = None
         
         # this if else statement changes the prediction horizon when tick > 50 (if horizon = 10)
-        profit, storage = test.maximize_profit_mpc(storage, self.data_buffers, self.predictions, self.tick, 60-self.tick, self.defs)
+        profit, storage, demand, energy_produced, buysell = test.maximize_profit_mpc(storage, self.data_buffers, self.predictions, self.tick, 60-self.tick, self.defs)
 
         total_profit += profit
 
         print(f" ********************************************{total_profit}*******************************************")
 
+        if self.tick == 50:
+            if buysell > 0:
+                energy_sold = 0
+                energy_bought = buysell
+            else:
+                energy_sold = buysell
+                energy_bought = 0
+            self.trade_api_post(self.cycle_count, total_profit, energy_sold, energy_bought) #energy sold,energy bought
+            self.energy_api_post(self.cycle_count, demand, energy_produced) #energy used, energy produced
+            total_profit = 0
+
+            
         return time.time() - start + time_taken, storage, total_profit
     
     def driver(self, queue : Queue):
@@ -180,7 +226,7 @@ class Algorithm:
         data1 = {"energy":134, "sell":True, "buy":False, "type":"cell"}
         data2 = {"energy":40, "sell":False, "buy":False, "type":"flywheel"}
 
-        while True:
+        while True: 
             print(f"Current tick {self.tick}")
             if(self.tick == 0):
                 self.cycle_count += 1
