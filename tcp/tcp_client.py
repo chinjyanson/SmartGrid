@@ -3,6 +3,7 @@ import time
 import network
 import machine
 from credentials import SSID, PASSWORD
+import ujson
 
 """
     Functions to allow SMPS to make TCP connection to server, and send and recieve messages
@@ -29,14 +30,16 @@ def connect_to_server(name):
     """
         Connect the PICO to server (laptop)
     """
-    server_ip = '172.20.10.2'
-    server_port = 9998
+    server_ip = '172.20.10.3'
+    server_port = 9999
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((server_ip, server_port))
 
     print("Connected to server")
     
     s.send(name.encode('utf-8'))
+        
+    time.sleep(2)
 
     return s
 
@@ -47,10 +50,14 @@ def get_message(socket):
     #message = "Hello from Pico"  # send particular message beased on which PICO this one is
     #socket.send(message.encode('utf-8'))
     response = socket.recv(1024)
-    # print(f"Received from server: {response.decode('utf-8')}")
+    print(f"Received from server: {response.decode('utf-8')}")
 
-    return response.decode('utf-8')
+    return ujson.loads(response.decode('utf-8'))
 
+def send_message(socket, message):
+    socket.send(str(message).encode('utf-8'))
+    
+    
 if __name__ == "__main__":
     led.toggle()
     connect()
