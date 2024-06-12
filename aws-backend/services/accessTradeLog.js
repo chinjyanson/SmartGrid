@@ -48,9 +48,9 @@ async function addTradeLog(tradeLogInfo){
         TableName: tradeTable,
         Item: {
             dayID: dayID,
-            energyBought: energyBought,
-            energySold: energySold,
-            earnings: earnings,
+            energyBought: Math.round(energyBought * 100) / 100,
+            energySold: Math.round(energySold * 100) / 100,
+            earnings: Math.round(earnings * 100) / 100,
             addedAt: addedAt,
             expiresAt: expiresAt
         }

@@ -1,3 +1,5 @@
+// This is now deprecated, it has been combined with the energy service in the same file.
+
 const AWS = require('aws-sdk');
 const utils = require('utils');
 
