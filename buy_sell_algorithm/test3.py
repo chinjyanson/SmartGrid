@@ -215,4 +215,11 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
         print(f"Optimization failed")
         print(problem.status)
 
-    return total_profit, storage
+    #sum(deferable_demand[idx][0].value for idx in range(len(deferable_list)))
+    if deferable_demand[0][0].value == None:
+        for idx in range(len(deferable_list)):
+            energy_used += (deferable_list[idx].energyTotal - deferable_list[idx].energyDone) / (deferable_list[idx].end - deferable_list[idx].start)
+    else:
+        energy_used += sum(deferable_demand[idx][0].value for idx in range(len(deferable_list)))
+
+    return total_profit, storage, energy_used, energy_in, optimal_energy_transaction
