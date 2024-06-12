@@ -62,7 +62,7 @@ def plot_datas(datas, title, ylabel, start_index=0, end_index=60)->None:
     set of data on the same graph needs to be put into a list
     """
 
-    times = [i*5 for i in range(start_index, end_index)]
+    times = [i*5 for i in range(start_index, max(list(map(lambda x : len(x), datas))))]
     colors = cm.rainbow(np.linspace(0, 1, len(datas)))
 
     plt.title(title)

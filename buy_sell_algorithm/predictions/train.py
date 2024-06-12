@@ -27,7 +27,7 @@ class Train:
         Train models using a genetic algorithm to synthesize data if needed, and predict data in a cycle
     """
 
-    def __init__(self, elitism, mutation_prob, mutation_power, max_epochs, num_of_histories, pop_size, nn_batch_size, parsed_data, conc) -> None:
+    def __init__(self, elitism, mutation_prob, mutation_power, max_epochs, num_of_histories, pop_size, nn_batch_size, conc) -> None:
         global pool
         
         self.histories_buffer = {'buy_price':[], 'sell_price':[], 'demand':[]}
@@ -40,6 +40,8 @@ class Train:
         self.saved_pop_path = os.path.join(train_root, "saved_populations")
         self.start_index = 0
         self.end_index = 0
+        self.current_data_name = ""
+        self.max_demand = 5 # assume 5, refine after getting histories
 
         self.elitism = elitism
         self.mutation_prob = mutation_prob
@@ -53,22 +55,22 @@ class Train:
         self.nn_batches = batch_up((0, self.pop_size), self.nn_batch_size)
         pool = Pool(processes=len(self.nn_batches))
 
-        self.parsed_data = parsed_data
         self.most_recent = None
 
         os.makedirs(self.saved_pop_path, exist_ok=True)
 
-    def change_historical_data(self, hd):
-        self.parsed_data = hd
+    def add_to_histories_buffer(self, most_recent_histories):
+        for k,v in self.histories_buffer.items():
+            self.histories_buffer[k] = v[1:] + [most_recent_histories[k]]
 
     def first_call(self) -> bool:
         return any([b==[] for b in self.histories_buffer.values()])
 
-    def get_synthetic_data(self, data_type : str) -> tuple[list[list], list]:
+    def get_synthetic_data(self, data_type : str, parsed_data) -> tuple[list[list], list]:
         """
             return a tuple of actual data and a set of synthetic data derived from this actual data
         """
-        h_data = self.parsed_data[data_type]
+        h_data = parsed_data[data_type]
 
         print("Training to synthesize similar data from one previous cycle")
 
@@ -129,6 +131,10 @@ class Train:
                     print(e)
                     sys.exit(1)  
 
+            if(self.current_data_name == "demand"):
+                # demand takes current tick into account when making predictions
+                input.append(j // 60)
+
             prediction.append(model.query(input)[0][0])
 
         return prediction
@@ -140,14 +146,6 @@ class Train:
         for model in batch:
             prediction = self.make_prediction(model)
             predictions.append(prediction)
-
-            try:
-                assert(isinstance(self.most_recent, list))
-                assert(isinstance(prediction, list))
-            except:
-                print("[ERROR] Inputs to MSE are wrong")
-                print(type(self.most_recent))
-                print(type(prediction))
 
             _mse = mse(self.most_recent, prediction)
 
@@ -194,7 +192,7 @@ class Train:
 
             return fitnesses, predictions
         
-    def train_on_histories(self, data_name : str) -> neural_net:
+    def train_on_histories(self) -> neural_net:
         """
             given a set of histories, and the most recent history, train to predict the cycle of the 
             most recent history
@@ -203,7 +201,7 @@ class Train:
         best_fitness = None
         most_recent_pop = None
 
-        file_name = os.path.join(self.saved_pop_path, data_name+".pop")
+        file_name = os.path.join(self.saved_pop_path, self.current_data_name+".pop")
         
         old_pop = get_population(file_name)
 
@@ -211,7 +209,11 @@ class Train:
             pop = Population(old_pop=old_pop)
             print("Loaded previous best population")
         else:
-            pop = Population(6, pop_size=self.pop_size, input_nodes=self.num_of_histories, output_nodes=1, mutation_prob=self.mutation_prob, 
+            input_nodes = self.num_of_histories
+            if(self.current_data_name == "demand"):
+                input_nodes = self.num_of_histories + 1  # account for tick when working on demand
+
+            pop = Population(6, pop_size=self.pop_size, input_nodes=input_nodes, output_nodes=1, mutation_prob=self.mutation_prob, 
                             elitism=self.elitism, mutation_power=self.mutation_power)
         
             print("Started from random population")
@@ -236,7 +238,7 @@ class Train:
             pop.elitism = (epoch+1 / self.epochs)
     
         save_population(most_recent_pop, file_name)   
-        self.data_fitnesses[data_name] = best_fitness
+        self.data_fitnesses[self.current_data_name] = best_fitness
 
         return pop.models[best_model_index]
 
@@ -261,16 +263,20 @@ class Train:
             self.end_index = end_index
             self.training_histories = previous
             self.most_recent = most_recent
+            self.current_data_name = data_name
 
             # train model to predict the most recent cycle given a set of previous cycles
-            best_model = self.train_on_histories(data_name)
+            best_model = self.train_on_histories()
 
             prediction = []
 
             for j in range(start_index, end_index):
                 input = []
                 for i in range(self.num_of_histories):
-                    input.append(self.histories_buffer[data_name][i][j])   
+                    input.append(self.histories_buffer[data_name][i][j]) 
+
+                if(data_name == "demand"):
+                    input.append(j // 60)  
 
                 prediction.append(best_model.query(input)[0][0])
 

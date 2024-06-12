@@ -3,12 +3,13 @@ from concurrent.futures import ThreadPoolExecutor
 from queue import Queue 
 from threading import Thread
 import json
+import time
 from buy_sell_algorithm.predictions.utils import add_data_to_frontend_file
 
 class Tcp_server:
     def __init__(self) -> None:
         # using a thread pool to avoid endless thread creation
-        self.port = 9998
+        self.port = 9999
         self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server.bind(('0.0.0.0', self.port))
         self.picos = {"flywheel": None, "solar":None, "cell":None}
@@ -18,7 +19,6 @@ class Tcp_server:
             message = client_socket.recv(1024).decode('utf-8')
 
             print(f"[{str(client_socket.getpeername())}] {message}")
-            client_socket.send("Message received".encode('utf-8'))
 
             if(message == "cell" or message == "solar" or message == "flywheel"):
                 self.picos[message] = client_socket
@@ -31,6 +31,8 @@ class Tcp_server:
     def handle_client(self, client_socket, queue):
         """Function to handle client connections."""
         self.init_pico(client_socket)
+
+        time.sleep(2)
 
         while True:
             data = queue.get()
@@ -45,10 +47,15 @@ class Tcp_server:
 
                 if(socket):
                     socket.send(data.encode('utf-8'))
+
             except KeyError:
                 print("Message type in data unknown")
 
-        client_socket.close()
+            message = client_socket.recv(1024).decode('utf-8')
+
+            for name, socket in self.picos:
+                if(socket == client_socket):
+                    print(f"Mesage {message} sent from {name}")
 
     def start(self, queue : Queue):
         self.server.listen(6)

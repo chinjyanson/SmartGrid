@@ -23,7 +23,7 @@ class Algorithm:
     def __init__(self) -> None:
         self.serve = server_data()
         self.trainer = Train(elitism=0.2, mutation_prob=0.08, mutation_power=0.1, max_epochs=20, num_of_histories=5, 
-                pop_size=60, nn_batch_size=15, parsed_data=self.serve.parsed_data, conc=True)
+                pop_size=60, nn_batch_size=15, conc=True)
 
         self.data_buffers : Dict[str, list[float]] = {'buy_price':[], 'sell_price':[], 'demand':[], 'sun':[]}
         self.old_predictions : Dict[str, list[float]] = {'buy_price':[], 'sell_price':[], 'demand':[], 'sun':[]}
@@ -33,7 +33,7 @@ class Algorithm:
 
         self.cycle_count = 0
         
-        self.starting_tick = self.serve.starting_tick(0)
+        self.starting_tick, _ = self.serve.tick_finder(0, init=True)
 
         if(self.serve.error):
             print(Back.CYAN + "Tick value got is incorrect, start again")
@@ -42,6 +42,7 @@ class Algorithm:
         self.tick = self.starting_tick
         self.data_batch_size = 15
         self.buy_to_sell_ratio = 0.5
+        self.computation_time = 1.5
 
         self.trade_url = "https://evuc3y0h1g.execute-api.eu-north-1.amazonaws.com/PROD/accessTradeLog"
         self.energy_url = "https://evuc3y0h1g.execute-api.eu-north-1.amazonaws.com/PROD/accessEnergyLog"
@@ -93,13 +94,12 @@ class Algorithm:
 
         # at start of new cycle, prepare predictions for current cycle, and set correct historical data
         self.serve.set_historical_prices()
-        self.trainer.change_historical_data(self.serve.parsed_data)
-
+    
         if(self.trainer.first_call()):
             print("First call, assume predictions for all data is most recent cycle")
             
             for data_name, _ in self.trainer.histories_buffer.items():
-                previous, most_recent = self.trainer.get_synthetic_data(data_name)
+                previous, most_recent = self.trainer.get_synthetic_data(data_name, self.serve.parsed_data)
                 self.trainer.histories_buffer[data_name] = previous[1:] + [most_recent]
                 self.predictions[data_name] = most_recent
                 self.old_predictions[data_name] = most_recent
@@ -113,8 +113,8 @@ class Algorithm:
             self.old_predictions['sun'] = self.data_buffers['sun']
             self.predictions = self.next_predictions.copy()
             self.predictions['sun'] = self.data_buffers['sun']
+            self.trainer.add_to_histories_buffer(self.serve.parsed_data)
 
-        """
         if(self.data_buffers != {'buy_price':[], 'sell_price':[], 'demand':[], 'sun':[]}):
             # previous cycle data buffers are full, we also have what we predicted in self.old_predictions
             for n, p in self.old_predictions.items():
@@ -123,8 +123,7 @@ class Algorithm:
                 except Exception as e:
                     print(f"Exception: {e}")
                     print(len(self.data_buffers[n]), len(p))
-        """
-
+        
         # empty data and next prediction buffers
         for data_name in ['buy_price', 'sell_price', 'demand', 'sun']:
             self.next_predictions[data_name] = []
@@ -177,10 +176,9 @@ class Algorithm:
 
         if(self.trainer.first_call()):
             self.serve.set_historical_prices()
-            self.trainer.change_historical_data(self.serve.parsed_data)
-            
+
             for data_name in ['buy_price', 'sell_price', 'demand']:
-                previous, most_recent = self.trainer.get_synthetic_data(data_name)
+                previous, most_recent = self.trainer.get_synthetic_data(data_name, self.serve.parsed_data)
                 self.trainer.histories_buffer[data_name] = previous[1:] + [most_recent]
                 self.predictions[data_name] = most_recent
 
@@ -211,10 +209,11 @@ class Algorithm:
         return time.time() - start + time_taken, storage, total_profit
     
     def driver(self, queue : Queue):
+        # fill data buffers with historical data at beginning
         if(self.starting_tick != 0):
             for k, v in self.data_buffers.items():
-                if(self.trainer.parsed_data[k] != []):
-                    self.data_buffers[k] = self.trainer.parsed_data[k][:self.starting_tick]
+                if(self.serve.parsed_data[k] != []):
+                    self.data_buffers[k] = self.serve.parsed_data[k][:self.starting_tick]
                 else:
                     self.data_buffers[k] = [0]*self.starting_tick
 
@@ -228,6 +227,7 @@ class Algorithm:
 
         while True: 
             print(f"Current tick {self.tick}")
+
             if(self.tick == 0):
                 self.cycle_count += 1
 
@@ -239,44 +239,52 @@ class Algorithm:
                 time_taken += tt
                 remainder = 5-time_taken 
                 print("Cycle ", self.cycle_count)
-                print(Fore.MAGENTA + f"Setting up new cycle took {time_taken}s", (Fore.GREEN if remainder > 1.5 else Fore.LIGHTRED_EX) + f"Window [{remainder}s]")
+                print(Fore.MAGENTA + f"Setting up new cycle took {time_taken} s", (Fore.GREEN if remainder > 1.5 else Fore.LIGHTRED_EX) + f"Time to t+1 [{remainder} s]")
 
             elif((self.tick % self.data_batch_size) == 0 or (self.tick == 59)):
                 time_taken, storage, total_profit = self.something_else(storage, total_profit)
                 time_taken += self.prepare_next()
                 remainder = 5-time_taken
                 print("Cycle ", self.cycle_count)
-                print(Fore.YELLOW + f"Preparation and decision took {time_taken}s", (Fore.GREEN if remainder > 1.5 else Fore.LIGHTRED_EX) + f"Window [{remainder}s]")
+                print(Fore.YELLOW + f"Preparation and decision took {time_taken} s", (Fore.GREEN if remainder > 1.5 else Fore.LIGHTRED_EX) + f"Time to t+1 [{remainder} s]")
             
             else:
                 time_taken, storage, total_profit = self.something_else(storage, total_profit)
                 remainder = 5-time_taken
                 print("Cycle ", self.cycle_count)
-                print(Fore.BLUE + f"Something else and adding to data buffers took {time_taken}s", (Fore.GREEN if remainder > 1.5 else Fore.LIGHTRED_EX) + f"Window [{remainder}s]")
+                print(Fore.BLUE + f"Something else and adding to data buffers took {time_taken} s", (Fore.GREEN if remainder > 1.5 else Fore.LIGHTRED_EX) + f"Time to t+1 [{remainder} s]")
 
-            if(remainder < -self.window_allowance):
+            # we know the time take for computation, and the remainder of time to the next tick
+            window_length_in_s = (5+self.computation_time) - max(self.computation_time, time_taken)
+            time_to_sleep_in_s = max(0, self.computation_time - time_taken)
+
+            print(Fore.CYAN + f"Hardware given window of {window_length_in_s} s")
+            print(Fore.LIGHTGREEN_EX + f"Sending decision to hardware after {time_to_sleep_in_s} s")
+
+            # send decision to hardware when window starts
+            time.sleep(time_to_sleep_in_s)
+            queue.put(json.dumps(data1))
+            queue.put(json.dumps(data2))
+
+            remainder -= time_to_sleep_in_s
+
+            if(time_taken > 5+self.computation_time):
                 print(Fore.RED + "Something took too much time ", time_taken)
                 print(Fore.RED + "Final tick was ", self.tick)
                 sys.exit(1)
+
             else:
+                # look for new tick
                 old_tick = self.tick
-                self.tick = self.serve.starting_tick(old_tick)
+                self.tick, polling_time = self.serve.tick_finder(old_tick)
 
-                if(self.tick == old_tick):
-                    remainder -= self.serve.live_timeout
-                    time_taken += self.serve.live_timeout
-
-                    print(Back.GREEN + "Got an error when getting live tick, tick is changed after sleep")
-                    if(remainder > -self.window_allowance):
-                        time.sleep(remainder)
-                        self.tick = (self.tick + 1) % 60 
-                    else:
-                        print(Fore.RED + "Something took too much time ", time_taken)
-                        sys.exit(1)
-
-                if (remainder < 0):
-                    # must have used the window allowace
-                    print(Back.LIGHTBLUE_EX + f"Next tick will lose out on {-remainder} seconds due to previous using window allowance")
+                print(Back.LIGHTBLACK_EX + f"Polling time: {polling_time} s")
+                
+                if(self.serve.error):
+                    if(0 < polling_time < remainder):
+                        time.sleep(remainder-polling_time) 
+                        
+                    self.tick = (self.tick + 1) % 60 
 
                 diff = old_tick - self.tick
                 
@@ -284,8 +292,7 @@ class Algorithm:
                     print(Back.LIGHTYELLOW_EX + f"Tick mismatch old: {old_tick}, new: {self.tick}")
                     self.tick = old_tick
 
-            queue.put(json.dumps(data1))
-            queue.put(json.dumps(data2))
+
 
 if __name__ == "__main__":
     q = Queue()
