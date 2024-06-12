@@ -12,7 +12,7 @@ const App = () => {
   return (
     <div className="app flex flex-col min-h-screen">
       <Navbar />
-      <div className="flex-grow bg-gradient-to-r from-dark-purple to-dark-blue">
+      <div className="flex-grow text-white"> {/* Change the background color */}
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/finances" element={<Finances />} />

@@ -1,5 +1,5 @@
 import React from 'react';
-
+import './battery.css';
 const Battery = ({ level, label }) => {
   // Ensure the level is between 0 and 100
   const batteryLevel = Math.min(100, Math.max(0, level));
