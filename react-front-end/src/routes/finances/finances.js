@@ -82,9 +82,9 @@ const Finances = () => {
   const filteredBottomChartData = bottomChartData ? filterData(bottomChartData, daysFilter) : null;
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen">
-      <h1 className="text-2xl text-white mb-4">Money</h1>
-      <div className="flex space-x-4 mb-4">
+    <div className="flex flex-col items-center justify-center mt-10">
+      {/* <h1 className="text-2xl text-white mb-4">Money</h1> */}
+      <div className="flex space-x-4 mb-8">
         {['1 Day', '3 Days', '7 Days', '30 Days', '90 Days'].map((label, index) => {
           const days = parseInt(label.split(' ')[0], 10);
           return (
@@ -117,19 +117,7 @@ const Finances = () => {
         </div>
         <div className="w-1/2 text-white ml-8">
           <h2 className="text-xl mb-4">Analysis</h2>
-          <p className="mb-4">
-            {/* Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum vel dolor et diam gravida tempus.
-            Integer ac interdum urna. Quisque pulvinar, nulla eu tristique vehicula, lorem eros aliquet turpis,
-            vel luctus nisl mauris et turpis.
-          </p>
-          <p className="mb-4">
-            Donec id augue vel nisl dignissim pharetra. Curabitur eget vehicula purus. Aliquam erat volutpat.
-            Phasellus eu est at libero ullamcorper fringilla. Etiam a eros at ex convallis scelerisque.
-          </p>
-          <p className="mb-4">
-            Suspendisse potenti. Pellentesque habitant morbi tristique senectus et netus et malesuada fames ac turpis egestas.
-            Fusce vehicula massa nec magna cursus, a tincidunt odio efficitur. */}
-          </p>
+          <p className="mb-4"></p>
         </div>
       </div>
     </div>

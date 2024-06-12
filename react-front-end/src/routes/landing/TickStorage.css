@@ -1,0 +1,54 @@
+.battery-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 400px;
+}
+
+.battery {
+  width: 60px;
+  height: 200px;
+  border: 2px solid #000;
+  background-color: #ddd;
+  position: relative;
+  border-radius: 5px;
+}
+
+.liquid {
+  position: absolute;
+  bottom: 2px;
+  left: 2px;
+  width: calc(100% - 4px);
+  background-color: #2ecc71;
+  transition: height 0.5s ease; /* Smooth transition for liquid level */
+  border-radius: 0 0 5px 5px;
+}
+
+.cap {
+  width: 30px;
+  height: 20px;
+  background-color: #ddd;
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-top: 2px solid #000;
+  border-radius: 0 0 10px 10px;
+}
+
+.terminal {
+  width: 10px;
+  height: 10px;
+  background-color: #ddd;
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  border: 2px solid #000;
+}
+
+.terminal:nth-child(2) {
+  bottom: auto;
+  top: -5px;
+}

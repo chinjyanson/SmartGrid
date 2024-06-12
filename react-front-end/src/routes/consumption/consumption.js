@@ -2,13 +2,11 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Line } from 'react-chartjs-2';
 import 'chart.js/auto';
-import Battery from '../../components/battery.js'; // Adjust the path as necessary
 
 const Consumption = () => {
   const [usageData, setUsageData] = useState(null);
   const [productionData, setProductionData] = useState(null);
   const [daysFilter, setDaysFilter] = useState(90);
-  const batteryLevel = 75; // Sample battery level
   const bigNumber = 12345; // Sample big number
 
   const fetchUsageData = async () => {
