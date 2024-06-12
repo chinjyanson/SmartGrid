@@ -152,12 +152,16 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
                 energy_used -= storage
                 storage = 0
 
+        if energy_used > 0:
+            energy_bought = energy_used
+            total_profit -= energy_bought * current_sell_price
+
         if energy_in > 0:
             if storage + energy_in <= MAX_STORAGE_CAPACITY:
                 storage += energy_in
             else:
                 excess_energy = storage + energy_in - MAX_STORAGE_CAPACITY
-                total_profit += excess_energy * current_sell_price
+                total_profit += excess_energy * current_buy_price
                 storage = MAX_STORAGE_CAPACITY
 
         print(f" Energy In: {energy_in} kWh")
@@ -217,6 +221,7 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
 
     #sum(deferable_demand[idx][0].value for idx in range(len(deferable_list)))
     if deferable_demand[0][0].value == None:
+        optimal_energy_transaction = energy_bought - excess_energy
         for idx in range(len(deferable_list)):
             energy_used += (deferable_list[idx].energyTotal - deferable_list[idx].energyDone) / (deferable_list[idx].end - deferable_list[idx].start)
     else:
