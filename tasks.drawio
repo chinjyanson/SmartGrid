@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2024-06-13T10:17:27.637Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36" etag="1XetvuVZD7jp4KRQ-ONh" version="24.5.4" type="github">
+<mxfile host="app.diagrams.net" modified="2024-06-13T10:59:56.893Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36" etag="gY3yj8eAKjNdQwib2JdV" version="24.5.4" type="github">
   <diagram name="Page-1" id="19d8dcba-68ad-dc05-1034-9cf7b2a963f6">
     <mxGraphModel dx="1050" dy="522" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" background="none" math="0" shadow="0">
       <root>
@@ -41,16 +41,16 @@
         <mxCell id="218ae93e1282097f-63" value="Justin Lam" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;shadow=0;comic=0;fontFamily=Verdana;fontSize=10;" parent="1" vertex="1">
           <mxGeometry x="685" y="410" width="90" height="25" as="geometry" />
         </mxCell>
-        <mxCell id="218ae93e1282097f-64" value="PV Characterisation" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;shadow=0;comic=0;fontFamily=Verdana;fontSize=10;" parent="1" vertex="1">
+        <mxCell id="218ae93e1282097f-64" value="PV Characterisation and overall hardware design" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;shadow=0;comic=0;fontFamily=Verdana;fontSize=10;" parent="1" vertex="1">
           <mxGeometry x="485" y="445" width="90" height="75" as="geometry" />
         </mxCell>
-        <mxCell id="218ae93e1282097f-65" value="Position 2" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;shadow=0;comic=0;fontFamily=Verdana;fontSize=10;" parent="1" vertex="1">
-          <mxGeometry x="585" y="445" width="90" height="25" as="geometry" />
+        <mxCell id="218ae93e1282097f-65" value="Buck SMPS Characterisation and overall hardware design" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;shadow=0;comic=0;fontFamily=Verdana;fontSize=10;" parent="1" vertex="1">
+          <mxGeometry x="585" y="445" width="90" height="85" as="geometry" />
         </mxCell>
-        <mxCell id="218ae93e1282097f-66" value="Position 3" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;shadow=0;comic=0;fontFamily=Verdana;fontSize=10;" parent="1" vertex="1">
-          <mxGeometry x="685" y="445" width="90" height="25" as="geometry" />
+        <mxCell id="218ae93e1282097f-66" value="Bi Directional SMPS Characterization and overall hardware design" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;shadow=0;comic=0;fontFamily=Verdana;fontSize=10;" parent="1" vertex="1">
+          <mxGeometry x="685" y="445" width="90" height="85" as="geometry" />
         </mxCell>
-        <mxCell id="218ae93e1282097f-67" value="Modified Hardware Code and&amp;nbsp;" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;shadow=0;comic=0;fontFamily=Verdana;fontSize=10;" parent="1" vertex="1">
+        <mxCell id="218ae93e1282097f-67" value="Modified SMPS code to account for algorithm decisions" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;shadow=0;comic=0;fontFamily=Verdana;fontSize=10;" parent="1" vertex="1">
           <mxGeometry x="890.5" y="510" width="90" height="70" as="geometry" />
         </mxCell>
         <mxCell id="218ae93e1282097f-68" value="Ilan Iwumbwe" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;shadow=0;comic=0;fontFamily=Verdana;fontSize=10;" parent="1" vertex="1">
@@ -59,7 +59,7 @@
         <mxCell id="218ae93e1282097f-69" value="Justin Lam" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;shadow=0;comic=0;fontFamily=Verdana;fontSize=10;" parent="1" vertex="1">
           <mxGeometry x="890.5" y="475" width="90" height="25" as="geometry" />
         </mxCell>
-        <mxCell id="218ae93e1282097f-70" value="TCP Connections&amp;nbsp;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=1;shadow=0;comic=0;fontFamily=Verdana;fontSize=10;" parent="1" vertex="1">
+        <mxCell id="218ae93e1282097f-70" value="TCP server and client side integration" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=1;shadow=0;comic=0;fontFamily=Verdana;fontSize=10;" parent="1" vertex="1">
           <mxGeometry x="990.5" y="510" width="90" height="70" as="geometry" />
         </mxCell>
         <mxCell id="6257edae8c83ed4a-9" value="Hardware&amp;nbsp;" style="whiteSpace=wrap;html=1;rounded=1;shadow=0;comic=0;strokeWidth=2;fontFamily=Verdana;align=center;fontSize=12;fontStyle=1" parent="1" vertex="1">
