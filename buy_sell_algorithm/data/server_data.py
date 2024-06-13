@@ -26,18 +26,21 @@ class server_data:
         self.parsed_data = {'buy_price':[], 'demand':[], 'sell_price':[], 'sun':[], 'deferables':[]}
         self.tick = 0
         self.live_timeout = 1
+        self.error = False
 
         # fill cache with most recent history in case live data fails on first call
         self.init_cache_and_history()
 
     def tick_finder(self, previous, init=False):
+        first_start_time = time.time()
         self.live_data(True)  # call this just to get live tick
+        first_end_time = time.time()
 
         start_tick = self.tick
     
         # if first poll failed need time.sleep or it worked and we need to move immediately
         if(self.error):
-            return start_tick, self.live_timeout
+            return start_tick, (first_end_time-first_start_time)
         elif(start_tick != previous and not init):
             return start_tick, 0
         else:
@@ -47,7 +50,9 @@ class server_data:
                 self.live_data(True)
             end_time = time.time()
 
-            return self.tick, (end_time-start_time)
+            print(f"error during while: {self.error}, start: {start_tick}, now: {self.tick}")
+
+            return self.tick, (end_time-start_time) + (first_end_time-first_start_time)
 
     def init_cache_and_history(self):
         self.set_historical_prices()

@@ -1,75 +1,87 @@
 import socket
-from concurrent.futures import ThreadPoolExecutor
 from queue import Queue 
-from threading import Thread
+from threading import Lock
+import selectors
 import json
-import time
-from buy_sell_algorithm.predictions.utils import add_data_to_frontend_file
 
-class Tcp_server:
-    def __init__(self) -> None:
-        # using a thread pool to avoid endless thread creation
-        self.port = 9999
-        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.server.bind(('0.0.0.0', self.port))
-        self.picos = {"flywheel": None, "solar":None, "cell":None}
+# Initialize the default selector
+sel = selectors.DefaultSelector()
+picos = {"flywheel": None, "solar":None, "cell":None}  
 
-    def init_pico(self, client_socket):
-        try: 
-            message = client_socket.recv(1024).decode('utf-8')
+def accept(sock, mask):
+    conn, addr = sock.accept()  
+    print(f'Accepted connection from {addr}')
 
-            print(f"[{str(client_socket.getpeername())}] {message}")
+    name = conn.recv(1024).decode('utf-8')
 
-            if(message == "cell" or message == "solar" or message == "flywheel"):
-                self.picos[message] = client_socket
-            else:
-                print(f"Message {message} is unknown")
-                                
-        except ConnectionResetError:
-            print("Connection has been reset")
+    if(name == "cell" or name == "solar" or name == "flywheel"):
+        print("Pico has name ", name)
+        picos[name] = conn
+    else:
+        print(f"Pico name {name} is unknown")
 
-    def handle_client(self, client_socket, queue):
-        """Function to handle client connections."""
-        self.init_pico(client_socket)
+    conn.settimeout(6) # seconds
 
-        time.sleep(2)
+    sel.register(conn, selectors.EVENT_WRITE, write) 
 
+def close_conn(conn):
+    print(f'Closing connection to {conn.getpeername()}')
+    sel.unregister(conn)  # Unregister the connection
+    conn.close()  # Close the connection
+
+def read(conn, mask):
+    print("Reading data from client")
+    try:
+        data = conn.recv(1024)  # Read data from the connection
+        if data:
+            print(f'Received {data} from {conn.getpeername()}')
+            sel.modify(conn, selectors.EVENT_WRITE, write)
+
+    except socket.timeout:
+        close_conn(conn)
+
+def write(conn, mask, q : Queue):
+    print("Writing data to client")
+    with Lock():
+        if (not q.empty()):
+            str_data = q.get()
+            dict_data = json.loads(str_data)
+            print(f"Sending {dict_data} to relevant client")
+
+            if(picos[dict_data["name"]] == conn):
+                try:
+                    conn.send(str_data.encode('utf-8'))
+                except socket.timeout:
+                    close_conn(conn)
+
+    sel.modify(conn, selectors.EVENT_READ, read) 
+
+def run_server(host, port, q : Queue):
+    server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server_sock.bind((host, port))
+    server_sock.listen()
+    server_sock.setblocking(False)
+    sel.register(server_sock, selectors.EVENT_READ, accept)  # Register the server socket for accept events
+
+    print(f'Server listening on {host}:{port}')
+    try:
         while True:
-            data = queue.get()
-            _data = json.loads(data)
+            events = sel.select()  
+            for key, mask in events:
+                callback = key.data  # Get the callback function
 
-            print(_data)
-            # send data to front end file
-            add_data_to_frontend_file("tcp", _data)
+                if(mask == selectors.EVENT_WRITE):
+                    callback(key.fileobj, mask, q) 
+                else:
+                    callback(key.fileobj, mask) 
 
-            try:
-                socket = self.picos[_data["type"]]
+    except KeyboardInterrupt:
+        print("Server stopped.")
+    finally:
+        sel.close()
 
-                if(socket):
-                    socket.send(data.encode('utf-8'))
-
-            except KeyError:
-                print("Message type in data unknown")
-
-            message = client_socket.recv(1024).decode('utf-8')
-
-            for name, socket in self.picos:
-                if(socket == client_socket):
-                    print(f"Mesage {message} sent from {name}")
-
-    def start(self, queue : Queue):
-        self.server.listen(6)
-        print(f"Server started and listening on port {self.port}")
-        
-        while True:
-            client_socket, addr = self.server.accept()
-            print(f"Accepted connection from {addr}")
-            #pool.submit(self.handle_client, args=(client_socket, queue, ))
-            thread = Thread(target=self.handle_client, args=[client_socket, queue])
-            thread.start()
 
 if __name__ == "__main__":
     q = Queue()
 
-    tcp_server = Tcp_server()
-    tcp_server.start(q)
+    run_server('0.0.0.0', 9999, q)
