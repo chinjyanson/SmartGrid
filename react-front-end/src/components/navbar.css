@@ -4,6 +4,7 @@
     justify-content: space-between;
     padding: 0 20px; /* Adjust padding for better spacing */
     background-color: #1e1e1e !important;/* Dark mode background color */
+    z-index: 1000;
   }
   
   .navbar ul {

@@ -1,0 +1,82 @@
+/* Add these styles to your CSS file */
+.energy-saving-tip-container {
+    background-color: #ffc04d; /* Light orange/dark yellow background */
+    padding: 10px; /* Add padding */
+    border-radius: 8px; /* Rounded corners */
+    max-width: 600px; /* Limit maximum width */
+    margin: 20px auto; /* Center align and add margin */
+  }
+  
+  .energy-saving-tip-text {
+    color: #1e1e1e; /* Dark text color */
+    font-size: 18px; /* Font size */
+    font-style: italic; /* Italicize the text */
+    text-align: center; /* Center align text */
+  }
+
+  /* styles.css */
+
+/* Home container styles */
+.home-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+  }
+  
+  /* Background styles (adjust to your needs) */
+  .background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1; /* Place background behind other content */
+    /* Add background styles (e.g., gradient, image) */
+    background: linear-gradient(to bottom, #3498db, #1abc9c); /* Example gradient background */
+  }
+  
+  /* Cloud container styles */
+  .cloud-container {
+    position: relative;
+    z-index: 1; /* Ensure cloud content is above background */
+    text-align: center;
+  }
+  
+  /* Cloud text animation */
+  .cloud-text {
+    font-size: 5rem;
+    font-weight: bold;
+    color: #fff;
+    animation: floatCloud 10s ease-in-out infinite alternate;
+  }
+  
+  /* Keyframes for cloud animation */
+  @keyframes floatCloud {
+    0% {
+      transform: translateY(0);
+    }
+    100% {
+      transform: translateY(-20px); /* Adjust the float distance */
+    }
+  }
+  
+  /* Additional styles for EnergySavingTip component */
+  .energy-saving-tip-container {
+    background-color: transparent;
+    padding: 15px; /* Padding around the tip */
+    border-radius: 8px; /* Rounded corners */
+    max-width: 700px; /* Limit maximum width */
+    margin: 20px auto; /* Center align and add margin */
+  }
+  
+  .energy-saving-tip-text {
+    color: #ffc04d; /* Dark text color */
+    font-size: 18px; /* Font size */
+    font-style: italic; /* Italicize the text */
+    text-align: center; /* Center align text */
+  }
+  
+  

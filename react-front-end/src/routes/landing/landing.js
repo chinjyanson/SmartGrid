@@ -9,21 +9,42 @@
 // we need to do algorithm comparison so a barchart on the left of naive and optimal, then line graph showing the profit every tick type thing
 
 import React, { useEffect } from 'react';
+import EnergySavingTip from './EnergySavingTip';
 import TickEnergy from './TickEnergy';
-// import TickBuySell from './TickBuySell';
-// import TickStorage from './TickStorage';
+import TickAlgo from './TickAlgo';
+import './landing.css'
 
 const Home = () => {
   useEffect(() => {
     document.title = "Home | Smart Grid";
   }, []);
-  return (
-    <div className="flex flex-col items-center justify-center min-h-screen">
-      <h1 className="text-3xl text-white">Welcome to the Home Page</h1>
-        <TickEnergy />
-        {/* <TickStorage /> */}
-        {/* <TickBuySell /> */}
 
+  const scrollToContent = () => {
+    const contentSection = document.getElementById('content-section');
+    contentSection.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  return (
+    <div className="flex flex-col items-center justify-center">
+      <div className="w-full min-h-screen flex flex-col items-center justify-center">
+        <h1 className="text-5xl text-white">Welcome To Your Dashboard</h1>
+        <EnergySavingTip />
+        <div className="flex flex-col items-center">
+          <button onClick={scrollToContent} className="text-white text-xl focus:outline-none hover:scale-110">
+            <svg className="w-10 h-10 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+      <div id="content-section" className="w-full flex flex-col items-center justify-center py-10">
+        <div className="w-full mt-8">
+          <TickEnergy/>
+          <TickAlgo />
+          {/* <TickStorage /> */}
+          {/* <TickBuySell /> */}
+        </div>
+      </div>
     </div>
   );
 };
