@@ -283,16 +283,18 @@ class Algorithm:
                 print(Back.LIGHTBLACK_EX + f"Polling time: {polling_time} s")
                 
                 if(self.serve.error):
-                    if(0 < polling_time < remainder):
+                    if(polling_time < remainder):
                         time.sleep(remainder-polling_time) 
                         
                     self.tick = (self.tick + 1) % 60 
 
                 diff = old_tick - self.tick
+
+                print(Back.LIGHTYELLOW_EX + f"old: {old_tick}, new: {self.tick}")
                 
-                if(not(diff == -1 or diff == 59 or diff == self.tick)):
-                    print(Back.LIGHTYELLOW_EX + f"Tick mismatch old: {old_tick}, new: {self.tick}")
-                    self.tick = old_tick
+                #if(not(diff == -1 or diff == 59 or diff == self.tick)):
+                #    print(Back.LIGHTYELLOW_EX + f"Tick mismatch old: {old_tick}, new: {self.tick}")
+                #    self.tick = old_tick
 
 
 

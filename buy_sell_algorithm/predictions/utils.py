@@ -56,13 +56,13 @@ def add_noise(x:float, y:int) -> float:
     """
     return x*y
 
-def plot_datas(datas, title, ylabel, start_index=0, end_index=60)->None:   
+def plot_datas(datas, title, ylabel)->None:   
     """
     Pass a list of datas to plot
     set of data on the same graph needs to be put into a list
     """
 
-    times = [i*5 for i in range(start_index, max(list(map(lambda x : len(x), datas))))]
+    times = [i*5 for i in range(0, max(list(map(lambda x : len(x), datas))))]
     colors = cm.rainbow(np.linspace(0, 1, len(datas)))
 
     plt.title(title)
@@ -70,7 +70,7 @@ def plot_datas(datas, title, ylabel, start_index=0, end_index=60)->None:
     plt.ylabel(ylabel)    
     
     for i in range(len(datas)):
-        plt.plot(times, datas[i], colors[i])
+        plt.plot(times[:len(datas[i])], datas[i], colors[i])
 
     plt.show()
 
