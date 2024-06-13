@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2024-06-02T18:23:22.531Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36" etag="sovgiKEa3y1JqNiPYRIL" version="24.4.13" type="github">
+<mxfile host="app.diagrams.net" modified="2024-06-13T12:16:13.450Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36" etag="BXtB8wpyHte5JNR_e20w" version="24.5.4" type="github">
   <diagram name="Page-1" id="5d7acffa-a066-3a61-03fe-96351882024d">
     <mxGraphModel dx="1050" dy="522" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" background="#ffffff" math="0" shadow="0">
       <root>
@@ -21,16 +21,13 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="21ea969265ad0168-10" value="AWS Cloud" style="swimlane;html=1;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;fillColor=#e0e0e0;horizontalStack=0;resizeParent=1;resizeLast=0;collapsible=1;marginBottom=0;swimlaneFillColor=#ffffff;align=center;rounded=1;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1;fontFamily=Verdana;fontSize=12" parent="1" vertex="1">
-          <mxGeometry x="480" y="50" width="360" height="110" as="geometry" />
+          <mxGeometry x="480" y="50" width="360" height="80" as="geometry" />
         </mxCell>
-        <mxCell id="21ea969265ad0168-11" value="Table 1: Energy Log {day, energyProduced, avgSunIrradiance}" style="text;html=1;strokeColor=none;fillColor=none;spacingLeft=4;spacingRight=4;whiteSpace=wrap;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" parent="21ea969265ad0168-10" vertex="1">
+        <mxCell id="21ea969265ad0168-11" value="Table 1: Energy Log {day, energyProduced, energyUsed}" style="text;html=1;strokeColor=none;fillColor=none;spacingLeft=4;spacingRight=4;whiteSpace=wrap;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" parent="21ea969265ad0168-10" vertex="1">
           <mxGeometry y="26" width="360" height="26" as="geometry" />
         </mxCell>
         <mxCell id="21ea969265ad0168-12" value="Table 2: Trade Log {energyBought, energySold, day, earnings}" style="text;html=1;strokeColor=none;fillColor=none;spacingLeft=4;spacingRight=4;whiteSpace=wrap;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" parent="21ea969265ad0168-10" vertex="1">
           <mxGeometry y="52" width="360" height="26" as="geometry" />
-        </mxCell>
-        <mxCell id="21ea969265ad0168-52" value="Table 3: Usage Log {energyUsed, day}" style="text;html=1;strokeColor=none;fillColor=none;spacingLeft=4;spacingRight=4;whiteSpace=wrap;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;" parent="21ea969265ad0168-10" vertex="1">
-          <mxGeometry y="78" width="360" height="26" as="geometry" />
         </mxCell>
         <mxCell id="21ea969265ad0168-14" value="Laptop (Local Device)" style="swimlane;html=1;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;fillColor=#e0e0e0;horizontalStack=0;resizeParent=1;resizeLast=0;collapsible=1;marginBottom=0;swimlaneFillColor=#ffffff;align=center;rounded=1;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1;fontFamily=Verdana;fontSize=12" parent="1" vertex="1">
           <mxGeometry x="60" y="100" width="160" height="110" as="geometry" />
