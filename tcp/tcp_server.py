@@ -1,87 +1,115 @@
 import socket
-from queue import Queue 
-from threading import Lock
 import selectors
 import json
+from queue import Queue
+from threading import Lock
 
-# Initialize the default selector
 sel = selectors.DefaultSelector()
-picos = {"flywheel": None, "solar":None, "cell":None}  
+picos = {"flywheel": None, "solar": None, "cell": None}
+message_queues = {name: Queue() for name in picos}
 
 def accept(sock, mask):
-    conn, addr = sock.accept()  
+    conn, addr = sock.accept()
     print(f'Accepted connection from {addr}')
-
-    name = conn.recv(1024).decode('utf-8')
-
-    if(name == "cell" or name == "solar" or name == "flywheel"):
-        print("Pico has name ", name)
-        picos[name] = conn
-    else:
-        print(f"Pico name {name} is unknown")
-
-    conn.settimeout(6) # seconds
-
-    sel.register(conn, selectors.EVENT_WRITE, write) 
+    conn.setblocking(False)
+    sel.register(conn, selectors.EVENT_READ, read_initial)
 
 def close_conn(conn):
-    print(f'Closing connection to {conn.getpeername()}')
-    sel.unregister(conn)  # Unregister the connection
-    conn.close()  # Close the connection
-
-def read(conn, mask):
-    print("Reading data from client")
     try:
-        data = conn.recv(1024)  # Read data from the connection
-        if data:
-            print(f'Received {data} from {conn.getpeername()}')
-            sel.modify(conn, selectors.EVENT_WRITE, write)
+        print(f'Closing connection to {conn.getpeername()}')
+    except Exception as e:
+        print(f'Error getting peer name: {e}')
+    sel.unregister(conn)
+    conn.close()
 
-    except socket.timeout:
+def read_initial(conn, mask):
+    try:
+        data = conn.recv(1024).decode('utf-8').strip()
+        print(f'Initial read data: "{data}"')
+        if not data:
+            raise ValueError("No data received")
+        name = data.strip()
+        if name in picos:
+            picos[name] = conn
+            sel.modify(conn, selectors.EVENT_READ, read)
+            print(f"Registered client {name}")
+        else:
+            print(f"Unknown client name: {name}")
+            close_conn(conn)
+    except BlockingIOError:
+        print("BlockingIOError during initial read, will retry")
+    except ValueError as e:
+        print(f"Error: {e}")
+        close_conn(conn)
+    except Exception as e:
+        print(f"Error during initial read: {e}")
         close_conn(conn)
 
-def write(conn, mask, q : Queue):
-    print("Writing data to client")
-    with Lock():
-        if (not q.empty()):
-            str_data = q.get()
-            dict_data = json.loads(str_data)
-            print(f"Sending {dict_data} to relevant client")
+def read(conn, mask):
+    try:
+        data = conn.recv(1024).decode('utf-8').strip()
+        print(f'Received data: "{data}"')
+        if data:
+            process_message(data, conn)
+        else:
+            close_conn(conn)
+    except BlockingIOError:
+        print("BlockingIOError during read, will retry")
+    except socket.timeout:
+        close_conn(conn)
+    except Exception as e:
+        print(f"Error during read: {e}")
+        close_conn(conn)
 
-            if(picos[dict_data["name"]] == conn):
+def write(conn, mask):
+    pico_name = next((name for name, c in picos.items() if c == conn), None)
+    if pico_name:
+        with Lock():
+            if not message_queues[pico_name].empty():
+                msg = message_queues[pico_name].get()
                 try:
-                    conn.send(str_data.encode('utf-8'))
-                except socket.timeout:
+                    conn.send(json.dumps(msg).encode('utf-8'))
+                    print(f"Sent message to {pico_name}: {msg}")
+                except BlockingIOError:
+                    print("BlockingIOError during write, will retry")
+                except Exception as e:
+                    print(f'Error sending data: {e}')
                     close_conn(conn)
+    sel.modify(conn, selectors.EVENT_READ, read)
 
-    sel.modify(conn, selectors.EVENT_READ, read) 
+def process_message(data, conn):
+    try:
+        message = json.loads(data)
+        pico_name = message.get('name')
+        if pico_name in picos:
+            message_queues[pico_name].put(message)
+            print(f"Queued message for {pico_name}: {message}")
+            sel.modify(conn, selectors.EVENT_WRITE, write)
+        else:
+            print(f"Received message for unknown pico: {pico_name}")
+    except json.JSONDecodeError as e:
+        print(f"Error decoding message: {e}")
+        print(f"Raw data received: {data}")
 
-def run_server(host, port, q : Queue):
+def run_server(host, port):
     server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_sock.bind((host, port))
     server_sock.listen()
     server_sock.setblocking(False)
-    sel.register(server_sock, selectors.EVENT_READ, accept)  # Register the server socket for accept events
+    sel.register(server_sock, selectors.EVENT_READ, accept)
 
     print(f'Server listening on {host}:{port}')
     try:
         while True:
-            events = sel.select()  
+            events = sel.select()
             for key, mask in events:
-                callback = key.data  # Get the callback function
-
-                if(mask == selectors.EVENT_WRITE):
-                    callback(key.fileobj, mask, q) 
-                else:
-                    callback(key.fileobj, mask) 
-
+                callback = key.data
+                callback(key.fileobj, mask)
     except KeyboardInterrupt:
         print("Server stopped.")
     finally:
         sel.close()
-
+        server_sock.close()
 
 if __name__ == "__main__":
-    q = Queue()
-
-    run_server('0.0.0.0', 9999, q)
+    run_server('0.0.0.0', 9998)
