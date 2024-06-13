@@ -1,1 +1,1 @@
-{"tcp": {"energy": 134, "sell": true, "buy": false, "type": "cell"}, "algo": {"optimal_energy_transaction": 2.8779208740102984, "optimal_storage_transaction": 0.0}}
+{"tcp": "", "algo": {"optimal_energy_transaction": 13.394206096049054, "optimal_storage_transaction": 0.0}}

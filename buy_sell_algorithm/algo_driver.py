@@ -6,7 +6,7 @@ from colorama import Fore, Back, Style, init
 import optimization as opt
 from predictions.train import Train
 from data.server_data import server_data
-import naive_solution as naive
+from threading import Lock
 import json
 import test3 as test
 from typing import Dict
@@ -208,7 +208,7 @@ class Algorithm:
             
         return time.time() - start + time_taken, storage, total_profit
     
-    def driver(self, queue : Queue):
+    def driver(self, q : Queue):
         # fill data buffers with historical data at beginning
         if(self.starting_tick != 0):
             for k, v in self.data_buffers.items():
@@ -222,8 +222,8 @@ class Algorithm:
         storage = 0
         total_profit = 0
 
-        data1 = {"energy":134, "sell":True, "buy":False, "type":"cell"}
-        data2 = {"energy":40, "sell":False, "buy":False, "type":"flywheel"}
+        data1 = {"energy":134, "sell":True, "buy":False, "name":"cell"}
+        data2 = {"energy":40, "sell":False, "buy":False, "name":"flywheel"}
 
         while True: 
             print(f"Current tick {self.tick}")
@@ -263,8 +263,10 @@ class Algorithm:
 
             # send decision to hardware when window starts
             time.sleep(time_to_sleep_in_s)
-            queue.put(json.dumps(data1))
-            queue.put(json.dumps(data2))
+
+            with Lock():
+                q.put(json.dumps(data1))
+                q.put(json.dumps(data2))
 
             remainder -= time_to_sleep_in_s
 
