@@ -6,9 +6,9 @@ from colorama import Fore, Back, Style, init
 import optimization as opt
 from predictions.train import Train
 from data.server_data import server_data
+import naive_solution as naive
 from threading import Lock
 import json
-import test3 as test
 from typing import Dict
 import requests
 
@@ -54,7 +54,6 @@ class Algorithm:
             "energySold": energysold,
             "energyBought": energybought
         }
-
         try:
             response = requests.post(self.trade_url, json=data)
             response.raise_for_status()  # Raise an exception if the request was unsuccessful
@@ -166,7 +165,7 @@ class Algorithm:
 
         return time.time()-start
 
-    def something_else(self, storage, total_profit):
+    def something_else(self, naive_storage, storage, sum_of_total_profit, total_profit, total_naive_profit):
         start = time.time()
         # do something else, must include filling data buffers
 
@@ -188,25 +187,31 @@ class Algorithm:
             self.defs = None
         
         # this if else statement changes the prediction horizon when tick > 50 (if horizon = 10)
-        profit, storage, demand, energy_produced, buysell = test.maximize_profit_mpc(storage, self.data_buffers, self.predictions, self.tick, 60-self.tick, self.defs)
+        profit, storage, demand, energy_produced, buysell = opt.maximize_profit_mpc(storage, self.data_buffers, self.predictions, self.tick, 60-self.tick, self.defs)
+        naive_profit, naive_storage = naive.naive_smart_grid_optimizer(self.data_buffers, self.tick, naive_storage, self.defs)
 
         total_profit += profit
+        sum_of_total_profit += profit
+        total_naive_profit += naive_profit
+
+        print(total_naive_profit)
 
         print(f" ********************************************{total_profit}*******************************************")
 
-        if self.tick == 50:
-            if buysell > 0:
-                energy_sold = 0
-                energy_bought = buysell
-            else:
-                energy_sold = buysell
-                energy_bought = 0
-            self.trade_api_post(self.cycle_count, total_profit, energy_sold, energy_bought) #energy sold,energy bought
-            self.energy_api_post(self.cycle_count, demand, energy_produced) #energy used, energy produced
-            total_profit = 0
+        # Post data to the cloud
+        # if self.tick == 59:
+        #     if buysell > 0:
+        #         energy_sold = 0
+        #         energy_bought = buysell
+        #     else:
+        #         energy_sold = buysell
+        #         energy_bought = 0
+        #     self.trade_api_post(self.cycle_count, total_profit, energy_sold, energy_bought) #energy sold,energy bought
+        #     self.energy_api_post(self.cycle_count, demand, energy_produced) #energy used, energy produced
+        #     total_profit = 0
 
             
-        return time.time() - start + time_taken, storage, total_profit
+        return time.time() - start + time_taken, storage, total_profit, total_naive_profit
     
     def driver(self, q : Queue):
         # fill data buffers with historical data at beginning
@@ -219,8 +224,11 @@ class Algorithm:
 
         print("Started at tick ", self.starting_tick)
         remainder = 0
+        naive_storage = 0
         storage = 0
+        sum_of_total_profit = 0
         total_profit = 0
+        total_naive_profit = 0
 
         data1 = {"energy":134, "sell":True, "buy":False, "name":"cell"}
         data2 = {"energy":40, "sell":False, "buy":False, "name":"flywheel"}
@@ -235,21 +243,21 @@ class Algorithm:
                 
                 # new cycle should always come before something_else such that data buffers get emptied
                 time_taken = self.new_cycle()
-                tt, storage, total_profit = self.something_else(storage, total_profit)
+                tt, storage, total_profit, total_naive_profit = self.something_else(naive_storage, storage, sum_of_total_profit, total_profit, total_naive_profit)
                 time_taken += tt
                 remainder = 5-time_taken 
                 print("Cycle ", self.cycle_count)
                 print(Fore.MAGENTA + f"Setting up new cycle took {time_taken} s", (Fore.GREEN if remainder > 1.5 else Fore.LIGHTRED_EX) + f"Time to t+1 [{remainder} s]")
 
             elif((self.tick % self.data_batch_size) == 0 or (self.tick == 59)):
-                time_taken, storage, total_profit = self.something_else(storage, total_profit)
+                time_taken, storage, total_profit, total_naive_profit = self.something_else(naive_storage, storage, sum_of_total_profit, total_profit, total_naive_profit)
                 time_taken += self.prepare_next()
                 remainder = 5-time_taken
                 print("Cycle ", self.cycle_count)
                 print(Fore.YELLOW + f"Preparation and decision took {time_taken} s", (Fore.GREEN if remainder > 1.5 else Fore.LIGHTRED_EX) + f"Time to t+1 [{remainder} s]")
             
             else:
-                time_taken, storage, total_profit = self.something_else(storage, total_profit)
+                time_taken, storage, total_profit, total_naive_profit = self.something_else(naive_storage, storage, sum_of_total_profit, total_profit, total_naive_profit)
                 remainder = 5-time_taken
                 print("Cycle ", self.cycle_count)
                 print(Fore.BLUE + f"Something else and adding to data buffers took {time_taken} s", (Fore.GREEN if remainder > 1.5 else Fore.LIGHTRED_EX) + f"Time to t+1 [{remainder} s]")

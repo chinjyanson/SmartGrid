@@ -1,36 +1,33 @@
 import data.server_data as data
 from predictions.train import Train
 import time
+import optimization as opt
 
 '''
 most naive solution to the problem
 '''
+deferable_list = []
 
-# Constants
-STORAGE_CAPACITY = 50  # Maximum storage capacity in Joules
-
-def naive_smart_grid_optimizer(data_buffers, t, current_storage):
+def naive_smart_grid_optimizer(data_buffers, t, current_storage, deferables):
+    STORAGE_CAPACITY = 50  # Maximum storage capacity in Joules
+    POWER_LOSS = 2
+    LINEAR_SOLAR_DEPENDANCE = 5/100
+    global deferable_list
     total_profit = 0
 
-    solar_energy = data_buffers['sun'][-1]
-    actual_demand = data_buffers['demand'][-1]
+    if deferables:
+        deferable_list = opt.parseDeferables(deferables)
+    
+    solar_energy = data_buffers['sun'][-1] * LINEAR_SOLAR_DEPENDANCE
+    actual_demand = data_buffers['demand'][-1] + POWER_LOSS
     buy_price = data_buffers['buy_price'][-1]
     sell_price = data_buffers['sell_price'][-1]
-    solar_energy = solar_energy * 0.1 
-
-    serve = data.server_data()
-    serve.deferables()
-    deferables = serve.parsed_data['deferables']
-    print(deferables)
-
 
     # Total energy needed
     total_demand = actual_demand
-    
-    # Schedule deferable demand within its window
-    for ele in deferables:
-        if ele["start"] <= t < ele["end"]:
-            total_demand += ele["energy"] / (ele["end"] - ele["start"])  # Spread energy requirement over time window
+    for idx in range(len(deferable_list)):
+        if deferable_list[idx].start <= t < deferable_list[idx].end:
+            total_demand += deferable_list[idx].energyTotal / (deferable_list[idx].end - deferable_list[idx].start) # Spread energy requirement over time window
 
     # Use solar energy first to meet demand
     if solar_energy >= total_demand:
@@ -71,7 +68,7 @@ def naive_smart_grid_optimizer(data_buffers, t, current_storage):
     # Print current state for debugging
     print("for cycle: " + str(t))
     print(f"Time {t}: Demand={actual_demand}, Solar={solar_energy}, Storage={current_storage}, Buy Price={buy_price}, Sell Price={sell_price}")
-    print(f"Total Profit={total_profit}")
+    print(f"Naive Profit (tick)={total_profit}")
 
     return total_profit, current_storage
 
