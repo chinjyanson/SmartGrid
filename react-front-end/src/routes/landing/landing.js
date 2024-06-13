@@ -6,11 +6,12 @@
 // 50/50 of buy or sell like speedo with bar chart next to it 1, -1, with pie chart also?
 // we also want to show the battery with text inside it showing between 0 to 50 joules of how much is stored, then next to it we will say if this is an increase of X or decrease by X % from the previous tick
 // also have a random energy tip of the day put that next to the battery 
+// we need to do algorithm comparison so a barchart on the left of naive and optimal, then line graph showing the profit every tick type thing
 
 import React, { useEffect } from 'react';
 import TickEnergy from './TickEnergy';
 // import TickBuySell from './TickBuySell';
-import TickStorage from './TickStorage';
+// import TickStorage from './TickStorage';
 
 const Home = () => {
   useEffect(() => {

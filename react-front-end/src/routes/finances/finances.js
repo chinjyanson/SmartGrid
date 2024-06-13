@@ -1,7 +1,9 @@
+// src/components/Finances/Finances.js
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Line, Bar } from 'react-chartjs-2';
 import 'chart.js/auto';
+import FilterButtons from '../../helpers/FilterButtons';
 
 const Finances = () => {
   const [topChartData, setTopChartData] = useState(null);
@@ -13,7 +15,6 @@ const Finances = () => {
       const response = await axios.get('https://evuc3y0h1g.execute-api.eu-north-1.amazonaws.com/PROD/accessTradeLog');
       const data = response.data;
 
-      // Sort data by day in ascending order
       const sortedData = data.sort((a, b) => new Date(a.dayID) - new Date(b.dayID));
 
       const days = sortedData.map(entry => entry.dayID);
@@ -44,10 +45,10 @@ const Finances = () => {
         datasets: [
           {
             label: 'Earnings',
-              data: earnings,
-              backgroundColor: 'rgba(255, 159, 64, 0.8)',
-              borderColor: 'rgba(255, 159, 64, 1)',
-              borderWidth: 1,
+            data: earnings,
+            backgroundColor: 'rgba(255, 159, 64, 0.8)',
+            borderColor: 'rgba(255, 159, 64, 1)',
+            borderWidth: 1,
           },
         ],
       });
@@ -57,7 +58,7 @@ const Finances = () => {
   };
 
   useEffect(() => {
-    document.title = "Finances | Smart Grid";
+    document.title = 'Finances | Smart Grid';
     fetchData();
   }, []);
 
@@ -83,21 +84,7 @@ const Finances = () => {
 
   return (
     <div className="flex flex-col items-center justify-center mt-10">
-      {/* <h1 className="text-2xl text-white mb-4">Money</h1> */}
-      <div className="flex space-x-4 mb-8">
-        {['1 Day', '3 Days', '7 Days', '30 Days', '90 Days'].map((label, index) => {
-          const days = parseInt(label.split(' ')[0], 10);
-          return (
-            <button
-              key={index}
-              className={`px-4 py-2 rounded ${daysFilter === days ? 'bg-blue-700 text-white' : 'bg-gray-500 text-gray-100'} hover:bg-blue-300 hover:text-black`}
-              onClick={() => handleDaysFilterChange(days)}
-            >
-              {label}
-            </button>
-          );
-        })}
-      </div>
+      <FilterButtons daysFilter={daysFilter} handleDaysFilterChange={handleDaysFilterChange} />
       <div className="flex w-11/12 md:w-3/4">
         <div className="w-1/2">
           {filteredTopChartData ? (

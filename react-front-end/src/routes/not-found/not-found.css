@@ -4,14 +4,16 @@ body {
     margin: 0;
     font-family: 'Calibri', sans-serif;
     background-color: #ffffff;
-    color: #1a1a1a;
+    color: #1e1e1e;
+    overflow: hidden;
   }
   
   .not-found-container {
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 100vh;
+    height: calc(100vh - 5rem); /* 5rem accounts for the navbar height */
+    padding-top: 5rem; /* Ensure content is below the navbar */
     background-color: #ffffff;
   }
   
@@ -24,28 +26,28 @@ body {
     font-size: 10rem;
     margin: 0;
     animation: bounce 2s infinite;
-    color: #1a1a1a;
+    color: #1e1e1e;
   }
   
   .not-found-text {
     font-size: 1.5rem;
     margin: 20px 0;
-    color: #1a1a1a;
+    color: #1e1e1e;
   }
   
   .home-link {
     display: inline-block;
     margin-top: 20px;
     padding: 10px 20px;
-    border: 2px solid #1a1a1a;
-    color: #1a1a1a;
+    border: 2px solid #1e1e1e;
+    color: #1e1e1e;
     text-decoration: none;
     border-radius: 5px;
     transition: background-color 0.3s ease, color 0.3s ease;
   }
   
   .home-link:hover {
-    background-color: #1a1a1a;
+    background-color: #1e1e1e;
     color: #ffffff;
   }
   

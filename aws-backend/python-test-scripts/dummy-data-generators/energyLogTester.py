@@ -32,7 +32,7 @@ class EnergyLogTester:
             inputval += 1
             day, energyUsed, energyProduced = self.generate_random_data(inputval)
             self.test_api_post(day, energyUsed, energyProduced)
-            time.sleep(5)
+            time.sleep(2)
 
 if __name__ == "__main__":
     tester = EnergyLogTester()

@@ -34,7 +34,7 @@ class TradeLogTester:
             inputval += 1
             day, earnings, energysold, energybought = self.generate_random_data(inputval)
             self.test_api_post(day, earnings, energysold, energybought)
-            time.sleep(5)
+            time.sleep(2)
 
 if __name__ == "__main__":
     tester = TradeLogTester()

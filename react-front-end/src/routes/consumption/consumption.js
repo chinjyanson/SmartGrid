@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Line } from 'react-chartjs-2';
-import 'chart.js/auto';
+import UsageChart from './UsageChart';
+import ProductionChart from './ProductionChart';
+import GreenScore from './GreenScore';
+import FilterButtons from '../../helpers/FilterButtons';
 
 const Consumption = () => {
   const [usageData, setUsageData] = useState(null);
@@ -98,54 +100,21 @@ const Consumption = () => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen">
-      <h1 className="text-2xl text-white mb-4">Usage</h1>
-      <div className="flex space-x-4 mb-4">
-        {['1 Day', '3 Days', '7 Days', '30 Days', '90 Days'].map((label, index) => {
-          const days = parseInt(label.split(' ')[0], 10);
-          return (
-            <button
-              key={index}
-              className={`px-4 py-2 rounded ${daysFilter === days ? 'bg-blue-700 text-white' : 'bg-gray-500 text-gray-100'} hover:bg-blue-300 hover:text-black`}
-              onClick={() => handleDaysFilterChange(days)}
-            >
-              {label}
-            </button>
-          );
-        })}
-      </div>
+      <FilterButtons daysFilter={daysFilter} handleDaysFilterChange={handleDaysFilterChange} />
       <div className="flex w-11/12 md:w-3/4">
         <div className="w-1/2">
           {filteredUsageData ? (
-            <div className="chart-container mb-8">
-              <Line data={filteredUsageData} />
-            </div>
+            <UsageChart data={filteredUsageData} />
           ) : (
             <p className="text-white">Loading usage data...</p>
           )}
           {filteredProductionData ? (
-            <div className="chart-container mb-8">
-              <Line data={filteredProductionData} />
-            </div>
+            <ProductionChart data={filteredProductionData} />
           ) : (
             <p className="text-white">Loading production data...</p>
           )}
         </div>
-        <div className="w-1/2 text-white ml-8 flex flex-col items-center justify-start">
-          <h2 className="text-2xl mb-4">Your Green Score</h2>
-          <h2 className="text-6xl font-bold mb-8">{bigNumber}</h2>
-          <div className="text-left w-full px-4">
-            {/* <p className="mb-4">
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum vel dolor et diam gravida tempus.
-              Integer ac interdum urna. Quisque pulvinar, nulla eu tristique vehicula, lorem eros aliquet turpis,
-              vel luctus nisl mauris et turpis.
-            </p>
-            <p className="mb-4">
-              Donec id augue vel nisl dignissim pharetra. Curabitur eget vehicula purus. Aliquam erat volutpat.
-              Phasellus eu est at libero ullamcorper fringilla. Etiam a eros at ex convallis scelerisque.
-            </p> */}
-          </div>
-          {/* <Battery level={batteryLevel} label="Battery Storage Level" /> Include the Battery component with a label */}
-        </div>
+        <GreenScore score={bigNumber} />
       </div>
     </div>
   );
