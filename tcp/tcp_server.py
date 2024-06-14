@@ -37,7 +37,8 @@ def read(conn, mask):
             print(f'Received {data} from {conn.getpeername()}')
             sel.modify(conn, selectors.EVENT_WRITE, write)
 
-    except socket.timeout:
+    except Exception as e:
+        print(e)
         close_conn(conn)
 
 def write(conn, mask, q : Queue):
