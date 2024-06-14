@@ -98,38 +98,13 @@ class ina219:
             print(f"INA219 configure error: {e}")
 
 name = "cell"
-client = None
-
-def maintain_connection():
-    global client
-    if not client or not client.is_connected:
-        print("Not connected to server, attempting to reconnect...")
-        if connect_to_server():
-            print("Reconnected successfully")
-        else:
-            print("Reconnection failed")
-            time.sleep(5)  # Delay before next attempt
-
-def connect_to_server():
-    global client
-    try:
-        if client:
-            client.close()
-        client = Tcp_client(host='192.168.90.7', port=9998, client_name=name, blocking=True)
-        client.connect()
-        print("TCP connected")
-        return True
-    except Exception as e:
-        print(f"Error connecting to server: {e}")
-        return False
 
 try:
     connect_to_wifi()
     print("WiFi connected")
 
-    if not connect_to_server():
-        raise Exception("Failed to connect to server")
-    
+    client = Tcp_client(host='192.168.90.7', port=9998, client_name=name, blocking=True)
+    client.connect()
     time.sleep(2)
 except Exception as e:
     print(f"TCP client setup error: {e}")
@@ -209,24 +184,21 @@ try:
             data['timestamp'] = time.time()
             
             try:
-                if client and client.is_connected:
-                    client.send_data(data)
-                    time.sleep(1)  # Wait a moment before receiving
-                    response = client.receive_data()
-                    print(f"Received response: {response}")
-                    if response is None:
-                        raise ValueError("Received None response")
-                else:
-                    maintain_connection()
+                client.send_data(data)
+                time.sleep(1)  # Wait a moment before receiving
+                response = client.receive_data()
+                print(f"Received response: {response}")
+                if response is None:
+                    raise ValueError("Received None response")
             except OSError as e:
                 print(f"OSError during send/receive: {e}")
-                maintain_connection()
+                client.maintain_connection()
             except ValueError as e:
                 print(f"ValueError: {e}")
-                maintain_connection()
+                client.maintain_connection()
             except Exception as e:
                 print(f"General error during send/receive: {e}")
-                maintain_connection()
+                client.maintain_connection()
             
             timer_elapsed = 0
             count += 1
