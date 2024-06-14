@@ -12,6 +12,7 @@ import json
 from typing import Dict
 from multiprocessing import freeze_support
 import requests
+from predictions.utils import add_data_to_frontend_file, init_frontend_file
 
 
 # Initialize colorama
@@ -109,6 +110,7 @@ class Algorithm:
             self.predictions['sun'] = get_sunlight()
             self.old_predictions['sun'] = get_sunlight()
             
+            
         else:
             print("Current predictions are ready")
             self.old_predictions = self.predictions
@@ -201,6 +203,11 @@ class Algorithm:
 
         print(f" ********************************************{total_profit}*******************************************")
 
+        
+        # send these values to front end file
+        add_data_to_frontend_file({"tick": self.tick, "naiveProfit": naive_profit, "optProfit": profit, "energyTransaction":buysell, "energyUsed": demand , "storage": storage, "energyIn": energy_produced, })
+
+
         # Post data to the cloud
         # if self.tick == 59:
         #     if buysell > 0:
@@ -226,6 +233,8 @@ class Algorithm:
                     self.data_buffers[k] = [0]*self.starting_tick
 
         print("Started at tick ", self.starting_tick)
+        init_frontend_file()
+        print("frontend file initialized")
         remainder = 0
         naive_storage = 0
         storage = 0
@@ -234,7 +243,7 @@ class Algorithm:
         total_naive_profit = 0
 
         data1 = {"energy":134, "sell":True, "buy":False, "name":"cell"}
-        data2 = {"energy":40, "sell":False, "buy":False, "name":"flywheel"}
+        data2 = {"energy":40, "sell":False, "buy":False, "name":"load"}
 
         while True: 
             print(f"Current tick {self.tick}")
@@ -274,10 +283,18 @@ class Algorithm:
 
             # send decision to hardware when window starts
             time.sleep(time_to_sleep_in_s)
-
-            with Lock():
-                q.put(json.dumps(data1))
-                q.put(json.dumps(data2))
+            
+            print("adding to queue")
+            # q.put(json.dumps(data1))
+            # q.put(json.dumps(data2))
+            if not q.empty():
+                message = q.get()
+                print(f"Processing message: {message}")
+                # Add your processing logic here
+                # Optionally, put response back into the queue
+                q.put(data1)
+                q.put(data2)
+                q.task_done()
 
             remainder -= time_to_sleep_in_s
 
