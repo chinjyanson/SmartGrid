@@ -38,6 +38,7 @@ class Train:
         self.epsilon = 0.0001
         self.save_checkpoint = 1
         self.saved_pop_path = os.path.join(train_root, "saved_populations")
+        self.saved_graphs_path = os.path.join(train_root, "graphs")
         self.start_index = 0
         self.end_index = 0
         self.current_data_name = ""
@@ -57,6 +58,7 @@ class Train:
         self.most_recent = None
 
         os.makedirs(self.saved_pop_path, exist_ok=True)
+        os.makedirs(self.saved_graphs_path, exist_ok=True)
 
     def add_to_histories_buffer(self, most_recent_histories):
         for k,v in self.histories_buffer.items():
