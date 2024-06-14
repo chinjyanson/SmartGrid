@@ -79,6 +79,8 @@ class Algorithm:
         start = time.time()
         self.serve.live_data()
         for data_name, data in self.data_buffers.items():
+            #if(data_name == "demand"):
+            #    print(self.serve.parsed_data[data_name])
             data.append(self.serve.parsed_data[data_name])
 
         return time.time() - start
@@ -171,7 +173,7 @@ class Algorithm:
 
         time_taken = self.add_to_data_buffers()
 
-        print(Fore.MAGENTA + "Adding to data buffers took ", time_taken)
+        print(Fore.MAGENTA + f"Adding to data buffers took {time_taken} s")
 
         if(self.trainer.first_call()):
             self.serve.set_historical_prices()

@@ -23,4 +23,5 @@ def main():
     algo_thread.join()
     tcp_thread.join()
 
-main()
+if __name__ == "__main__":
+    main()
