@@ -7,7 +7,7 @@ if train_root not in sys.path:
 
 from neural_net import Population, neural_net
 import numpy as np
-from utils import module_from_file, mse, save_population, get_population, add_noise, batch_up
+from utils import module_from_file, mae, save_population, get_population, add_noise, batch_up, mse, plot_datas
 from multiprocessing import Pool
 from functools import partial
 
@@ -41,7 +41,6 @@ class Train:
         self.start_index = 0
         self.end_index = 0
         self.current_data_name = ""
-        self.max_demand = 5 # assume 5, refine after getting histories
 
         self.elitism = elitism
         self.mutation_prob = mutation_prob
@@ -61,7 +60,12 @@ class Train:
 
     def add_to_histories_buffer(self, most_recent_histories):
         for k,v in self.histories_buffer.items():
-            self.histories_buffer[k] = v[1:] + [most_recent_histories[k]]
+            if(k == "demand"):
+                addition = list(map(lambda x : 5*x, most_recent_histories[k]))
+            else:
+                addition = most_recent_histories[k]
+
+            self.histories_buffer[k] = v[1:] + [addition]
 
     def first_call(self) -> bool:
         return any([b==[] for b in self.histories_buffer.values()])
@@ -115,6 +119,13 @@ class Train:
                 check_counter += 1
 
             pop = Population(old_pop=pop)
+
+        # plot_datas(out+[h_data], "synth", "data")
+
+        if(data_type == "demand"):
+            # multiply all by 5
+            out = list(map(lambda x : 5*x, out))
+            h_data = list(map(lambda x : x*5, h_data))
         
         return out, h_data
         
@@ -126,14 +137,11 @@ class Train:
             for i in range(self.num_of_histories):
                 try:
                     input.append(self.training_histories[i][j])
-                except IndexError as e:
+
+                except Exception as e:
                     print(self.training_histories, i, j)
                     print(e)
                     sys.exit(1)  
-
-            if(self.current_data_name == "demand"):
-                # demand takes current tick into account when making predictions
-                input.append(j // 60)
 
             prediction.append(model.query(input)[0][0])
 
@@ -148,11 +156,6 @@ class Train:
             predictions.append(prediction)
 
             _mse = mse(self.most_recent, prediction)
-
-            try:
-                assert(type(_mse) == np.float64)
-            except AssertionError:
-                print(_mse, type(_mse))
 
             if(_mse != 0):
                 fitnesses.append(1 / _mse)
@@ -210,9 +213,6 @@ class Train:
             print("Loaded previous best population")
         else:
             input_nodes = self.num_of_histories
-            if(self.current_data_name == "demand"):
-                input_nodes = self.num_of_histories + 1  # account for tick when working on demand
-
             pop = Population(6, pop_size=self.pop_size, input_nodes=input_nodes, output_nodes=1, mutation_prob=self.mutation_prob, 
                             elitism=self.elitism, mutation_power=self.mutation_power)
         
@@ -273,10 +273,7 @@ class Train:
             for j in range(start_index, end_index):
                 input = []
                 for i in range(self.num_of_histories):
-                    input.append(self.histories_buffer[data_name][i][j]) 
-
-                if(data_name == "demand"):
-                    input.append(j // 60)  
+                    input.append(self.histories_buffer[data_name][i][j])
 
                 prediction.append(best_model.query(input)[0][0])
 
