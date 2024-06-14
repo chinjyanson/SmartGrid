@@ -23,7 +23,7 @@ class Tcp_client:
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.socket.setblocking(self.blocking)
             if self.blocking:
-                self.socket.settimeout(10)  # Add timeout for blocking mode
+                self.socket.settimeout(10)
             print(f"Connecting to server {self.host}:{self.port}")
             self.socket.connect((self.host, self.port))
             self._finalize_connection()

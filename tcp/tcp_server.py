@@ -3,16 +3,18 @@ import selectors
 import json
 from queue import Queue
 from threading import Lock
+from functools import partial
 
 sel = selectors.DefaultSelector()
 picos = {"flywheel": None, "solar": None, "cell": None}
 message_queues = {name: Queue() for name in picos}
+lock = Lock()
 
-def accept(sock, mask):
+def accept(sock, mask, q):
     conn, addr = sock.accept()
     print(f'Accepted connection from {addr}')
     conn.setblocking(False)
-    sel.register(conn, selectors.EVENT_READ, read_initial)
+    sel.register(conn, selectors.EVENT_READ, partial(read_initial, q=q))
 
 def close_conn(conn):
     try:
@@ -22,7 +24,7 @@ def close_conn(conn):
     sel.unregister(conn)
     conn.close()
 
-def read_initial(conn, mask):
+def read_initial(conn, mask, q):
     try:
         data = conn.recv(1024).decode('utf-8').strip()
         print(f'Initial read data: "{data}"')
@@ -31,7 +33,7 @@ def read_initial(conn, mask):
         name = data.strip()
         if name in picos:
             picos[name] = conn
-            sel.modify(conn, selectors.EVENT_READ, read)
+            sel.modify(conn, selectors.EVENT_READ, partial(read, q=q, pico_name=name))
             print(f"Registered client {name}")
         else:
             print(f"Unknown client name: {name}")
@@ -45,12 +47,12 @@ def read_initial(conn, mask):
         print(f"Error during initial read: {e}")
         close_conn(conn)
 
-def read(conn, mask):
+def read(conn, mask, q, pico_name):
     try:
         data = conn.recv(1024).decode('utf-8').strip()
-        print(f'Received data: "{data}"')
+        print(f'Received data from {pico_name}: "{data}"')
         if data:
-            process_message(data, conn)
+            process_message(data, conn, q, pico_name)
         else:
             close_conn(conn)
     except BlockingIOError:
@@ -61,42 +63,34 @@ def read(conn, mask):
         print(f"Error during read: {e}")
         close_conn(conn)
 
-def write(conn, mask):
-    pico_name = next((name for name, c in picos.items() if c == conn), None)
-    if pico_name:
-        with Lock():
-            if not message_queues[pico_name].empty():
-                msg = message_queues[pico_name].get()
-                try:
-                    conn.send(json.dumps(msg).encode('utf-8'))
-                    print(f"Sent message to {pico_name}: {msg}")
-                except BlockingIOError:
-                    print("BlockingIOError during write, will retry")
-                except Exception as e:
-                    print(f'Error sending data: {e}')
-                    close_conn(conn)
-    sel.modify(conn, selectors.EVENT_READ, read)
+def write(conn, mask, q, pico_name):
+    with lock:
+        if not q.empty():
+            try:
+                message = q.get_nowait()
+                conn.send(message.encode('utf-8'))
+                print(f"Sent to {pico_name}: {message}")
+            except socket.error as e:
+                print(f"Error sending data: {e}")
+                close_conn(conn)
+        sel.modify(conn, selectors.EVENT_READ, partial(read, q=q, pico_name=pico_name))
 
-def process_message(data, conn):
+def process_message(data, conn, q, pico_name):
     try:
         message = json.loads(data)
-        pico_name = message.get('name')
-        if pico_name in picos:
-            message_queues[pico_name].put(message)
-            print(f"Queued message for {pico_name}: {message}")
-            sel.modify(conn, selectors.EVENT_WRITE, write)
-        else:
-            print(f"Received message for unknown pico: {pico_name}")
+        response = {"status": "received", "name": pico_name, "timestamp": message["timestamp"]}
+        q.put(json.dumps(response))
+        print(f"Processed and queued response for {pico_name}: {response}")
+        sel.modify(conn, selectors.EVENT_WRITE, partial(write, q=q, pico_name=pico_name))
     except json.JSONDecodeError as e:
-        print(f"Error decoding message: {e}")
-        print(f"Raw data received: {data}")
+        print(f"Error decoding message: {e}, raw data: {data}")
 
-def run_server(host, port):
+def run_server(host, port, q: Queue):
     server_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_sock.bind((host, port))
     server_sock.listen()
     server_sock.setblocking(False)
-    sel.register(server_sock, selectors.EVENT_READ, accept)
+    sel.register(server_sock, selectors.EVENT_READ, partial(accept, q=q))
 
     print(f'Server listening on {host}:{port}')
     try:
@@ -112,4 +106,5 @@ def run_server(host, port):
         server_sock.close()
 
 if __name__ == "__main__":
-    run_server('0.0.0.0', 9998)
+    q = Queue()
+    run_server('0.0.0.0', 9998, q)

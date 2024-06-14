@@ -10,6 +10,7 @@ import naive_solution as naive
 from threading import Lock
 import json
 from typing import Dict
+from multiprocessing import freeze_support
 import requests
 
 

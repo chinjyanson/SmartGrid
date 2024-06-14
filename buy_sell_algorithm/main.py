@@ -7,7 +7,7 @@ m_tcp = module_from_file("run_server", "tcp/tcp_server.py")
 
 q = Queue()
 server_host = '0.0.0.0'
-server_port = 9999
+server_port = 9998
 
 def main():
     init_frontend_file()
@@ -23,4 +23,5 @@ def main():
     algo_thread.join()
     tcp_thread.join()
 
-main()
+if __name__ == "__main__":
+    main()

@@ -7,13 +7,13 @@ import ujson
 va_pin = ADC(Pin(28))
 vb_pin = ADC(Pin(26))
 vpot_pin = ADC(Pin(27))
-OL_CL_pin = Pin(12, Pin.IN, Pin.PULL_UP)
-BU_BO_pin = Pin(2, Pin.IN, Pin.PULL_UP)
+OL_CL_pin = Pin(12, Pin.PULL_UP)
+BU_BO_pin = Pin(2, Pin.PULL_UP)
 
 # Set up the I2C for the INA219 chip for current sensing
-ina_i2c = I2C(0, scl=Pin(1), sda=Pin(0), freq=100000)  # Reduced frequency for stability
+ina_i2c = I2C(0, scl=Pin(1), sda=Pin(0), freq=100000)
 
-# Some PWM settings, pin number, frequency, duty cycle limits and start with the PWM outputting the default of the min value.
+# Some PWM settings
 pwm = PWM(Pin(9))
 pwm.freq(100000)
 min_pwm = 1000
@@ -21,45 +21,44 @@ max_pwm = 64536
 pwm_out = min_pwm
 pwm_ref = 30000
 
-# Some error signals
+# Error signals
 trip = 0
 OC = 0
 
-# The potentiometer is prone to noise so we are filtering the value using a moving average
+# Potentiometer noise filtering
 v_pot_filt = [0] * 100
 v_pot_index = 0
 
-# Gains etc for the PID controller
-i_ref = 0 # Voltage reference for the CL modes
-i_err = 0 # Voltage error
-i_err_int = 0 # Voltage error integral
-i_pi_out = 0 # Output of the voltage PI controller
-kp = 100 # Boost Proportional Gain
-ki = 300 # Boost Integral Gain
+# PID controller gains
+i_ref = 0 
+i_err = 0
+i_err_int = 0
+i_pi_out = 0
+kp = 100
+ki = 300
 
-# Basic signals to control logic flow
+# Control logic signals
 global timer_elapsed
 timer_elapsed = 0
 count = 0
 first_run = 1
 hold_vpot = 1
 
-# Need to know the shunt resistance
+# Shunt resistance
 global SHUNT_OHMS
 SHUNT_OHMS = 0.10
 
-# Saturation function for anything you want saturated within bounds
+# Saturation function
 def saturate(signal, upper, lower):
     return max(min(signal, upper), lower)
 
-# This is the function executed by the loop timer, it simply sets a flag which is used to control the main loop
+# Timer callback
 def tick(t):
     global timer_elapsed
     timer_elapsed = 1
 
-# These functions relate to the configuring of and reading data from the INA219 Current sensor
+# INA219 class
 class ina219:
-    # Register Locations
     REG_CONFIG = 0x00
     REG_SHUNTVOLTAGE = 0x01
     REG_BUSVOLTAGE = 0x02
@@ -75,7 +74,7 @@ class ina219:
         try:
             reg_bytes = ina_i2c.readfrom_mem(self.address, self.REG_SHUNTVOLTAGE, 2)
             reg_value = int.from_bytes(reg_bytes, 'big')
-            if reg_value > 2**15:  # Negative
+            if reg_value > 2**15:  
                 reg_value -= 2**16
             return float(reg_value) * 1e-5
         except Exception as e:
@@ -93,13 +92,23 @@ class ina219:
         
     def configure(self):
         try:
-            ina_i2c.writeto_mem(self.address, self.REG_CONFIG, b'\x19\x9F')  # PG = /8
+            ina_i2c.writeto_mem(self.address, self.REG_CONFIG, b'\x19\x9F')
             ina_i2c.writeto_mem(self.address, self.REG_CALIBRATION, b'\x00\x00')
         except Exception as e:
             print(f"INA219 configure error: {e}")
 
 name = "cell"
 client = None
+
+def maintain_connection():
+    global client
+    if not client or not client.is_connected:
+        print("Not connected to server, attempting to reconnect...")
+        if connect_to_server():
+            print("Reconnected successfully")
+        else:
+            print("Reconnection failed")
+            time.sleep(5)  # Delay before next attempt
 
 def connect_to_server():
     global client
@@ -114,30 +123,14 @@ def connect_to_server():
         print(f"Error connecting to server: {e}")
         return False
 
-def reconnect_client():
-    global client
-    print("Attempting to reconnect...")
-    if client:
-        client.close()
-    return connect_to_server()
-
 try:
     connect_to_wifi()
     print("WiFi connected")
 
-    # Attempt to connect to the server with retries
-    max_retries = 5
-    for attempt in range(max_retries):
-        if connect_to_server():
-            break
-        else:
-            print(f"Retrying to connect to server (attempt {attempt + 1}/{max_retries})...")
-            time.sleep(5)  # Delay before retrying
-
-    if not client or not client.is_connected:
-        raise Exception("Failed to connect to server after multiple attempts")
+    if not connect_to_server():
+        raise Exception("Failed to connect to server")
     
-    time.sleep(2)  # Allow some time for server stabilization
+    time.sleep(2)
 except Exception as e:
     print(f"TCP client setup error: {e}")
 
@@ -150,12 +143,10 @@ data = {
 try:
     while True:
         if first_run:
-            # for first run, set up the INA link and the loop timer settings
-            ina = ina219(SHUNT_OHMS, 0x40)  # Replace 0x40 with the detected I2C address
+            ina = ina219(SHUNT_OHMS, 0x40)
             ina.configure()
             first_run = 0
             
-            # This starts a 1kHz timer which we use to control the execution of the control loops and sampling
             loop_timer = Timer(mode=Timer.PERIODIC, freq=1000, callback=tick)
         
         if timer_elapsed == 1:
@@ -217,30 +208,25 @@ try:
             data['value'] = pwm_out
             data['timestamp'] = time.time()
             
-            retry_count = 0
-            max_retries = 5
-            
-            while retry_count < max_retries:
-                try:
-                    if client and client.is_connected:
-                        client.send_data(data)
-                        response = client.receive_data()
-                        print(f"Received response: {response}")
-                    else:
-                        print("Not connected to server, attempting to reconnect...")
-                        if reconnect_client():
-                            print("Reconnected successfully")
-                        else:
-                            print("Reconnection failed")
-                    break
-                except OSError as e:
-                    print(f"OSError during send/receive: {e}")
-                    time.sleep(1)
-                    retry_count += 1
-                except Exception as e:
-                    print(f"General error during send/receive: {e}")
-                    reconnect_client()
-                    break
+            try:
+                if client and client.is_connected:
+                    client.send_data(data)
+                    time.sleep(1)  # Wait a moment before receiving
+                    response = client.receive_data()
+                    print(f"Received response: {response}")
+                    if response is None:
+                        raise ValueError("Received None response")
+                else:
+                    maintain_connection()
+            except OSError as e:
+                print(f"OSError during send/receive: {e}")
+                maintain_connection()
+            except ValueError as e:
+                print(f"ValueError: {e}")
+                maintain_connection()
+            except Exception as e:
+                print(f"General error during send/receive: {e}")
+                maintain_connection()
             
             timer_elapsed = 0
             count += 1
