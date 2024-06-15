@@ -12,6 +12,7 @@ import os
 
 SUNRISE = 15    #Sunrise ticks after start of day
 DAY_LENGTH = 30 #Ticks between sunrise and sunset
+project_dir = os.getcwd()
 
 """
     Useful helper functions
@@ -56,7 +57,7 @@ def add_noise(x:float, y:int) -> float:
     """
     return x*y
 
-def plot_datas(datas, title, ylabel)->None:   
+def plot_datas(datas, title, ylabel, save=True)->None:   
     """
     Pass a list of datas to plot
     set of data on the same graph needs to be put into a list
@@ -72,7 +73,12 @@ def plot_datas(datas, title, ylabel)->None:
     for i in range(len(datas)):
         plt.plot(times[:len(datas[i])], datas[i], colors[i])
 
-    plt.show()
+    if(save):
+        file_name = f"{project_dir}/buy_sell_algorithm/predictions/graphs/{ylabel}"
+        plt.savefig(file_name)
+        plt.close()
+    else:
+        plt.show()
 
 def module_from_file(module_name:str, file_path:str)->ModuleType:
     spec = importlib.util.spec_from_file_location(module_name, file_path)
@@ -150,7 +156,6 @@ def get_sunlight():
     return sunlight
 
 lock = Lock()
-project_dir = os.getcwd()
 json_path = os.path.join(project_dir, "react-front-end", "data.json")
 
 def init_frontend_file():

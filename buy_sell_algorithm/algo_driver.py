@@ -123,7 +123,7 @@ class Algorithm:
             # previous cycle data buffers are full, we also have what we predicted in self.old_predictions
             for n, p in self.old_predictions.items():
                 try:
-                    plot_datas([p, self.data_buffers[n]], "Prediction of previous cycle vs Actual data", n)
+                    plot_datas([p, self.data_buffers[n]], "Prediction of previous cycle vs Actual data after", n+str(self.cycle_count))
                 except Exception as e:
                     print(f"Exception: {e}")
                     print(len(self.data_buffers[n]), len(p))
@@ -228,7 +228,10 @@ class Algorithm:
         if(self.starting_tick != 0):
             for k, v in self.data_buffers.items():
                 if(self.serve.parsed_data[k] != []):
-                    self.data_buffers[k] = self.serve.parsed_data[k][:self.starting_tick]
+                    if(k == "demand"):
+                        self.data_buffers[k] = list(map(lambda x : 5*x, self.serve.parsed_data[k][:self.starting_tick]))
+                    else:
+                        self.data_buffers[k] = self.serve.parsed_data[k][:self.starting_tick]
                 else:
                     self.data_buffers[k] = [0]*self.starting_tick
 

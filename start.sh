@@ -2,7 +2,7 @@
 
 # Start the backend
 echo "Starting Python backend..."
-(cd buy_sell_algorithm && python main.py) &
+(python buy_sell_algorithm/main.py) &
 
 # Start the frontend
 echo "Starting React frontend..."
@@ -11,5 +11,5 @@ echo "Starting React frontend..."
 # Wait for both processes to complete
 wait
 
-#chmod +x start.sh
+# chmod +x start.sh
 

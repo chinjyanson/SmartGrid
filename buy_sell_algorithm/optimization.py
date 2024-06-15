@@ -50,7 +50,11 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
 
     # Simulate real-time change
     energy_in = data_buffers['sun'][-1] * LINEAR_SOLAR_DEPENDANCE
-    energy_used = data_buffers['demand'][-1] + POWER_LOSS
+    try:
+        energy_used = data_buffers['demand'][-1] + POWER_LOSS
+    except:
+        print(data_buffers['demand'], POWER_LOSS)
+
     current_buy_price = data_buffers['buy_price'][-1] /100
     current_sell_price = data_buffers['sell_price'][-1] /100
 
