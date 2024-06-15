@@ -1,70 +1,76 @@
-import socket
-import time
 import network
+import socket
+import json
+import _thread
 import machine
+import utime
 from credentials import SSID, PASSWORD
-import ujson
 
-"""
-    Functions to allow SMPS to make TCP connection to server, and send and recieve messages
-"""
-# code that allows rapberry pi to connect to wlan given here: https://projects.raspberrypi.org/en/projects/get-started-pico-w/2
-
-led = machine.Pin("LED", machine.Pin.OUT)
-
-def connect():
-    """
-        Connect the PICO to wifi
-    """
-    #Connect to WLAN
+# Function to connect to Wi-Fi
+def connect_wifi(ssid, password):
     wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
-    wlan.connect(SSID, PASSWORD)
-    while wlan.isconnected() == False:
-        print('Waiting for connection...')
-        time.sleep(1)
-    ip = wlan.ifconfig()[0]
-    print("Connected with ip", ip)
-
-def connect_to_server(name):
-    """
-        Connect the PICO to server (laptop)
-    """
-    server_ip = '172.20.10.3'
-    server_port = 9999
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect((server_ip, server_port))
-
-    print("Connected to server")
+    wlan.connect(ssid, password)
+    print("Connecting to Wi-Fi...", end="")
     
-    s.send(name.encode('utf-8'))
-        
-    time.sleep(2)
-
-    return s
-
-def get_message(socket):
-    """
-        Returns message from server
-    """
-    #message = "Hello from Pico"  # send particular message beased on which PICO this one is
-    #socket.send(message.encode('utf-8'))
-    response = socket.recv(1024)
-    print(f"Received from server: {response.decode('utf-8')}")
-
-    return ujson.loads(response.decode('utf-8'))
-
-def send_message(socket, message):
-    socket.send(str(message).encode('utf-8'))
+    # Wait for the connection to complete
+    while not wlan.isconnected():
+        print(".", end="")
+        utime.sleep(1)
     
-    
-if __name__ == "__main__":
-    led.toggle()
-    connect()
-    socket = connect_to_server("cell")
+    print(" Connected!")
+    print("Network configuration:", wlan.ifconfig())
 
+# Function to receive data from the server
+def receive_from_server(client_socket):
     while True:
-        received = get_message(socket)
-        print(f"Received {received} from server")
+        try:
+            data = client_socket.recv(1024)
+            if not data:
+                break
+            received_json = data.decode('utf-8')
+            parsed_data = json.loads(received_json)
+            print(f"Received from server: {parsed_data}")
+        except Exception as e:
+            print(f"Error receiving data: {e}")
+            break
 
+# Function to send dummy data to the server
+def send_to_server(client_socket, data):
+    while True:
+        # Generate dummy data with client name
+        try:
+            client_socket.sendall(json.dumps(data).encode('utf-8'))
+            print(f"Sent to server: {data}")
+        except Exception as e:
+            print(f"Error sending data: {e}")
+        
+        utime.sleep(5)  # Wait 5 seconds before sending the next dummy data
+
+
+# Function to start the client
+def start_client(server_host, server_port, client_name, ssid, password, data):
+    # Connect to Wi-Fi
+    connect_wifi(ssid, password)
+    
+    # Create a socket and connect to the server
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client_socket.connect((server_host, server_port))
+    print(client_name.encode('utf-8'))
+    client_socket.sendall(client_name.encode('utf-8'))  # Send the client's name to the server
+    utime.sleep(3)
+
+    # Start threads for sending and receiving data
+    _thread.start_new_thread(receive_from_server, (client_socket,))
+
+    return client_socket
+
+if __name__ == "__main__":
+    server_host = '192.168.90.7'  # Replace with your server's IP address
+    server_port = 5555
+    client_name = 'Client1'  # Replace with your client name
+    data = None
+    
+    client_socket = start_client(server_host, server_port, client_name, SSID, PASSWORD)
+    send_to_server(client_socket, data)
 
