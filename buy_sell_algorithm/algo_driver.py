@@ -1,6 +1,6 @@
 from queue import Queue 
 import time
-from predictions.utils import plot_datas, get_sunlight
+from predictions.utils import plot_datas, get_sunlight, init_frontend_file, add_data_to_frontend_file
 import sys
 from colorama import Fore, Back, Style, init
 import optimization as opt
@@ -201,6 +201,8 @@ class Algorithm:
 
         print(f" ********************************************{total_profit}*******************************************")
 
+        add_data_to_frontend_file({"tick": self.tick, "naiveProfit": naive_profit, "optProfit": profit, "energyTransaction":buysell, "energyUsed": demand , "storage": storage, "energyIn": energy_produced, })
+
         # Post data to the cloud
         # if self.tick == 59:
         #     if buysell > 0:
@@ -229,6 +231,8 @@ class Algorithm:
                     self.data_buffers[k] = [0]*self.starting_tick
 
         print("Started at tick ", self.starting_tick)
+        init_frontend_file()
+        print("Initialized frontend file")
         remainder = 0
         naive_storage = 0
         storage = 0

@@ -157,32 +157,60 @@ def get_sunlight():
 
 def init_frontend_file():
     try:
+        initial_data = {str(i): [] for i in range(60)}  # Create keys '0' to '59' with empty lists
+        
+        # Write the initial structure to the JSON file
         with open(json_path, "w") as f:
-            json.dump({"tcp": "", "algo": ""}, f)
-    except:
-        print("Error while creating front-end file")
+            json.dump(initial_data, f, indent=4)
+
+        print(f"Initialized {json_path} with empty data for ticks 0 to 59.")
+
+    except Exception as e:
+        print(f"An error occurred during initialization: {e}")
 
 lock = Lock()
 json_path = os.path.join(project_dir, "react-front-end", "data.json")
 
 def add_data_to_frontend_file(source : str, data : Dict):
     """
-        pass source ("tcp" or "algo") 
         pass the data you want to be displayed on front end in Python dict
     """
     with lock:  # only one thread can access this at any one time
-        if(source == "tcp" or source == "algo"):
-            try:
-                with open(json_path, "r+") as f:
-                    d = json.load(f)
-                    d[source] = data
-                    f.truncate(0) # make file size 0, effectively clearing the file
-                    f.seek(0) # move cursor to beginning of file to overwrite
-                    json.dump(d, f)
-            except:
-                print("Error while writing to file")
-        else:
-            print("Use `tcp` for data from tcp server and `algo` for data from algorithm")
+        if 'tick' not in data:
+            raise ValueError("The 'data' dictionary must contain a 'tick' key.")
+        
+        tick_value = str(data['tick'])  # Convert tick to string to match JSON keys
+
+        try:
+            # Check if the file exists
+            if not os.path.exists(json_path):
+                raise FileNotFoundError(f"The file {json_path} does not exist. Initialize it first.")
+
+            # Read the JSON file
+            with open(json_path, "r") as f:
+                json_data = json.load(f)
+
+            # Ensure the tick value exists in the JSON data
+            if tick_value in json_data:
+                # Append new data to the list for the specified tick
+                json_data[tick_value].append(data)
+            else:
+                raise ValueError(f"Tick {tick_value} is not valid. Must be between '0' and '59'.")
+
+            # Write the updated JSON back to the file
+            with open(json_path, "w") as f:
+                json.dump(json_data, f, indent=4)
+
+            if tick_value == "59":
+                print("Tick 59 reached. Clearing data...")
+                init_frontend_file()
+
+        except json.JSONDecodeError as e:
+            print(f"Error decoding JSON from the file {json_path}: {e}")
+        except FileNotFoundError as e:
+            print(e)
+        except Exception as e:
+            print(f"An unexpected error occurred: {e}")
 
 
 if __name__ == "__main__":
