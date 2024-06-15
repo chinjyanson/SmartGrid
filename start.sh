@@ -11,5 +11,5 @@ echo "Starting React frontend..."
 # Wait for both processes to complete
 wait
 
-chmod +x start.sh
+#chmod +x start.sh
 

@@ -2,7 +2,7 @@
 
 REM Start the backend
 echo Starting Python backend...
-start "Backend" cmd /c "cd buy_sell_algorithm && python main.py"
+start "Backend" cmd /c "python buy_sell_algorithm/main.py"
 
 REM Start the frontend
 echo Starting React frontend...
