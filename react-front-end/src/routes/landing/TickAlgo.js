@@ -14,6 +14,7 @@ const TickAlgo = () => {
       {
         label: 'Energy Usage (kWh)',
         data: Array.from({ length: 60 }, (_, i) => ({ x: i, y: null })), // Create an array with 60 objects with x and y properties for energy usage
+        fill: true,
         borderColor: 'rgba(75,192,192,1)',
         backgroundColor: 'rgba(75,192,192,0.2)',
         pointBackgroundColor: 'rgba(255, 192, 203, 0.8)', // Lighter pink color for energy usage points
@@ -22,6 +23,7 @@ const TickAlgo = () => {
       {
         label: 'Energy Produced (kWh)',
         data: Array.from({ length: 60 }, (_, i) => ({ x: i, y: null })), // Create an array with 60 objects with x and y properties for energy produced
+        fill: true,
         borderColor: 'rgba(255, 99, 132, 1)',
         backgroundColor: 'rgba(255, 99, 132, 0.2)',
         pointBackgroundColor: 'rgba(64, 224, 208, 0.8)', // Slightly darker pastel bluish green color for energy produced points

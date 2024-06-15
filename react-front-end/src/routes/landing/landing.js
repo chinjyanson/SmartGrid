@@ -1,7 +1,3 @@
-// import React, { useState, useEffect } from 'react';
-// import raw from '../../assets/TEST_FILE.txt';
-// import CurrEnergyUsed from './currEnegyUsed';
-
 // DATA TO SHOW IN THE HOME PAGE:
 // 50/50 of buy or sell like speedo with bar chart next to it 1, -1, with pie chart also?
 // we also want to show the battery with text inside it showing between 0 to 50 joules of how much is stored, then next to it we will say if this is an increase of X or decrease by X % from the previous tick

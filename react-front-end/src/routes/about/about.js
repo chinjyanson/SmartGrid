@@ -80,7 +80,7 @@ const About = () => {
   return (
     <div className="about">
       <div className="max-w-6xl mx-auto px-4 py-8">
-        <h1 className="text-4xl text-white mb-4">About</h1>
+        <h1 className="text-4xl text- font-semibold mb-4">About</h1>
         <p className="text-lg text-white mb-8">{projectDescription}</p>
         <TeamMembers members={teamMembers} />
       </div>

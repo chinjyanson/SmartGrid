@@ -7,6 +7,7 @@ import Consumption from './routes/consumption/consumption.js';
 import NotFound from './routes/not-found/not-found.js';
 import About from './routes/about/about.js';
 import './core-ui/App.css';
+import StayTuned from './routes/alert/stayTuned.js';
 
 const App = () => {
   return (
@@ -18,6 +19,7 @@ const App = () => {
           <Route path="/finances" element={<Finances />} />
           <Route path="/consumption" element={<Consumption />} />
           <Route path="/about" element={<About />} />
+          <Route path="/alert" element={<StayTuned />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </div>

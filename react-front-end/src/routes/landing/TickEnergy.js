@@ -120,6 +120,9 @@ const TickEnergy = () => {
                     display: true,
                     text: 'Ticks',
                     color: 'white',
+                    font: {
+                      weight: 'bold', // Make the title bold
+                    },
                   },
                   type: 'linear',
                   position: 'bottom',
@@ -138,6 +141,9 @@ const TickEnergy = () => {
                     display: true,
                     text: 'Energy (kWh)',
                     color: 'white',
+                    font: {
+                      weight: 'bold', // Make the title bold
+                    },
                   },
                   type: 'linear',
                   position: 'left',
@@ -164,6 +170,6 @@ const TickEnergy = () => {
       </div>
     </div>
   );
-} 
+}
 
 export default TickEnergy;

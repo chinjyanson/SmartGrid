@@ -3,7 +3,7 @@ import React from 'react';
 const TeamMembers = ({ members }) => {
   return (
     <div className="team-members">
-      <h2 className="text-white text-3xl mb-4">Our Team</h2>
+      <h2 className="text-white font-semibold text-3xl mb-4">Our Team</h2>
       <div className="grid grid-cols-3 gap-4">
         {members.map((member, index) => (
           <div key={index} className="bg-gray-500 bg-opacity-50 p-4 rounded-lg">

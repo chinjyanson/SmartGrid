@@ -8,7 +8,7 @@ class TradeLogTester:
 
     def generate_random_data(self, inputval):
         day = inputval
-        earnings = round(random.uniform(0, 1000), 2)
+        earnings = round(random.uniform(0, -500), 2)
         energysold = round(random.uniform(0, 198), 2)
         energybought = round(random.uniform(0, 198), 2)
         return day, earnings, energysold, energybought

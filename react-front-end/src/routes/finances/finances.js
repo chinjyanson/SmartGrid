@@ -1,14 +1,23 @@
-// src/components/Finances/Finances.js
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Line, Bar } from 'react-chartjs-2';
-import 'chart.js/auto';
 import FilterButtons from '../../helpers/FilterButtons';
+import BarChart from './BarChart';
+import CombinedCharts from './CombinedCharts';
+import WeeklyEarnings from './WeeklyEarnings';
+import WeeklyComparison from './WeeklyComparison';
+import './finance.css';
 
 const Finances = () => {
   const [topChartData, setTopChartData] = useState(null);
   const [bottomChartData, setBottomChartData] = useState(null);
+  const [pieChartData, setPieChartData] = useState(null);
   const [daysFilter, setDaysFilter] = useState(90);
+  const [weeklyEarnings, setWeeklyEarnings] = useState(0);
+  const [weeklyComparison, setWeeklyComparison] = useState({
+    energyBought: { difference: 0, trend: '' },
+    energySold: { difference: 0, trend: '' },
+    earnings: { difference: 0, trend: '' },
+  });
 
   const fetchData = async () => {
     try {
@@ -20,7 +29,7 @@ const Finances = () => {
       const days = sortedData.map(entry => entry.dayID);
       const energyBought = sortedData.map(entry => entry.energyBought);
       const energySold = sortedData.map(entry => entry.energySold);
-      const earnings = sortedData.map(entry => entry.earnings);
+      const earnings = sortedData.map(entry => -1 * entry.earnings);
 
       setTopChartData({
         labels: days,
@@ -44,13 +53,51 @@ const Finances = () => {
         labels: days,
         datasets: [
           {
-            label: 'Earnings',
+            label: 'Costs',
             data: earnings,
             backgroundColor: 'rgba(255, 159, 64, 0.8)',
             borderColor: 'rgba(255, 159, 64, 1)',
             borderWidth: 1,
           },
         ],
+      });
+
+      const totalEnergyBought = energyBought.slice(-7).reduce((acc, curr) => acc + curr, 0);
+      const totalEnergySold = energySold.slice(-7).reduce((acc, curr) => acc + curr, 0);
+      setPieChartData({
+        labels: ['Energy Bought', 'Energy Sold'],
+        datasets: [
+          {
+            data: [totalEnergyBought, totalEnergySold],
+            backgroundColor: ['rgba(75,192,192,0.6)', 'rgba(153,102,255,0.6)'],
+            hoverBackgroundColor: ['rgba(75,192,192,1)', 'rgba(153,102,255,1)'],
+          },
+        ],
+      });
+
+      const recentEarnings = earnings.slice(-7).reduce((acc, curr) => acc + curr, 0);
+      setWeeklyEarnings(recentEarnings);
+
+      // Calculate weekly comparison
+      const recentEnergyBought = energyBought.slice(-7).reduce((acc, curr) => acc + curr, 0);
+      const previousEnergyBought = energyBought.slice(-14, -7).reduce((acc, curr) => acc + curr, 0);
+      const recentEnergySold = energySold.slice(-7).reduce((acc, curr) => acc + curr, 0);
+      const previousEnergySold = energySold.slice(-14, -7).reduce((acc, curr) => acc + curr, 0);
+      const previousEarnings = earnings.slice(-14, -7).reduce((acc, curr) => acc + curr, 0);
+
+      setWeeklyComparison({
+        energyBought: {
+          difference: recentEnergyBought - previousEnergyBought,
+          trend: recentEnergyBought > previousEnergyBought ? 'increase' : 'decrease',
+        },
+        energySold: {
+          difference: recentEnergySold - previousEnergySold,
+          trend: recentEnergySold > previousEnergySold ? 'increase' : 'decrease',
+        },
+        earnings: {
+          difference: recentEarnings - previousEarnings,
+          trend: recentEarnings > previousEarnings ? 'increase' : 'decrease',
+        },
       });
     } catch (error) {
       console.error('Error fetching data', error);
@@ -83,28 +130,35 @@ const Finances = () => {
   const filteredBottomChartData = bottomChartData ? filterData(bottomChartData, daysFilter) : null;
 
   return (
-    <div className="flex flex-col items-center justify-center mt-10">
-      <FilterButtons daysFilter={daysFilter} handleDaysFilterChange={handleDaysFilterChange} />
-      <div className="flex w-11/12 md:w-3/4">
-        <div className="w-1/2">
-          {filteredTopChartData ? (
-            <div className="chart-container mb-8">
-              <Line data={filteredTopChartData} />
-            </div>
-          ) : (
-            <p className="text-white">Loading chart data...</p>
-          )}
-          {filteredBottomChartData ? (
-            <div className="chart-container">
-              <Bar data={filteredBottomChartData} />
-            </div>
-          ) : (
-            <p className="text-white">Loading earnings data...</p>
-          )}
+    <div className="finances-container">
+      <div className="w-11/12 flex justify-between items-center px-6">
+        <div className="text-2xl font-semibold -mt-4">Your Finances History</div>
+        <div>
+          <FilterButtons daysFilter={daysFilter} handleDaysFilterChange={handleDaysFilterChange} />
         </div>
-        <div className="w-1/2 text-white ml-8">
-          <h2 className="text-xl mb-4">Analysis</h2>
-          <p className="mb-4"></p>
+      </div>
+      <div className="w-11/12 md:w-8/10 flex flex-col items-center">
+        <div className="w-full flex">
+          <div className="energybs-bubble bg-gray-500 bg-opacity-50 shadow-lg">
+          {filteredTopChartData && pieChartData ? (
+              <CombinedCharts lineChartData={filteredTopChartData} pieChartData={pieChartData} />
+            ) : (
+              <p>Loading chart data...</p>
+            )}
+          </div>
+          <div className="w-4"></div>
+          <div className="costs-bubble bg-gray-500 bg-opacity-50 shadow-lg flex-2">
+            <WeeklyEarnings earnings={weeklyEarnings} />
+          </div>
+        </div>
+        <div className="w-full flex mt-4">
+          <div className="cost-chart-bubble bg-gray-500 bg-opacity-50 shadow-lg flex-1">
+            <BarChart data={filteredBottomChartData} />
+          </div>
+          <div className="w-4"></div>
+          <div className="comparison-bubble bg-gray-500 bg-opacity-50 shadow-lg flex-1">
+            <WeeklyComparison comparison={weeklyComparison} />
+          </div>
         </div>
       </div>
     </div>
