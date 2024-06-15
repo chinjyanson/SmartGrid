@@ -1,18 +1,19 @@
 from predictions.utils import module_from_file, init_frontend_file
 from threading import Thread
-from algo_driver import Algorithm
+#from algo_driver import Algorithm
 from queue import Queue 
 
 m_tcp = module_from_file("run_server", "tcp/tcp_server_II.py")
+a_tcp = module_from_file("driver", "tcp/fake_algo.py")
 q = Queue()
 
 
 def main():
-    init_frontend_file()
+    #init_frontend_file()
 
-    algo = Algorithm()
+    #algo = Algorithm()
 
-    algo_thread = Thread(target=algo.driver, args=(q, ))
+    algo_thread = Thread(target=a_tcp.driver, args=(q, ))
     tcp_thread = Thread(target=m_tcp.run_server, args=(q, ))
 
     algo_thread.start()

@@ -174,7 +174,7 @@ class ina219:
 
 server_host = '192.168.90.7'  # Replace with your server's IP address
 server_port = 5555
-client_name = 'solar'  # Replace with your client name
+client_name = 'bidirectional'  # Replace with your client name
 data = None
 client_socket = start_client(server_host, server_port, client_name, SSID, PASSWORD)
 # Here we go, main function, always executes
