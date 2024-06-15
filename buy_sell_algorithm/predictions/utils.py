@@ -171,7 +171,7 @@ def init_frontend_file():
 lock = Lock()
 json_path = os.path.join(project_dir, "react-front-end", "data.json")
 
-def add_data_to_frontend_file(source : str, data : Dict):
+def add_data_to_frontend_file(data : Dict):
     """
         pass the data you want to be displayed on front end in Python dict
     """

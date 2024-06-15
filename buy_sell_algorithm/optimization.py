@@ -2,7 +2,6 @@ import numpy as np
 import cvxpy as cp
 import data.server_data as data
 import predictions.train as train
-from predictions.utils import add_data_to_frontend_file
 
 class Deferables:
     def __init__(self, start, end, energyTotal, energyDone, idx) -> None:
@@ -188,9 +187,6 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
     elif problem.status == cp.OPTIMAL or problem.status == cp.FEASIBLE:
         optimal_energy_transaction = energy_transactions.value[0]
         optimal_storage_transaction = storage_transactions.value[0]
-
-        # send these values to front end file
-        add_data_to_frontend_file("algo", {"optimal_energy_transaction":optimal_energy_transaction, "optimal_storage_transaction":optimal_storage_transaction})
 
         for idx in range(len(deferable_list)):
             deferable_list[idx].energyDone += deferable_demand[idx][0].value

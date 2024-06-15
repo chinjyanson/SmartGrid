@@ -201,6 +201,7 @@ class Algorithm:
 
         print(f" ********************************************{total_profit}*******************************************")
 
+
         add_data_to_frontend_file({"tick": self.tick, "naiveProfit": naive_profit, "optProfit": profit, "energyTransaction":buysell, "energyUsed": demand , "storage": storage, "energyIn": energy_produced, })
 
         # Post data to the cloud
