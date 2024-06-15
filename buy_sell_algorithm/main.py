@@ -14,9 +14,12 @@ def main():
     #init_frontend_file()
 
     #algo = Algorithm()
+    server_host = '0.0.0.0'
+    server_port = 5555  
+
 
     algo_thread = Thread(target=a_tcp.driver, args=(q, ))
-    tcp_thread = Thread(target=m_tcp.start_server, args=(host, port, q, ))
+    tcp_thread = Thread(target=m_tcp.start_server, args=(server_host, server_port, q, ))
 
     algo_thread.start()
     tcp_thread.start()
