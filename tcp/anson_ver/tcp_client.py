@@ -2,8 +2,9 @@ import network
 import socket
 import json
 import _thread
-import machine
-import utime
+#import machine
+#import utime
+import time
 from credentials import SSID, PASSWORD
 
 # Function to connect to Wi-Fi
@@ -16,7 +17,7 @@ def connect_wifi(ssid, password):
     # Wait for the connection to complete
     while not wlan.isconnected():
         print(".", end="")
-        utime.sleep(1)
+        time.sleep(1)
     
     print(" Connected!")
     print("Network configuration:", wlan.ifconfig())
@@ -36,7 +37,7 @@ def receive_from_server(client_socket):
             break
 
 # Function to send dummy data to the server
-def send_to_server(client_socket, client_name, data):
+def send_to_server(client_socket, data):
     while True:
         # Generate dummy data with client name
         try:
@@ -45,30 +46,33 @@ def send_to_server(client_socket, client_name, data):
         except Exception as e:
             print(f"Error sending data: {e}")
         
-        utime.sleep(5)  # Wait 5 seconds before sending the next dummy data
+        time.sleep(5)  # Wait 5 seconds before sending the next dummy data
 
 
 # Function to start the client
-def start_client(server_host, server_port, client_name, ssid, password, data):
+def start_client(server_host, server_port, client_name, ssid, password):
     # Connect to Wi-Fi
-    connect_wifi(ssid, password)
+    #connect_wifi(ssid, password)
     
     # Create a socket and connect to the server
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client_socket.connect((server_host, server_port))
-    print(client_name.encode('utf-8'))
+    print(client_name)
     client_socket.sendall(client_name.encode('utf-8'))  # Send the client's name to the server
-    utime.sleep(3)
+    time.sleep(3)
 
     # Start threads for sending and receiving data
     _thread.start_new_thread(receive_from_server, (client_socket,))
-    send_to_server(client_socket, client_name, data)
+    #send_to_server(client_socket, data)
+
+    return client_socket
 
 if __name__ == "__main__":
-    server_host = '192.168.90.7'  # Replace with your server's IP address
+    server_host = '0.0.0.0'  # Replace with your server's IP address
     server_port = 5555
     client_name = 'Client1'  # Replace with your client name
-    data = None
+    data = {"time":1, "INception":True, "name":client_name}
     
-    start_client(server_host, server_port, client_name, SSID, PASSWORD, data)
+    client_socket = start_client(server_host, server_port, client_name, SSID, PASSWORD)
+    send_to_server(client_socket, data)
 

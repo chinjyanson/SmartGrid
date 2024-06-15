@@ -243,7 +243,7 @@ class Algorithm:
         total_naive_profit = 0
 
         data1 = {"energy":134, "sell":True, "buy":False, "name":"cell"}
-        data2 = {"energy":40, "sell":False, "buy":False, "name":"load"}
+        data2 = {"energy":40, "sell":False, "buy":False, "name":"Client1"}
 
         while True: 
             print(f"Current tick {self.tick}")
@@ -285,16 +285,18 @@ class Algorithm:
             time.sleep(time_to_sleep_in_s)
             
             print("adding to queue")
-            # q.put(json.dumps(data1))
-            # q.put(json.dumps(data2))
+            #q.put(json.dumps(data1))
+            #q.put(data2)
+
             if not q.empty():
                 message = q.get()
-                print(f"Processing message: {message}")
+                print(f"Got message from a client: {message}")
                 # Add your processing logic here
                 # Optionally, put response back into the queue
-                q.put(data1)
-                q.put(data2)
-                q.task_done()
+                #q.put(data1)
+
+            q.put(data2)
+            #q.task_done()
 
             remainder -= time_to_sleep_in_s
 

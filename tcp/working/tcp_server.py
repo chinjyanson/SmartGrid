@@ -5,8 +5,6 @@ from queue import Queue
 
 clients = {}
 
-
-
 # Function to handle each client connection
 def handle_client(client_socket, addr, client_name, queue):
     print(f"Client {client_name} connected from {addr}")
