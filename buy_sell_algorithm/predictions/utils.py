@@ -157,7 +157,8 @@ def get_sunlight():
 
 def init_frontend_file():
     try:
-        initial_data = {str(i): [] for i in range(60)}  # Create keys '0' to '59' with empty lists
+        initial_data = {str(i): [] for i in range(60)}   # Create keys '0' to '59' with empty lists
+        initial_data["batteryStorage"] = 0
         
         # Write the initial structure to the JSON file
         with open(json_path, "w") as f:
@@ -171,7 +172,7 @@ def init_frontend_file():
 lock = Lock()
 json_path = os.path.join(project_dir, "react-front-end", "data.json")
 
-def add_data_to_frontend_file(data : Dict):
+def add_data_to_frontend_file(data : Dict, batteryStorage: int):
     """
         pass the data you want to be displayed on front end in Python dict
     """
@@ -189,6 +190,9 @@ def add_data_to_frontend_file(data : Dict):
             # Read the JSON file
             with open(json_path, "r") as f:
                 json_data = json.load(f)
+            
+
+            json_data['batteryStorage'] = batteryStorage
 
             # Ensure the tick value exists in the JSON data
             if tick_value in json_data:
