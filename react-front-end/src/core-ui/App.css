@@ -40,8 +40,3 @@
 .app::-webkit-scrollbar-thumb:hover {
   background: #555; /* Change scrollbar thumb color on hover */
 }
-
-.chart-container {
-  width: 80%;
-  max-width: 600px;
-}

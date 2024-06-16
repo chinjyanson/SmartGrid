@@ -7,7 +7,7 @@
 import React, { useEffect } from 'react';
 import EnergySavingTip from './EnergySavingTip';
 import TickEnergy from './TickEnergy';
-import TickAlgo from './TickAlgo';
+// import TickAlgo from './TickAlgo';
 import './landing.css'
 
 const Home = () => {
@@ -36,7 +36,7 @@ const Home = () => {
       <div id="content-section" className="w-full flex flex-col items-center justify-center py-10">
         <div className="w-full mt-8">
           <TickEnergy/>
-          <TickAlgo />
+          {/* <TickAlgo /> */}
           {/* <TickStorage /> */}
           {/* <TickBuySell /> */}
         </div>

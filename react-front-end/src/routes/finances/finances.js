@@ -37,14 +37,16 @@ const Finances = () => {
           {
             label: 'Energy Bought',
             data: energyBought,
-            backgroundColor: 'rgba(75,192,192,0.2)',
-            borderColor: 'rgba(75,192,192,1)',
+            backgroundColor: 'rgba(186, 143, 235, 0.4)', // Lighter shade of pastel purple
+            borderColor: 'rgba(186, 143, 235, 1)', // Slightly darker shade for border
+            borderWidth: 0.75,
           },
           {
             label: 'Energy Sold',
             data: energySold,
-            backgroundColor: 'rgba(153,102,255,0.2)',
-            borderColor: 'rgba(153,102,255,1)',
+            backgroundColor: 'rgba(255, 174, 207, 0.2)', // Light pink
+            borderColor: 'rgba(255, 174, 207, 1)', // Slightly darker shade for border
+            borderWidth: 0.75,
           },
         ],
       });
@@ -55,12 +57,13 @@ const Finances = () => {
           {
             label: 'Costs',
             data: earnings,
-            backgroundColor: 'rgba(255, 159, 64, 0.8)',
-            borderColor: 'rgba(255, 159, 64, 1)',
+            backgroundColor: 'rgba(255, 204, 0, 0.8)', // Warm yellow
+            borderColor: 'rgba(255, 204, 0, 1)', // Slightly darker shade for border
             borderWidth: 1,
           },
         ],
       });
+      
 
       const totalEnergyBought = energyBought.slice(-7).reduce((acc, curr) => acc + curr, 0);
       const totalEnergySold = energySold.slice(-7).reduce((acc, curr) => acc + curr, 0);
@@ -69,11 +72,14 @@ const Finances = () => {
         datasets: [
           {
             data: [totalEnergyBought, totalEnergySold],
-            backgroundColor: ['rgba(75,192,192,0.6)', 'rgba(153,102,255,0.6)'],
-            hoverBackgroundColor: ['rgba(75,192,192,1)', 'rgba(153,102,255,1)'],
+            backgroundColor: ['rgba(107, 174, 214, 0.6)', 'rgba(123, 201, 134, 0.6)'],
+            hoverBackgroundColor: ['rgba(107, 174, 214, 1)', 'rgba(123, 201, 134, 1)'],
+            borderColor: 'rgba(64, 64, 64, 1)',
+            borderWidth: 1,
           },
         ],
       });
+      
 
       const recentEarnings = earnings.slice(-7).reduce((acc, curr) => acc + curr, 0);
       setWeeklyEarnings(recentEarnings);
@@ -137,7 +143,7 @@ const Finances = () => {
           <FilterButtons daysFilter={daysFilter} handleDaysFilterChange={handleDaysFilterChange} />
         </div>
       </div>
-      <div className="w-11/12 md:w-8/10 flex flex-col items-center">
+      <div className="w-11/12 md:w-8/10 flex flex-col items-center mb-4">
         <div className="w-full flex">
           <div className="energybs-bubble bg-gray-500 bg-opacity-50 shadow-lg">
           {filteredTopChartData && pieChartData ? (
@@ -149,6 +155,8 @@ const Finances = () => {
           <div className="w-4"></div>
           <div className="costs-bubble bg-gray-500 bg-opacity-50 shadow-lg flex-2">
             <WeeklyEarnings earnings={weeklyEarnings} />
+            {/* budget planning calculator? */}
+            
           </div>
         </div>
         <div className="w-full flex mt-4">
@@ -158,6 +166,14 @@ const Finances = () => {
           <div className="w-4"></div>
           <div className="comparison-bubble bg-gray-500 bg-opacity-50 shadow-lg flex-1">
             <WeeklyComparison comparison={weeklyComparison} />
+            <div className="flex justify-center items-center ">
+              <p className="italic vertical-center">
+                "This section evaluates energy transactions and financial performance 
+                over the past week, contrasting trends in energy bought, energy sold, and associated costs.
+                It provides insights into recent changes to aid in strategic decision-making for energy 
+                management and cost optimization."
+              </p>
+            </div>
           </div>
         </div>
       </div>

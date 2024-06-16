@@ -3,7 +3,7 @@ import { Line } from 'react-chartjs-2';
 
 const ProductionChart = ({ data }) => {
   const chartOptions = {
-    maintainAspectRatio: false, // Ensures the chart can grow to full width and height
+    maintainAspectRatio: true, // Ensures the chart can grow to full width and height
     scales: {
       x: {
         title: {
