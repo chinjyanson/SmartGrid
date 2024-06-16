@@ -91,6 +91,7 @@ const TickEnergy = () => {
               width={300} // Adjusted size of the speedometer
               height={200} // Adjusted size of the speedometer
               textColor="transparent" // Hide the number inside the speedometer
+              labelFontSize='0'
             />
             <p className="text-lg">Current Energy Usage: <strong>{energyUsage} kWh</strong></p> {/* Bold the current energy usage line */}
           </div>
@@ -106,6 +107,7 @@ const TickEnergy = () => {
               width={300} // Adjusted size of the speedometer
               height={200} // Adjusted size of the speedometer
               textColor="transparent" // Hide the number inside the speedometer
+              labelFontSize='0'
             />
             <p className="text-lg">Current Energy Produced: <strong>{energyProduced} kWh</strong></p> {/* Bold the current energy produced line */}
           </div>

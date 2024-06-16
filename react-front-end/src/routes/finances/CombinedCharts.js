@@ -78,8 +78,8 @@ const CombinedCharts = ({ lineChartData, pieChartData }) => {
         <div className="pie-container">
           {pieChartData ? <Pie data={pieChartData} options={pieChartOptions} /> : <p>Loading pie chart data...</p>}
           <div className="mt-4 text-white text-center">
-                <p>Sold: <span style={{ color: 'rgba(123, 201, 134, 1)', fontWeight: 'bold' }}>{pieChartData.datasets[0].data[1]}</span></p>
-                <p>Bought: <span style={{ color: 'rgba(107, 174, 214, 1)', fontWeight: 'bold' }}>{pieChartData.datasets[0].data[0]}</span></p>
+                <p>Sold: <span style={{ color: 'rgba(123, 201, 134, 1)', fontWeight: 'bold' }}>{pieChartData.datasets[0].data[1].toFixed(2)}</span></p>
+                <p>Bought: <span style={{ color: 'rgba(107, 174, 214, 1)', fontWeight: 'bold' }}>{pieChartData.datasets[0].data[0].toFixed(2)}</span></p>
               </div>
         </div>
       </div>

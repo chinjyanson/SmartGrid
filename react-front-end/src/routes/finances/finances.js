@@ -5,6 +5,7 @@ import BarChart from './BarChart';
 import CombinedCharts from './CombinedCharts';
 import WeeklyEarnings from './WeeklyEarnings';
 import WeeklyComparison from './WeeklyComparison';
+import EarningsSpeedometer from './EarningsSpeedometer'; // Import the new component
 import './finance.css';
 
 const Finances = () => {
@@ -18,6 +19,8 @@ const Finances = () => {
     energySold: { difference: 0, trend: '' },
     earnings: { difference: 0, trend: '' },
   });
+  const [average7Days, setAverage7Days] = useState(0);
+  const [average30Days, setAverage30Days] = useState(0);
 
   const fetchData = async () => {
     try {
@@ -63,7 +66,6 @@ const Finances = () => {
           },
         ],
       });
-      
 
       const totalEnergyBought = energyBought.slice(-7).reduce((acc, curr) => acc + curr, 0);
       const totalEnergySold = energySold.slice(-7).reduce((acc, curr) => acc + curr, 0);
@@ -79,10 +81,16 @@ const Finances = () => {
           },
         ],
       });
-      
 
       const recentEarnings = earnings.slice(-7).reduce((acc, curr) => acc + curr, 0);
       setWeeklyEarnings(recentEarnings);
+
+      // Calculate averages for 7 days and 30 days
+      const averageEarnings7Days = recentEarnings / 7;
+      const averageEarnings30Days = earnings.slice(-30).reduce((acc, curr) => acc + curr, 0) / 30;
+
+      setAverage7Days(averageEarnings7Days);
+      setAverage30Days(averageEarnings30Days);
 
       // Calculate weekly comparison
       const recentEnergyBought = energyBought.slice(-7).reduce((acc, curr) => acc + curr, 0);
@@ -146,7 +154,7 @@ const Finances = () => {
       <div className="w-11/12 md:w-8/10 flex flex-col items-center mb-4">
         <div className="w-full flex">
           <div className="energybs-bubble bg-gray-500 bg-opacity-50 shadow-lg">
-          {filteredTopChartData && pieChartData ? (
+            {filteredTopChartData && pieChartData ? (
               <CombinedCharts lineChartData={filteredTopChartData} pieChartData={pieChartData} />
             ) : (
               <p>Loading chart data...</p>
@@ -155,8 +163,7 @@ const Finances = () => {
           <div className="w-4"></div>
           <div className="costs-bubble bg-gray-500 bg-opacity-50 shadow-lg flex-2">
             <WeeklyEarnings earnings={weeklyEarnings} />
-            {/* budget planning calculator? */}
-            
+            <EarningsSpeedometer average7Days={average7Days} average30Days={average30Days} />
           </div>
         </div>
         <div className="w-full flex mt-4">
@@ -182,3 +189,4 @@ const Finances = () => {
 };
 
 export default Finances;
+
