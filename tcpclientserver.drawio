@@ -1,14 +1,14 @@
-<mxfile host="app.diagrams.net" modified="2024-06-17T10:26:47.953Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36" etag="AsNevR28x3DNHkjcQmeu" version="24.5.4" type="github">
+<mxfile host="app.diagrams.net" modified="2024-06-17T10:33:41.982Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36" etag="tr_g2BwbybaCK7RHTjCh" version="24.5.4" type="github">
   <diagram name="Page-1" id="C0AcNYlliO7HNQd4Lne7">
     <mxGraphModel dx="1900" dy="618" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
+        <mxCell id="tdRyDM0lDxfAwj2Caq-v-64" value="" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d4d4d4;strokeColor=#10739e;strokeWidth=0;" vertex="1" parent="1">
+          <mxGeometry x="340" y="180" width="440" height="270" as="geometry" />
+        </mxCell>
         <mxCell id="3" value="Server" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;edgeStyle&quot;:&quot;elbowEdgeStyle&quot;,&quot;elbow&quot;:&quot;vertical&quot;,&quot;curved&quot;:0,&quot;rounded&quot;:0};size=65;fontStyle=1" parent="1" vertex="1">
           <mxGeometry x="343" y="100" width="150" height="703" as="geometry" />
-        </mxCell>
-        <mxCell id="4" value="Queue Structure" style="shape=umlFrame;dashed=1;pointerEvents=0;dropTarget=0;strokeColor=#B3B3B3;height=20;width=40;opacity=90;fillColor=#a39999;" parent="1" vertex="1">
-          <mxGeometry x="343" y="170" width="437" height="290" as="geometry" />
         </mxCell>
         <mxCell id="tdRyDM0lDxfAwj2Caq-v-15" value="Algorithm" style="shape=umlLifeline;perimeter=lifelinePerimeter;whiteSpace=wrap;container=1;dropTarget=0;collapsible=0;recursiveResize=0;outlineConnect=0;portConstraint=eastwest;newEdgeStyle={&quot;edgeStyle&quot;:&quot;elbowEdgeStyle&quot;,&quot;elbow&quot;:&quot;vertical&quot;,&quot;curved&quot;:0,&quot;rounded&quot;:0};size=65;fontStyle=1" vertex="1" parent="1">
           <mxGeometry x="620" y="100" width="150" height="703" as="geometry" />
@@ -39,7 +39,7 @@
           <mxGeometry x="377" y="290" width="82" height="40" as="geometry" />
         </mxCell>
         <mxCell id="tdRyDM0lDxfAwj2Caq-v-24" value="is q.empty?" style="rhombus;whiteSpace=wrap;html=1;" vertex="1" parent="1">
-          <mxGeometry x="363" y="180" width="110" height="80" as="geometry" />
+          <mxGeometry x="363" y="190" width="110" height="80" as="geometry" />
         </mxCell>
         <mxCell id="tdRyDM0lDxfAwj2Caq-v-25" value="is q.empty?" style="rhombus;whiteSpace=wrap;html=1;" vertex="1" parent="1">
           <mxGeometry x="640" y="180" width="110" height="80" as="geometry" />
@@ -154,6 +154,9 @@
         </mxCell>
         <mxCell id="tdRyDM0lDxfAwj2Caq-v-63" value="Yes" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
           <mxGeometry x="240" y="430" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="tdRyDM0lDxfAwj2Caq-v-65" value="Queue Structure" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" vertex="1" parent="1">
+          <mxGeometry x="320" y="180" width="90" height="30" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
