@@ -8,9 +8,10 @@ most naive solution to the problem
 '''
 deferable_list = []
 
-def naive_smart_grid_optimizer(data_buffers, t, current_storage, deferables):
+def naive_smart_grid_optimizer(data_buffers, t, curr_storage, deferables):
+    current_storage = curr_storage
     STORAGE_CAPACITY = 50  # Maximum storage capacity in Joules
-    POWER_LOSS = 2
+    POWER_LOSS = 10
     LINEAR_SOLAR_DEPENDANCE = 5/100
     global deferable_list
     total_profit = 0
@@ -20,8 +21,8 @@ def naive_smart_grid_optimizer(data_buffers, t, current_storage, deferables):
     
     solar_energy = data_buffers['sun'][-1] * LINEAR_SOLAR_DEPENDANCE
     actual_demand = data_buffers['demand'][-1] + POWER_LOSS
-    buy_price = data_buffers['buy_price'][-1]
-    sell_price = data_buffers['sell_price'][-1]
+    buy_price = data_buffers['buy_price'][-1]/100
+    sell_price = data_buffers['sell_price'][-1]/100
 
     # Total energy needed
     total_demand = actual_demand
@@ -29,6 +30,8 @@ def naive_smart_grid_optimizer(data_buffers, t, current_storage, deferables):
         if deferable_list[idx].start <= t < deferable_list[idx].end:
             total_demand += deferable_list[idx].energyTotal / (deferable_list[idx].end - deferable_list[idx].start) # Spread energy requirement over time window
 
+    excess_energy = 0
+    print(f"naive demand: {total_demand}")
     # Use solar energy first to meet demand
     if solar_energy >= total_demand:
         solar_energy -= total_demand
@@ -50,9 +53,10 @@ def naive_smart_grid_optimizer(data_buffers, t, current_storage, deferables):
     if total_demand > 0:
         # Buy enough energy to meet the remaining demand
         energy_bought = total_demand
-        total_profit -= energy_bought * buy_price  # Subtract the cost of buying energy
-        current_storage += energy_bought
-        current_storage = min(current_storage, STORAGE_CAPACITY)  # Ensure storage does not exceed capacity
+        total_profit -= energy_bought * sell_price # Subtract the cost of buying energy
+        total_demand = 0 
+        # current_storage += energy_bought
+        # current_storage = min(current_storage, STORAGE_CAPACITY)  # Ensure storage does not exceed capacity
 
     # Handle excess solar energy
     if solar_energy > 0:
@@ -61,14 +65,15 @@ def naive_smart_grid_optimizer(data_buffers, t, current_storage, deferables):
             current_storage += solar_energy
         else:
             # If storage is full, sell the excess energy
+            # excess_energy = solar_energy
             excess_energy = current_storage + solar_energy - STORAGE_CAPACITY
-            total_profit += excess_energy * sell_price  # Add the revenue from selling energy
+            total_profit += excess_energy * buy_price # Add the revenue from selling energy
             current_storage = STORAGE_CAPACITY
+        solar_energy = 0
 
     # Print current state for debugging
-    print("for cycle: " + str(t))
-    print(f"Time {t}: Demand={actual_demand}, Solar={solar_energy}, Storage={current_storage}, Buy Price={buy_price}, Sell Price={sell_price}")
-    print(f"Naive Profit (tick)={total_profit}")
+    print("for tick: " + str(t))
+    print(f"Time {t}: Demand={total_demand}, Solar={solar_energy}, Storage={current_storage}, Buy Price={buy_price}, Sell Price={sell_price}")
 
     return total_profit, current_storage
 

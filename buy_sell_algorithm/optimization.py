@@ -28,7 +28,7 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
         for idx in range(len(deferable_list)):
             deferable_list[idx].energyDone = 0
 
-    MAX_POWER = 30
+    MAX_ENERGY = 40
     POWER_LOSS = 2
     LINEAR_SOLAR_DEPENDANCE = 5/100
     MAX_STORAGE_CAPACITY = 50
@@ -38,7 +38,7 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
     predicted_buy_prices = []
     predicted_sell_prices = []
 
-    # Convert prices to £/kWh
+    # # Convert prices to £/kWh
     for ele in predicted_buy:
         predicted_buy_prices.append(ele/100)
     for ele in predicted_sell:
@@ -109,7 +109,7 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
 
     for i in range(1, horizon):
         constraints += [
-            solar_energy[i] == predicted_sun[t + i]/10,
+            solar_energy[i] == predicted_sun[t + i]*0.05,
             demand[i] == predicted_demand[t + i],
         ]
 
@@ -128,7 +128,7 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
             min_energy_fulfilled = energy_needed / (end - start) * 1  # Ensure minimum energy allocation
             constraints += [
                 deferable_demand[idx][i] >= min_energy_fulfilled,
-                deferable_demand[idx][i] <= MAX_POWER - demand[i],
+                deferable_demand[idx][i] <= MAX_ENERGY - demand[i],
                 penalty_deferable[idx][i] >= energy_needed / (end - start) - deferable_demand[idx][i],  # Penalty for not meeting demand
                 penalty_deferable[idx][i] >= 0  # Penalty must be non-negative
             ]
