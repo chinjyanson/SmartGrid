@@ -188,21 +188,25 @@ class Algorithm:
             self.defs = self.serve.parsed_data['deferables']
         else:
             self.defs = None
-        
+        # profit, naive_profit = 0, 0
+        # print(profit, naive_profit)
+        print(storage, naive_storage)
         # this if else statement changes the prediction horizon when tick > 50 (if horizon = 10)
         profit, storage, demand, energy_produced, buysell = opt.maximize_profit_mpc(storage, self.data_buffers, self.predictions, self.tick, 60-self.tick, self.defs)
         naive_profit, naive_storage = naive.naive_smart_grid_optimizer(self.data_buffers, self.tick, naive_storage, self.defs)
 
         total_profit += profit
-        sum_of_total_profit += profit
         total_naive_profit += naive_profit
 
-        print(total_naive_profit)
+        print(f"opt profit (tick): {profit}")
+        print(f"naive profit (tick): {naive_profit}")
+        print(f"opt profit total: {total_profit}")
+        print(f"naive profit total: {total_naive_profit}")
 
-        print(f" ********************************************{total_profit}*******************************************")
+        print(f" ***************************************************************************************")
 
 
-        add_data_to_frontend_file({"tick": self.tick, "naiveProfit": naive_profit, "optProfit": profit, "energyTransaction":buysell, "energyUsed": demand , "storage": storage, "energyIn": energy_produced, })
+        add_data_to_frontend_file({"tick": self.tick, "naiveProfit": naive_profit, "optProfit": profit, "energyTransaction":buysell, "energyUsed": demand, "energyIn": energy_produced }, storage)
 
         # Post data to the cloud
         # if self.tick == 59:

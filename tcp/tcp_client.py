@@ -49,7 +49,7 @@ def send_to_server(client_socket, data):
 
 
 # Function to start the client
-def start_client(server_host, server_port, client_name, ssid, password, data):
+def start_client(server_host, server_port, client_name, ssid, password):
     # Connect to Wi-Fi
     connect_wifi(ssid, password)
     
