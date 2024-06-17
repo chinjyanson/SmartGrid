@@ -7,7 +7,6 @@ import optimization as opt
 from predictions.train import Train
 from data.server_data import server_data
 import naive_solution as naive
-import optimization2 as opt2
 from threading import Lock
 import json
 from typing import Dict
@@ -193,7 +192,7 @@ class Algorithm:
         # print(profit, naive_profit)
         print(storage, naive_storage)
         # this if else statement changes the prediction horizon when tick > 50 (if horizon = 10)
-        profit, storage, demand, energy_produced, buysell = opt2.maximize_profit_mpc(storage, self.data_buffers, self.predictions, self.tick, 60-self.tick, self.defs)
+        profit, storage, demand, energy_produced, buysell = opt.maximize_profit_mpc(storage, self.data_buffers, self.predictions, self.tick, 60-self.tick, self.defs)
         naive_profit, naive_storage = naive.naive_smart_grid_optimizer(self.data_buffers, self.tick, naive_storage, self.defs)
 
         total_profit += profit
