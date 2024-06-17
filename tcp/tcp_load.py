@@ -7,8 +7,13 @@ import _thread
 import random
 import utime
 from credentials import SSID, PASSWORD
-
+required_power = 0
 # Function to connect to Wi-Fi
+server_port = 5552
+str_data = ""
+newdata = False
+
+
 def connect_wifi(ssid, password):
     wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
@@ -24,31 +29,26 @@ def connect_wifi(ssid, password):
     print("Network configuration:", wlan.ifconfig())
 
 def receive_from_server(client_socket, client_name):
-    while True:
-        try:
-            data = client_socket.recv(1024)
-            if data:                
-                # Decode and parse the received JSON data
-                received_json = data.decode('utf-8')
-                print(received_json)
-                parsed_data = json.loads(received_json)
-                
-                # Check if 'toClient' matches client_name
-                if isinstance(parsed_data, list):
-                    for message in parsed_data:
-                        print("Message: ",message)
-                        if message.get("client") == client_name:
-                            print(f"Received from server: {message}")
-                        else:
-                            print(f"Ignored message for {message.get('client')}")
-                else:
-                    if parsed_data.get("client") == client_name:
-                        print(f"Received from server: {parsed_data}")
-                    else:
-                        print(f"Ignored message for {parsed_data.get('client')}")
-        except Exception as e:
-            print(f"Error receiving data: {e}")
-            break
+    global newdata
+    global powerreading
+    global str_data
+    try:
+        data = client_socket.recv(2048)
+        if data and (data != str_data):
+            # Decode and parse the received JSON data
+            received_json = data.decode('utf-8')
+            parsed_data = ujson.loads(received_json)
+            
+            if parsed_data.get("client") == client_name:
+                str_data = data
+                #print(f"Received from server: {parsed_data}")
+                return parsed_data['power']
+            else:
+                print(f"Ignored message for {parsed_data.get('client')}")
+    except Exception as e:
+        print(f"Error receiving data: {e}")
+        print(data)
+        #break
 
 # Function to send dummy data to the server
 def send_to_server(client_socket, data):
@@ -76,13 +76,13 @@ def start_client(server_host, server_port, client_name, ssid, password):
     utime.sleep(3)
 
     # Start threads for sending and receiving data
-    _thread.start_new_thread(receive_from_server, (client_socket,client_name, ))
+    #_thread.start_new_thread(receive_from_server, (client_socket,client_name, ))
     
     return client_socket
     
 server_host = '192.168.90.163'  # Replace with your server's IP address
-server_port = 5555
-client_name = 'load'  # Replace with your client name
+
+client_name = 'load1'  # Replace with your client name
 client_socket = start_client(server_host, server_port, client_name, SSID, PASSWORD)
 data = None
 
@@ -96,10 +96,12 @@ vret_sum = 0
 total_vret_readings = 0
 tolerance = 5
 
+firstRun = True
+
 pid = PID(0.2, 10, 0, setpoint=0.3, scale='ms')
 
 count = 0
-pwm_out = 0
+pwm_out = 15000
 pwm_ref = 0
 setpoint = 0.0
 delta = 0.01
@@ -116,64 +118,45 @@ def power_Calc(vout, vret):
     return vout*vret/1.02
 
 while True:
-    pwm_en.value(1)
-    required_power = random.randint(1,15)/10
-    stop = False
-    
-    while not stop:
-        vin = 1.026*(12490/2490)*3.3*(vin_pin.read_u16()/65536) # calibration factor * potential divider ratio * ref voltage * digital reading
-        vout = 1.026*(12490/2490)*3.3*(vout_pin.read_u16()/65536) # calibration factor * potential divider ratio * ref voltage * digital reading
-        vret = 1*3.3*((vret_pin.read_u16()-350)/65536) # calibration factor * potential divider ratio * ref voltage * digital reading
-        count = count + 1      
-        pwm_ref = pid(vret)
-        pwm_ref = int(pwm_ref*65536)
-        pwm.duty_u16(pwm_out)
-        vret_sum+=vret
-        total_vret_readings+=1
-        average_vret = vret_sum/total_vret_readings
+    required_power = receive_from_server(client_socket, client_name)
+    if required_power != None:
+        print(required_power)
+        pwm_en.value(1)
+        stop = False
+        while not stop:
+            vin = 1.026*(12490/2490)*3.3*(vin_pin.read_u16()/65536) # calibration factor * potential divider ratio * ref voltage * digital reading
+            vout = 1.026*(12490/2490)*3.3*(vout_pin.read_u16()/65536) # calibration factor * potential divider ratio * ref voltage * digital reading
+            vret = 1*3.3*((vret_pin.read_u16()-350)/65536) # calibration factor * potential divider ratio * ref voltage * digital reading
+            count = count + 1      
+            pwm_ref = pid(vret)
+            pwm_ref = int(pwm_ref*65536)
+            pwm.duty_u16(pwm_out)
+            vret_sum+=vret
+            total_vret_readings+=1
+            average_vret = vret_sum/total_vret_readings
+            current_Power = power_Calc(vout, vret)        
+            if current_Power< required_power*(1-tolerance/100):
+                pwm_out+=100
+            elif current_Power > required_power*(1+tolerance/100):
+                pwm_out-=100
+            elif required_power*(1-tolerance/100) <= current_Power <= required_power*(1+tolerance/100):
+                print("Power Achieved")
+                stop = True
 
-        current_Power = power_Calc(vout, vret)
         print("Current Power:",current_Power)
-        print("Required Power:",required_power)
-        if current_Power< required_power*(1-tolerance/100):
-            pwm_out+=100
-        elif current_Power > required_power*(1+tolerance/100):
-            pwm_out-=100
-        elif required_power*(1-tolerance/100) <= current_Power <= required_power*(1+tolerance/100):
-            print("Power Achieved")
-            stop = True
-        print(pwm_out)
-    
-
-
-    utime.sleep(1)
-
-    print("Vin = {:.3f}".format(vin))
-    print("Vout = {:.3f}".format(vout))
-    print("Vret = {:.3f}".format(vret))
-    print("Average Vret = {:.3f}".format(average_vret))
-    print("Duty = {:.0f}".format(pwm_out))
-    
-    if count > 2000:
-        
-        count = 0
-        setpoint = setpoint + delta
+        print("Duty Cycle:",pwm_out)
                 
-        if setpoint > max_sp:
-            setpoint = max_sp
-            delta = - delta
-        
-        if setpoint <= 0:
-            setpoint = 0
-            delta = -delta
+        if count > 2000:
             
-        pid.setpoint = setpoint
-        
-    data = {"client": client_name,
-        "timestamp": utime.time(),
-        "value": pwm_out}
-    send_to_server(client_socket, data)
-
-
-
-
+            count = 0
+            setpoint = setpoint + delta
+                    
+            if setpoint > max_sp:
+                setpoint = max_sp
+                delta = - delta
+            
+            if setpoint <= 0:
+                setpoint = 0
+                delta = -delta
+                
+            pid.setpoint = setpoint
