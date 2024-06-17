@@ -8,7 +8,7 @@ a_tcp = module_from_file("driver", "tcp/fake_algo.py")
 q = Queue()
 
 host = '0.0.0.0'
-port = 5555
+port = 5552
 
 def main():
     #init_frontend_file()
