@@ -18,7 +18,6 @@ def handle_client(client_socket, addr, client_name, q):
                     print(f"Sent {data} to {data['client']}")
                 str_data = json.dumps(data).encode('utf-8')
                 client_socket.sendall(str_data)
-                print(f"Sent {data} to {client_name}")
 
             print(f"************************************TCP Queue: {list(q.queue)}")
 
