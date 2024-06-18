@@ -60,7 +60,8 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
     current_sell_price = data_buffers['sell_price'][-1]/100
     energy_in = energy_in * 0.05
 
-    print(f"opt demand {energy_used} kWh")
+    #print(f"opt demand {energy_used} kWh")
+    #energy_used = min(energy_used, MAX_DEMAND_CAPACITY)
 
     # Update predictions
     predicted_buy_prices[t] = current_buy_price
@@ -119,48 +120,41 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
     problem = cp.Problem(cp.Maximize(profit), constraints)
 
     # Solve problem
-    problem.solve(solver=cp.CBC, verbose=True)  # Using CBC mixed-integer solver
+    problem.solve(solver=cp.CBC)  # Using CBC mixed-integer solver
 
     if problem.status == cp.INFEASIBLE:
         print("Infeasible")
-
-        total_demand = energy_used
-        solar_energy = energy_in
         excess_energy = 0
-        # Use naive solution if solution is infeasible
-        if solar_energy >= total_demand:
-            solar_energy -= total_demand
-            total_demand = 0
-        else:
-            total_demand -= solar_energy
-            solar_energy = 0
 
-        # Use stored energy if solar is insufficient
-        if total_demand > 0:
-            if storage >= total_demand:
-                storage -= total_demand
-                total_demand = 0
+        # Use naive solution if solution is infeasible
+        if energy_in >= energy_used:
+            energy_in -= energy_used
+            energy_used = 0
+        else:
+            energy_used -= energy_in
+            energy_in = 0
+
+        if energy_used > 0:
+            if storage >= energy_used:
+                storage -= energy_used
+                energy_used = 0
             else:
-                total_demand -= storage
+                energy_used -= storage
                 storage = 0
 
-        # Buy energy from the grid if necessary
-        if total_demand > 0:
-            # Buy enough energy to meet the remaining demand
-            energy_bought = total_demand
+        if energy_used > 0:
+            energy_bought = energy_used
             tick_profit -= energy_bought * current_sell_price  # Subtract the cost of buying energy
-            total_demand = 0
+            energy_used = 0
 
-        # Handle excess solar energy
-        if solar_energy > 0:
-            # First try to store the excess energy
-            if storage + solar_energy <= MAX_STORAGE_CAPACITY:
-                storage += solar_energy
+        if energy_in > 0:
+            if storage + energy_in <= MAX_STORAGE_CAPACITY:
+                storage += energy_in
             else:
-                excess_energy = storage + solar_energy - MAX_STORAGE_CAPACITY
+                excess_energy = storage + energy_in - MAX_STORAGE_CAPACITY
                 tick_profit += excess_energy * current_buy_price  # Add the revenue from selling energy
                 storage = MAX_STORAGE_CAPACITY
-            solar_energy = 0
+            energy_in = 0
 
         optimal_energy_transaction = energy_bought - excess_energy
 
@@ -178,20 +172,20 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
         storage -= optimal_storage_transaction
         storage = min(max(storage, 0), MAX_STORAGE_CAPACITY)
 
-        print(f"  Energy Transaction: {optimal_energy_transaction} kWh")
-        print(f"  Storage Transaction: {optimal_storage_transaction} kWh")
-        print(f"  Energy Currently in storage: {storage} kWh")
-        print(f"  Energy Used: {energy_used} kWh")
-        print(f"  Solar Energy: {energy_in} kWh")
-        print(f"  Current Buy Price: {current_buy_price} £/kWh")
-        print(f"  Current Sell Price: {current_sell_price} £/kWh")
-        print(f" energy_transactions.value: {energy_transactions.value}")
-        print(f" storage_transactions.value: {storage_transactions.value}")
-        print(f" solar_energy: {solar_energy.value}")
-        print(f" demand: {demand.value}")
-        print(f" storage: {storage_level.value}")
-        print(f" Predicted Buy Prices: {predicted_buy_prices[t:t + horizon]}")
-        print(f" Predicted Sell Prices: {predicted_sell_prices[t:t + horizon]}")
+        # print(f"  Energy Transaction: {optimal_energy_transaction} kWh")
+        # print(f"  Storage Transaction: {optimal_storage_transaction} kWh")
+        # print(f"  Energy Currently in storage: {storage} kWh")
+        # print(f"  Energy Used: {energy_used} kWh")
+        # print(f"  Solar Energy: {energy_in} kWh")
+        # print(f"  Current Buy Price: {current_buy_price} £/kWh")
+        # print(f"  Current Sell Price: {current_sell_price} £/kWh")
+        # print(f" energy_transactions.value: {energy_transactions.value}")
+        # print(f" storage_transactions.value: {storage_transactions.value}")
+        # print(f" solar_energy: {solar_energy.value}")
+        # print(f" demand: {demand.value}")
+        # print(f" storage: {storage_level.value}")
+        # print(f" Predicted Buy Prices: {predicted_buy_prices[t:t + horizon]}")
+        # print(f" Predicted Sell Prices: {predicted_sell_prices[t:t + horizon]}")
 
     else:
         print(f"   Optimization failed")

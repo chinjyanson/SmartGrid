@@ -198,7 +198,7 @@ class Algorithm:
 
         print(f" ***************************************************************************************")
 
-        add_data_to_frontend_file({"tick": algovar.tick, "naiveProfit": naive_profit, "optProfit": algovar.profit, "energyTransaction":algovar.optimal_energy_transactions, "energyUsed": algovar.demand, "energyIn": algovar.solar_energy, "storageProfit": algovar.storage*algovar.buy_price }, algovar.storage)
+        add_data_to_frontend_file({"tick": algovar.tick, "naiveProfit": -naive_profit, "optProfit": -algovar.profit, "storage": algovar.storage,"energyTransaction":algovar.optimal_energy_transactions, "energyUsed": algovar.demand, "energyIn": algovar.solar_energy, "storageProfit": -algovar.profit-algovar.storage*algovar.buy_price})
 
         # Post data to the cloud
         # if self.tick == 59:
