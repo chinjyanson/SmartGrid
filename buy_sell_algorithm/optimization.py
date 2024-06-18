@@ -39,13 +39,16 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
     predicted_buy_prices = [ele/100 for ele in predictions_buffer['buy_price']]
     predicted_sell_prices = [ele/100 for ele in predictions_buffer['sell_price']]
     predicted_demand = [ele+10 for ele in predictions_buffer['demand']]
-    predicted_sun = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 20, 30, 40, 49, 58, 66, 74, 80, 86, 91, 95, 97, 99, 100, 99, 97, 95, 91, 86, 80, 74, 66, 58, 49, 40, 30, 20, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    predicted_sun = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+                     0, 0, 0, 0, 0, 0, 10, 20, 30, 40, 
+                     49, 58, 66, 74, 80, 86, 91, 95, 97, 99, 
+                     100, 99, 97, 95, 91, 86, 80, 74, 66, 58, 
+                     49, 40, 30, 20, 10, 0, 0, 0, 0, 0, 
+                     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 
     for idx in range(len(deferable_list)):
         if deferable_list[idx].start <= t < deferable_list[idx].end:
             deferable_demand += deferable_list[idx].energyTotal / (deferable_list[idx].end - deferable_list[idx].start) 
-
-    print(f"Deferable Demand: {deferable_demand} kWh")
 
     storage = initial_storage_level
     tick_profit = 0

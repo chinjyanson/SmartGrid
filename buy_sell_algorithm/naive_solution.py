@@ -54,9 +54,7 @@ def naive_smart_grid_optimizer(data_buffers, t, curr_storage, deferables):
         # Buy enough energy to meet the remaining demand
         energy_bought = total_demand
         total_profit -= energy_bought * sell_price # Subtract the cost of buying energy
-        total_demand = 0 
-        # current_storage += energy_bought
-        # current_storage = min(current_storage, STORAGE_CAPACITY)  # Ensure storage does not exceed capacity
+        total_demand = 0
 
     # Handle excess solar energy
     if solar_energy > 0:

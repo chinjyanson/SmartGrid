@@ -187,7 +187,6 @@ class Algorithm:
         algovar = opt.maximize_profit_mpc(storage, self.data_buffers, self.predictions, self.tick, 60-self.tick, self.defs)
         naive_profit, naive_storage = naive.naive_smart_grid_optimizer(self.data_buffers, self.tick, naive_storage, self.defs)
 
-        print(f"Algovar energy transactions: {algovar.storage}")
         storage = algovar.storage
         total_profit += algovar.profit
         total_naive_profit += naive_profit
