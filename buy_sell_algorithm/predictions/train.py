@@ -219,7 +219,7 @@ class Train:
                             elitism=self.elitism, mutation_power=self.mutation_power)
         
             print("Started from random population")
-
+            
         for epoch in range(self.epochs):
             fitnesses, predictions = self.train_models(pop.models)
             pop.fitnesses = fitnesses
