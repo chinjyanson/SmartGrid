@@ -17,6 +17,17 @@ def parseDeferables(deferables):
 
 deferable_list = []
 
+class AlgoVar:
+    def __init__(self, tick, optimal_energy_transactions, solar_energy, demand, tick_profit, current_buy_price, current_sell_price, storage):
+        self.tick = tick
+        self.optimal_energy_transactions = optimal_energy_transactions
+        self.solar_energy = solar_energy
+        self.demand = demand
+        self.buy_price = current_buy_price
+        self.sell_price = current_sell_price
+        self.profit = tick_profit
+        self.storage = storage
+
 def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer, t, horizon, deferables):
     deferable_demand = 0
     global deferable_list
@@ -25,14 +36,10 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
 
     MAX_STORAGE_CAPACITY = 50
     MAX_DEMAND_CAPACITY = 20
-    predicted_buy = predictions_buffer['buy_price']
-    predicted_sell = predictions_buffer['sell_price']
-    predicted_dem = predictions_buffer['demand']
+    predicted_buy_prices = [ele/100 for ele in predictions_buffer['buy_price']]
+    predicted_sell_prices = [ele/100 for ele in predictions_buffer['sell_price']]
+    predicted_demand = [ele+10 for ele in predictions_buffer['demand']]
     predicted_sun = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 20, 30, 40, 49, 58, 66, 74, 80, 86, 91, 95, 97, 99, 100, 99, 97, 95, 91, 86, 80, 74, 66, 58, 49, 40, 30, 20, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-
-    predicted_buy_prices = []
-    predicted_sell_prices = []
-    predicted_demand = []
 
     for idx in range(len(deferable_list)):
         if deferable_list[idx].start <= t < deferable_list[idx].end:
@@ -40,15 +47,8 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
 
     print(f"Deferable Demand: {deferable_demand} kWh")
 
-    for ele in predicted_buy:
-        predicted_buy_prices.append(ele/100)
-    for ele in predicted_sell:
-        predicted_sell_prices.append(ele/100)
-    for ele in predicted_dem:
-        predicted_demand.append(ele+10)
-
     storage = initial_storage_level
-    total_profit = 0
+    tick_profit = 0
 
     # Simulate real-time change
     energy_in = data_buffers['sun'][-1]
@@ -58,6 +58,7 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
     energy_in = energy_in * 0.05
 
     print(f"opt demand {energy_used} kWh")
+
     # Update predictions
     predicted_buy_prices[t] = current_buy_price
     predicted_sell_prices[t] = current_sell_price
@@ -79,7 +80,7 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
     x = cp.Variable(horizon, boolean=True)  # Binary variable
 
     # Objective function
-    profit = cp.sum(cp.multiply(neg_energy_transactions, predicted_buy[t:t+horizon]) - cp.multiply(pos_energy_transactions, predicted_sell[t:t+horizon]))
+    profit = cp.sum(cp.multiply(neg_energy_transactions, predicted_buy_prices[t:t+horizon]) - cp.multiply(pos_energy_transactions, predicted_sell_prices[t:t+horizon]))
 
     # Constraints
     M = 1e5  # Large constant for big-M method
@@ -144,7 +145,7 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
         if total_demand > 0:
             # Buy enough energy to meet the remaining demand
             energy_bought = total_demand
-            total_profit -= energy_bought * current_sell_price  # Subtract the cost of buying energy
+            tick_profit -= energy_bought * current_sell_price  # Subtract the cost of buying energy
             total_demand = 0
 
         # Handle excess solar energy
@@ -154,7 +155,7 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
                 storage += solar_energy
             else:
                 excess_energy = storage + solar_energy - MAX_STORAGE_CAPACITY
-                total_profit += excess_energy * current_buy_price  # Add the revenue from selling energy
+                tick_profit += excess_energy * current_buy_price  # Add the revenue from selling energy
                 storage = MAX_STORAGE_CAPACITY
             solar_energy = 0
 
@@ -166,9 +167,9 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
 
         # Update storage and profit based on actual prices
         if optimal_energy_transaction < 0:
-            total_profit -= optimal_energy_transaction * current_buy_price
+            tick_profit -= optimal_energy_transaction * current_buy_price
         elif optimal_energy_transaction > 0:
-            total_profit -= optimal_energy_transaction * current_sell_price
+            tick_profit -= optimal_energy_transaction * current_sell_price
 
         # Ensure storage is within bounds after transactions
         storage -= optimal_storage_transaction
@@ -193,4 +194,6 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
         print(f"   Optimization failed")
         print(problem.status)
 
-    return total_profit, storage, energy_used, energy_in, optimal_energy_transaction, current_buy_price
+    algovar = AlgoVar(t, optimal_energy_transaction, energy_in, energy_used, tick_profit, current_buy_price, current_sell_price, storage)
+
+    return algovar

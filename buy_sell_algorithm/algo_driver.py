@@ -166,7 +166,6 @@ class Algorithm:
 
     def something_else(self, naive_storage, storage, sum_of_total_profit, total_profit, total_naive_profit):
         start = time.time()
-        # do something else, must include filling data buffers
 
         time_taken = self.add_to_data_buffers()
 
@@ -185,20 +184,22 @@ class Algorithm:
         else:
             self.defs = None
 
-        profit, storage, demand, energy_produced, buysell, buy_price = opt.maximize_profit_mpc(storage, self.data_buffers, self.predictions, self.tick, 60-self.tick, self.defs)
+        algovar = opt.maximize_profit_mpc(storage, self.data_buffers, self.predictions, self.tick, 60-self.tick, self.defs)
         naive_profit, naive_storage = naive.naive_smart_grid_optimizer(self.data_buffers, self.tick, naive_storage, self.defs)
 
-        total_profit += profit
+        print(f"Algovar energy transactions: {algovar.storage}")
+        storage = algovar.storage
+        total_profit += algovar.profit
         total_naive_profit += naive_profit
 
-        print(f"opt profit (tick): {profit}")
+        print(f"opt profit (tick): {algovar.profit}")
         print(f"naive profit (tick): {naive_profit}")
         print(f"opt profit total: {total_profit}")
         print(f"naive profit total: {total_naive_profit}")
 
         print(f" ***************************************************************************************")
 
-        add_data_to_frontend_file({"tick": self.tick, "naiveProfit": naive_profit, "optProfit": profit, "energyTransaction":buysell, "energyUsed": demand, "energyIn": energy_produced, "storageProfit": storage*buy_price }, storage)
+        add_data_to_frontend_file({"tick": algovar.tick, "naiveProfit": naive_profit, "optProfit": algovar.profit, "energyTransaction":algovar.optimal_energy_transactions, "energyUsed": algovar.demand, "energyIn": algovar.solar_energy, "storageProfit": algovar.storage*algovar.buy_price }, algovar.storage)
 
         # Post data to the cloud
         # if self.tick == 59:
