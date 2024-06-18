@@ -73,6 +73,7 @@ const Finances = () => {
         labels: ['Energy Bought', 'Energy Sold'],
         datasets: [
           {
+            // data: [totalEnergySold, totalEnergyBought],
             data: [totalEnergyBought, totalEnergySold],
             backgroundColor: ['rgba(107, 174, 214, 0.6)', 'rgba(123, 201, 134, 0.6)'],
             hoverBackgroundColor: ['rgba(107, 174, 214, 1)', 'rgba(123, 201, 134, 1)'],

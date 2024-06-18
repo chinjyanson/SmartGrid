@@ -1,86 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { Bar } from 'react-chartjs-2';
-import Speedometer from 'react-d3-speedometer';
+import React from 'react';
 
-// make a pie chart that grows to 59 to show the ratio of buy to sell?
-
-const TickBuySell = () => {
-  const [ticks, setTicks] = useState([]);
-  const [chartData, setChartData] = useState({
-    labels: [],
-    datasets: [
-      {
-        label: 'Buy/Sell Decisions',
-        data: [],
-        backgroundColor: [],
-      },
-    ],
-  });
-
-  useEffect(() => {
-    const updateChartData = (decision) => {
-      const newData = [...chartData.datasets[0].data];
-      const newLabels = [...chartData.labels];
-
-      if (ticks.length >= 59) {
-        // Clear chart data if there are 59 ticks
-        setTicks([]);
-        setChartData((prevData) => ({
-          ...prevData,
-          labels: [],
-          datasets: [
-            {
-              ...prevData.datasets[0],
-              data: [],
-            },
-          ],
-        }));
-      } else {
-        setTicks((prevTicks) => [...prevTicks, decision]);
-
-        newData.push(decision > 0 ? decision : 0);
-        newLabels.push(newLabels.length + 1);
-        const backgroundColor = decision > 0 ? 'rgba(75, 192, 192, 0.2)' : 'rgba(255, 99, 132, 0.2)';
-
-        setChartData((prevData) => ({
-          ...prevData,
-          labels: newLabels,
-          datasets: [
-            {
-              ...prevData.datasets[0],
-              data: newData,
-              backgroundColor: backgroundColor,
-            },
-          ],
-        }));
-      }
-    };
-
-    // Simulate buy/sell decisions
-    const interval = setInterval(() => {
-      const decision = Math.random() > 0.5 ? 1 : -1; // Randomly decide between buy (1) and sell (-1)
-      updateChartData(decision);
-    }, 1000);
-
-    // Clean up interval on component unmount
-    return () => clearInterval(interval);
-  }, [chartData]);
-
+const TickBuySell = ({ currentAction, actionLog }) => {
   return (
-    <div className="w-full flex justify-around mt-10">
-      <div className="w-1/3 flex justify-center items-center">
-        <Speedometer
-          value={ticks.length > 0 ? (ticks[ticks.length - 1] === 1 ? 100 : 0) : 50} // Set speedometer value based on the last tick
-          needleColor={ticks.length > 0 ? (ticks[ticks.length - 1] === 1 ? 'green' : 'red') : 'gray'} // Set needle color based on the last tick
-          startColor='red'
-          segments={2}
-          endColor='green'
-          valueFormatter={() => (ticks.length > 0 ? (ticks[ticks.length - 1] === 1 ? 135 : 45) : 90)} // Set the angle of the needle
-          currentValueText={ticks.length > 0 ? (ticks[ticks.length - 1] === 1 ? 'Buy' : 'Sell') : ''}
-        />
+    <div className="w-full flex flex-col items-center mt-10">
+      <div className={`w-full p-5 rounded-lg shadow-lg ${currentAction === 'buy' ? 'bg-green-500' : 'bg-red-500'}`}>
+        <h2 className="text-2xl text-white">{currentAction.toUpperCase()}</h2>
       </div>
-      <div className="w-2/3">
-        <Bar data={chartData} />
+      <div className="w-full mt-8 bg-gray-200 p-5 rounded-lg shadow-lg">
+        <h3 className="text-xl mb-4">Action Log</h3>
+        <ul className="overflow-y-auto max-h-40">
+          {actionLog.map((log, index) => (
+            <li key={index} className="text-sm">{`Tick ${log.tick}: ${log.action} - ${log.value} kWh`}</li>
+          ))}
+        </ul>
       </div>
     </div>
   );

@@ -1,18 +1,121 @@
 // DATA TO SHOW IN THE HOME PAGE:
-// 50/50 of buy or sell like speedo with bar chart next to it 1, -1, with pie chart also?
-// we also want to show the battery with text inside it showing between 0 to 50 joules of how much is stored, then next to it we will say if this is an increase of X or decrease by X % from the previous tick
-// also have a random energy tip of the day put that next to the battery 
-// we need to do algorithm comparison so a barchart on the left of naive and optimal, then line graph showing the profit every tick type thing
+// module 2:
+// first bubble in row
+// battery/storage indicator (values rounded to 1 d.p.) then next to it we will say if this is an increase of X or decrease by X % from the previous tick
+// make this battery indicator the doughnot chart
+// historical battery value indicator? (maybe barchart)
+// second bubble in row
+// buy and sell indicator (red or green and saying current buy or sell)
+// do a scroll log of actions paired witht ick so like a historical log of the last 59 ticks of buy and sell of energy and the values
 
-import React, { useEffect } from 'react';
+// module 3:
+// barchart with 2 bars, one to show the naive costs, another to show the optimal costs so far for the day
+// line graph to show the cost of the naive at each tick (with fill), then second line graph that shows the cost of the optimal at each tick (with fill)
+
+import React, { useEffect, useState } from 'react';
 import EnergySavingTip from './EnergySavingTip';
 import TickEnergy from './TickEnergy';
-// import TickAlgo from './TickAlgo';
-import './landing.css'
+import TickBuySell from './TickBuySell';
+import TickStorage from './TickStorage';
+import TickAlgo from './TickAlgo';
+import ExternalInfo from '../../assets/ExternalInfo.json';
+import './landing.css';
 
 const Home = () => {
+  const [energyUsage, setEnergyUsage] = useState(0);
+  const [energyProduced, setEnergyProduced] = useState(0);
+  const [chartData, setChartData] = useState({
+    labels: Array.from({ length: 60 }, (_, i) => i),
+    datasets: [
+      {
+        label: 'Energy Usage (kWh)',
+        data: Array.from({ length: 60 }, (_, i) => ({ x: i, y: null })),
+        borderColor: 'rgba(75,192,192,1)',
+        backgroundColor: 'rgba(75,192,192,0.2)',
+        pointBackgroundColor: 'rgba(255, 192, 203, 0.8)',
+        pointBorderColor: 'rgba(255, 150, 150, 0.6)',
+      },
+      {
+        label: 'Energy Produced (kWh)',
+        data: Array.from({ length: 60 }, (_, i) => ({ x: i, y: null })),
+        borderColor: 'rgba(255, 99, 132, 1)',
+        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+        pointBackgroundColor: 'rgba(64, 224, 208, 0.8)',
+        pointBorderColor: 'rgba(0, 100, 90, 0.6)',
+      },
+    ],
+  });
+
+  const [currentAction, setCurrentAction] = useState('buy');
+  const [actionLog, setActionLog] = useState([]);
+  const [currentStorage, setCurrentStorage] = useState(0);
+  const [storageChange, setStorageChange] = useState(0);
+  const [historicalStorage, setHistoricalStorage] = useState(Array.from({ length: 60 }, () => 0));
+  const [naiveCosts, setNaiveCosts] = useState(0);
+  const [optimalCosts, setOptimalCosts] = useState(0);
+  const [naiveCostPerTick, setNaiveCostPerTick] = useState(Array.from({ length: 60 }, () => 0));
+  const [optimalCostPerTick, setOptimalCostPerTick] = useState(Array.from({ length: 60 }, () => 0));
+
   useEffect(() => {
-    document.title = "Home | Smart Grid";
+    document.title = 'Home | Energy Dashboard';
+    const fetchData = async () => {
+      const data = ExternalInfo;
+
+      let newUsageData = Array.from({ length: 60 }, (_, i) => ({ x: i, y: null }));
+      let newProducedData = Array.from({ length: 60 }, (_, i) => ({ x: i, y: null }));
+      let newHistoricalStorage = Array.from({ length: 60 }, () => 0);
+      let lastStorageValue = data.batteryStorage;
+      let naiveCostSum = 0;
+      let optimalCostSum = 0;
+      let newNaiveCostPerTick = Array.from({ length: 60 }, () => 0);
+      let newOptimalCostPerTick = Array.from({ length: 60 }, () => 0);
+      let newActionLog = [];
+
+      Object.keys(data).forEach(key => {
+        if (key !== "batteryStorage" && data[key].length > 0) {
+          const tickData = data[key][0];
+          newUsageData[key] = { x: key, y: tickData.energyUsage };
+          newProducedData[key] = { x: key, y: tickData.energyIn };
+
+          naiveCostSum += tickData.naiveProfit;
+          optimalCostSum += tickData.optProfit;
+          newNaiveCostPerTick[key] = naiveCostSum;
+          newOptimalCostPerTick[key] = optimalCostSum;
+
+          newHistoricalStorage[key] = lastStorageValue;
+          lastStorageValue -= tickData.energyTransaction;
+
+          newActionLog.push({ tick: key, action: tickData.energyTransaction >= 0 ? 'buy' : 'sell', value: Math.abs(tickData.energyTransaction) });
+        }
+      });
+
+      setEnergyUsage(newUsageData[newUsageData.length - 1]?.y ?? 0);
+      setEnergyProduced(newProducedData[newProducedData.length - 1]?.y ?? 0);
+      setChartData(prevData => ({
+        ...prevData,
+        datasets: [
+          {
+            ...prevData.datasets[0],
+            data: newUsageData,
+          },
+          {
+            ...prevData.datasets[1],
+            data: newProducedData,
+          },
+        ],
+      }));
+      setCurrentStorage(data.batteryStorage);
+      setStorageChange((data.batteryStorage - newHistoricalStorage[newHistoricalStorage.length - 1]) / newHistoricalStorage[newHistoricalStorage.length - 1] * 100);
+      setHistoricalStorage(newHistoricalStorage);
+      setNaiveCosts(naiveCostSum);
+      setOptimalCosts(optimalCostSum);
+      setNaiveCostPerTick(newNaiveCostPerTick);
+      setOptimalCostPerTick(newOptimalCostPerTick);
+      setCurrentAction(newActionLog[newActionLog.length - 1]?.action ?? 'buy');
+      setActionLog(newActionLog);
+    };
+
+    fetchData();
   }, []);
 
   const scrollToContent = () => {
@@ -35,10 +138,16 @@ const Home = () => {
       </div>
       <div id="content-section" className="w-full flex flex-col items-center justify-center py-10">
         <div className="w-full mt-8">
-          <TickEnergy/>
-          {/* <TickAlgo /> */}
-          {/* <TickStorage /> */}
-          {/* <TickBuySell /> */}
+          <TickEnergy energyUsage={energyUsage.toFixed(2)} energyProduced={energyProduced.toFixed(2)} chartData={chartData} />
+        </div>
+        <div className="w-full mt-8">
+            <TickStorage currentStorage={currentStorage} storageChange={storageChange} historicalStorage={historicalStorage} />
+        </div>
+        <div className="w-full mt-8">
+            <TickBuySell currentAction={currentAction} actionLog={actionLog} />
+        </div>
+        <div className="w-full mt-8">
+          <TickAlgo naiveCosts={naiveCosts} optimalCosts={optimalCosts} naiveCostPerTick={naiveCostPerTick} optimalCostPerTick={optimalCostPerTick} />
         </div>
       </div>
     </div>

@@ -8,6 +8,7 @@ import NotFound from './routes/not-found/not-found.js';
 import About from './routes/about/about.js';
 import './core-ui/App.css';
 import StayTuned from './routes/alert/stayTuned.js';
+import 'chart.js/auto';
 
 const App = () => {
   return (
