@@ -193,4 +193,4 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
         print(f"   Optimization failed")
         print(problem.status)
 
-    return total_profit, storage, energy_used, energy_in, optimal_energy_transaction
+    return total_profit, storage, energy_used, energy_in, optimal_energy_transaction, current_buy_price
