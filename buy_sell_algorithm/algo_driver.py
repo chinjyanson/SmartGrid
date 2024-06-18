@@ -1,16 +1,15 @@
 from queue import Queue 
 import time
 from predictions.utils import plot_datas, get_sunlight, init_frontend_file, add_data_to_frontend_file
-import sys
 from colorama import Fore, Back, Style, init
 import optimization as opt
 from predictions.train import Train
 from data.server_data import server_data
 import naive_solution as naive
 from threading import Lock
-import json
+import sys
 from typing import Dict
-from multiprocessing import freeze_support
+import random
 import requests
 
 # Initialize colorama
@@ -236,8 +235,11 @@ class Algorithm:
         total_profit = 0
         total_naive_profit = 0
 
-        data1 = {"energy":134, "sell":True, "buy":False, "name":"cell"}
-        data2 = {"energy":40, "sell":False, "buy":False, "name":"flywheel"}
+        power = random.uniform(0, 1.5)
+
+        loads = ['load', 'load1', 'load2', 'load3']
+        loads_data = {"client": None, "power":None}
+        bidirectional_data = {'client':'bidirectional', 'buysell':None, 'storage':None}
 
         while True: 
             print(f"Current tick {self.tick}")
@@ -278,9 +280,19 @@ class Algorithm:
             # send decision to hardware when window starts
             time.sleep(time_to_sleep_in_s)
 
-            with Lock():
-                q.put(json.dumps(data1))
-                q.put(json.dumps(data2))
+            if(q.empty()):
+                print("Adding results to queue")
+                bidirectional_data['buysell'] = False
+                bidirectional_data['storage'] = storage
+
+                q.put(bidirectional_data)
+                #add_data_to_tcp_algo_file(bidirectional_data)
+
+                loads_data['power'] = power
+        
+                for load_name in loads:
+                    loads_data['client'] = load_name
+                    q.put(loads_data)
 
             remainder -= time_to_sleep_in_s
 
