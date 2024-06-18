@@ -13,12 +13,8 @@ from typing import Dict
 from multiprocessing import freeze_support
 import requests
 
-
 # Initialize colorama
 init(autoreset=True)
-
-#m_Train = module_from_file("Train", "buy_sell_algorithm/predictions/train.py")
-#m_data = module_from_file("server_data", "buy_sell_algorithm/data/server_data.py")
 
 class Algorithm:
     def __init__(self) -> None:
@@ -170,7 +166,6 @@ class Algorithm:
 
     def something_else(self, naive_storage, storage, sum_of_total_profit, total_profit, total_naive_profit):
         start = time.time()
-        # do something else, must include filling data buffers
 
         time_taken = self.add_to_data_buffers()
 
@@ -188,25 +183,22 @@ class Algorithm:
             self.defs = self.serve.parsed_data['deferables']
         else:
             self.defs = None
-        # profit, naive_profit = 0, 0
-        # print(profit, naive_profit)
-        print(storage, naive_storage)
-        # this if else statement changes the prediction horizon when tick > 50 (if horizon = 10)
-        profit, storage, demand, energy_produced, buysell = opt.maximize_profit_mpc(storage, self.data_buffers, self.predictions, self.tick, 60-self.tick, self.defs)
+
+        algovar = opt.maximize_profit_mpc(storage, self.data_buffers, self.predictions, self.tick, 60-self.tick, self.defs)
         naive_profit, naive_storage = naive.naive_smart_grid_optimizer(self.data_buffers, self.tick, naive_storage, self.defs)
 
-        total_profit += profit
+        storage = algovar.storage
+        total_profit += algovar.profit
         total_naive_profit += naive_profit
 
-        print(f"opt profit (tick): {profit}")
+        print(f"opt profit (tick): {algovar.profit}")
         print(f"naive profit (tick): {naive_profit}")
         print(f"opt profit total: {total_profit}")
         print(f"naive profit total: {total_naive_profit}")
 
         print(f" ***************************************************************************************")
 
-
-        add_data_to_frontend_file({"tick": self.tick, "naiveProfit": naive_profit, "optProfit": profit, "energyTransaction":buysell, "energyUsed": demand, "energyIn": energy_produced }, storage)
+        add_data_to_frontend_file({"tick": algovar.tick, "naiveProfit": naive_profit, "optProfit": algovar.profit, "energyTransaction":algovar.optimal_energy_transactions, "energyUsed": algovar.demand, "energyIn": algovar.solar_energy, "storageProfit": algovar.storage*algovar.buy_price }, algovar.storage)
 
         # Post data to the cloud
         # if self.tick == 59:
@@ -220,7 +212,6 @@ class Algorithm:
         #     self.energy_api_post(self.cycle_count, demand, energy_produced) #energy used, energy produced
         #     total_profit = 0
 
-            
         return time.time() - start + time_taken, storage, total_profit, total_naive_profit
     
     def driver(self, q : Queue):
