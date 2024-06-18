@@ -13,6 +13,9 @@ import os
 SUNRISE = 15    #Sunrise ticks after start of day
 DAY_LENGTH = 30 #Ticks between sunrise and sunset
 project_dir = os.getcwd()
+lock = Lock()
+json_path = os.path.join(project_dir, "react-front-end", "data.json")
+tcp_path = os.path.join(project_dir, "tcp", "data.json")
 
 """
     Useful helper functions
@@ -169,8 +172,6 @@ def init_frontend_file():
     except Exception as e:
         print(f"An error occurred during initialization: {e}")
 
-lock = Lock()
-json_path = os.path.join(project_dir, "react-front-end", "data.json")
 
 def add_data_to_frontend_file(data : Dict, batteryStorage: int):
     """

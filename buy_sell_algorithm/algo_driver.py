@@ -1,16 +1,15 @@
 from queue import Queue 
 import time
 from predictions.utils import plot_datas, get_sunlight, init_frontend_file, add_data_to_frontend_file
-import sys
 from colorama import Fore, Back, Style, init
 import optimization as opt
 from predictions.train import Train
 from data.server_data import server_data
 import naive_solution as naive
 from threading import Lock
-import json
+import sys
 from typing import Dict
-from multiprocessing import freeze_support
+import random
 import requests
 
 # Initialize colorama
@@ -19,8 +18,8 @@ init(autoreset=True)
 class Algorithm:
     def __init__(self) -> None:
         self.serve = server_data()
-        self.trainer = Train(elitism=0.2, mutation_prob=0.08, mutation_power=0.1, max_epochs=20, num_of_histories=5, 
-                pop_size=225, nn_batch_size=15, conc=True)
+        self.trainer = Train(elitism=0.2, mutation_prob=0.08, mutation_power=0.1, max_epochs=10, num_of_histories=5, 
+                pop_size=50, nn_batch_size=5, conc=True)
 
         self.data_buffers : Dict[str, list[float]] = {'buy_price':[], 'sell_price':[], 'demand':[], 'sun':[]}
         self.old_predictions : Dict[str, list[float]] = {'buy_price':[], 'sell_price':[], 'demand':[], 'sun':[]}
@@ -236,8 +235,11 @@ class Algorithm:
         total_profit = 0
         total_naive_profit = 0
 
-        data1 = {"energy":134, "sell":True, "buy":False, "name":"cell"}
-        data2 = {"energy":40, "sell":False, "buy":False, "name":"flywheel"}
+        power = random.uniform(0, 1.5)
+
+        loads = ['load', 'load1', 'load2', 'load3']
+        loads_data = {"client": None, "power":None}
+        bidirectional_data = {'client':'bidirectional', 'buysell':None, 'storage':None}
 
         while True: 
             print(f"Current tick {self.tick}")
@@ -278,9 +280,19 @@ class Algorithm:
             # send decision to hardware when window starts
             time.sleep(time_to_sleep_in_s)
 
-            with Lock():
-                q.put(json.dumps(data1))
-                q.put(json.dumps(data2))
+            if(q.empty()):
+                print("Adding results to queue")
+                bidirectional_data['buysell'] = False
+                bidirectional_data['storage'] = storage
+
+                q.put(bidirectional_data)
+                #add_data_to_tcp_algo_file(bidirectional_data)
+
+                loads_data['power'] = power
+        
+                for load_name in loads:
+                    loads_data['client'] = load_name
+                    q.put(loads_data)
 
             remainder -= time_to_sleep_in_s
 

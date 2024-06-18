@@ -11,7 +11,7 @@ def handle_client(client_socket, addr, client_name, q):
 
     while True:
         try:
-            if not q.empty():
+            while not q.empty():
                 data = q.get()
 
                 if data['client'] == client_name:
@@ -19,9 +19,9 @@ def handle_client(client_socket, addr, client_name, q):
                     print(f"Sent {data} to {client_name}")
                     str_data = json.dumps(data).encode('utf-8')
                     client_socket.sendall(str_data)
-
+            
         except Exception as e:
-            #print(f"Error handling client {client_name}: {e}")
+            print(f"Error handling client {client_name}: {e}")
 
             #print(f"Client {client_name} disconnected")
             #client_socket.close()
