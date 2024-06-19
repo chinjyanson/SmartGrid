@@ -1,25 +1,32 @@
-from predictions.utils import module_from_file
-from multiprocessing import Process, Queue
-from algo_driver import Algorithm
-#from queue import Queue 
+# buy_sell_algo/main.py
 
-m_tcp = module_from_file("run_server", "tcp/tcp_server.py")
-m_driver = module_from_file("driver", "tcp/fake_algo.py")
+from multiprocessing import Process, Queue, set_start_method
+from algo_driver import Algorithm
+import os
+import sys
+
+# Ensure correct import path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "tcp")))
+
+# Import start_server directly
+from tcp_server import start_server
+
+# Use spawn method for multiprocessing
+set_start_method('spawn', force=True)
+
 q = Queue()
 
 def main():
-    #init_frontend_file()
-    # algorithm runs in main process
     algo = Algorithm()
     server_host = '0.0.0.0'
-    server_port = 5559 
+    server_port = 5559
 
-    # tcp server runs in seperate process
-    tcp_process = Process(target=m_tcp.start_server, args=(server_host, server_port, q, ))
+    # tcp server runs in separate process
+    tcp_process = Process(target=start_server, args=(server_host, server_port, q))
     tcp_process.start()
     algo.driver(q)
-     
+
     tcp_process.join()
 
 if __name__ == "__main__":
-    main() 
+    main()
