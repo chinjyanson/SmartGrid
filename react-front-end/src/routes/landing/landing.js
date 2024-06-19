@@ -48,6 +48,8 @@ const Home = () => {
   const [naiveCosts, setNaiveCosts] = useState(0);
   const [optimalCosts, setOptimalCosts] = useState(0);
   const [storageCosts, setStorageCosts] = useState(0);
+  const [currNaiveCosts, setCurrNaiveCosts] = useState(0);
+  const [currOptimalCosts, setCurrOptimalCosts] = useState(0);
   const [naiveCostPerTick, setNaiveCostPerTick] = useState(Array.from({ length: 60 }, () => 0));
   const [optimalCostPerTick, setOptimalCostPerTick] = useState(Array.from({ length: 60 }, () => 0));
   const [storageCostPerTick, setStorageCostPerTick] = useState(Array.from({ length: 60 }, () => 0));
@@ -133,6 +135,8 @@ const Home = () => {
       setNaiveCosts(naiveCostSum);
       setOptimalCosts(optimalCostSum);
       setStorageCosts(storageCostSum);
+      setCurrNaiveCosts(data[latestTick]?.[0]?.naiveProfit.toFixed(2) ?? 0);
+      setCurrOptimalCosts(data[latestTick]?.[0]?.optProfit.toFixed(2) ?? 0);
       setNaiveCostPerTick(newNaiveCostPerTick);
       setOptimalCostPerTick(newOptimalCostPerTick);
       setStorageCostPerTick(newStorageCostPerTick);
@@ -180,6 +184,8 @@ const Home = () => {
         </div>
         <div className="w-full mt-8">
           <TickAlgo 
+          currNaiveCosts={currNaiveCosts}
+          currOptimalCosts={currOptimalCosts}
           naiveCosts={naiveCosts}
           optimalCosts={optimalCosts}
           storageCosts={storageCosts}

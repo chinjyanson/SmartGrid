@@ -1,25 +1,70 @@
 import React from 'react';
 import { Bar, Line } from 'react-chartjs-2';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faCaretUp, faCaretDown, faEquals } from '@fortawesome/free-solid-svg-icons';
+import './landing.css';
 
 const TickAlgo = ({ currNaiveCosts, currOptimalCosts, naiveCosts, optimalCosts, storageCosts, naiveCostPerTick, optimalCostPerTick, storageCostPerTick }) => {
   const barChartData = {
-    labels: ['Costs'],
+    labels: ['Methods'],
     datasets: [
       {
         label: 'Current Naive Cost',
-        data: [naiveCosts],
+        data: [currNaiveCosts],
         backgroundColor: 'rgba(255, 99, 132, 0.6)',
         borderColor: 'rgba(255, 99, 132, 1)',
         borderWidth: 1,
       },
       {
         label: 'Current Optimal Cost',
-        data: [optimalCosts],
+        data: [currOptimalCosts],
         backgroundColor: 'rgba(75, 192, 192, 0.6)',
         borderColor: 'rgba(75, 192, 192, 1)',
         borderWidth: 1,
       },
     ],
+  };
+
+  const barChartOptions = {
+    maintainAspectRatio: false, // Corrected option to disable aspect ratio
+    scales: {
+      y: {
+        beginAtZero: true,
+        title: {
+          display: true,
+          text: 'Tick Cost ($)',
+          color: 'white',
+          font: {
+            weight: 'bold',
+          },
+        },
+        ticks: {
+          stepSize: 1,
+          color: 'white',
+        },
+      },
+      x: {
+        title: {
+          display: true,
+          text: 'Methods',
+          color: 'white',
+          font: {
+            weight: 'bold',
+          },
+        },
+        ticks: {
+          display: false,
+          color: 'white',
+        },
+      },
+    },
+    plugins: {
+      legend: {
+        labels: {
+          color: 'white',
+        },
+      },
+    },
   };
 
   const lineChartData = {
@@ -93,14 +138,33 @@ const TickAlgo = ({ currNaiveCosts, currOptimalCosts, naiveCosts, optimalCosts, 
     },
   };
 
-  const performanceComparison = ((optimalCosts - naiveCosts) / naiveCosts * 100).toFixed(2);
+  const performanceComparison = currNaiveCosts - currOptimalCosts;
 
+  let iconComponent = null;
+  if (performanceComparison > 0) {
+    iconComponent = <FontAwesomeIcon icon={faCaretUp} className="increase-icon" />;
+  } else if (performanceComparison < 0) {
+    iconComponent = <FontAwesomeIcon icon={faCaretDown} className="decrease-icon" />;
+  } else {
+    iconComponent = <FontAwesomeIcon icon={faEquals} className="equal-icon" />;
+  }
+  
   return (
 <div className="w-full flex flex-col items-center mt-10">
       <div className="bg-gray-500 bg-opacity-50 p-7 rounded-lg shadow-lg w-11/12 flex flex-col items-center">
         <div className="w-full flex items-center">
-          <div className="w-full flex-1">
-            <Bar data={barChartData} />
+          <div className="w-full h-full flex-1">
+            <h2 className="text-2xl text-white text-center">Cost Comparison</h2>
+            <div className="w-full flex items-center justify-center">
+              <Bar data={barChartData} options={barChartOptions} style={{height: '400px', width: '300px'}}/>
+            </div>
+            <div className="w-full flex flex-col items-center mt-5">
+              <div className="total-action-bubble bg-gray-800 p-6 rounded-xl shadow-2xl text-center text-white ml-3">
+                <p className="mb-1">Performance Difference:</p>
+                <span className="text-lg font-bold mb-2">{performanceComparison.toFixed(2)}</span>
+                <span className="ml-2">{iconComponent}</span>
+              </div>
+            </div>
           </div>
           <div className="w-full flex-3">
             <Line data={lineChartData} options={lineChartOptions} />
