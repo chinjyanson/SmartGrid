@@ -240,11 +240,10 @@ class Algorithm:
         total_profit = 0
         total_naive_profit = 0
 
-        power = random.uniform(0, 1.5)
-
-        loads = ['load', 'load1', 'load2', 'load3']
-        loads_data = {"client": None, "power":None}
+        loads_data = [{"client": "load", "power":None},{"client": "load1", "power":None}, {"client": "load2", "power":None}, {"client": "load3", "power":None}]
         bidirectional_data = {'client':'bidirectional', 'buysell':None, 'storage':None}
+
+        #data_to_clients = {"load":0, "load1":0, "load2":0, "load3":0, "bidirectional":{"buysell":0, "storage":None}}
 
         while True: 
             print(f"Current tick {self.tick}")
@@ -296,12 +295,10 @@ class Algorithm:
                 q.put(bidirectional_data)
                 #add_data_to_tcp_algo_file(bidirectional_data)
 
-                loads_data['power'] = algovar.demand/3
-        
-                for load_name in loads:
-                    loads_data['client'] = load_name
-                    q.put(loads_data)
-
+                for ld in loads_data:
+                    ld["power"] = algovar.demand/3
+                    q.put(ld)
+            
             remainder -= time_to_sleep_in_s
 
             if(time_taken > 5+self.computation_time):
