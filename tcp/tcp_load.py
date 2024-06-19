@@ -9,10 +9,10 @@ import utime
 from credentials import SSID, PASSWORD
 required_power = 0
 # Function to connect to Wi-Fi
-server_port = 5552
+#server_port = 5552
 str_data = ""
 newdata = False
-
+ports = range(5550,5560)
 
 def connect_wifi(ssid, password):
     wlan = network.WLAN(network.STA_IF)
@@ -59,31 +59,50 @@ def send_to_server(client_socket, data):
             print(f"Sent to server: {data}")
         except Exception as e:
             print(f"Error sending data: {e}")
-        
-        utime.sleep(5)  # Wait 5 seconds before sending the next dummy data
+        utime.sleep(5)
+
+def connect_server(server_host, client_name):
+    for port in ports:
+        try:
+            print(f"Attempting to connect to port {port}...")
+            # Create a socket object
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            # Attempt to connect to the server
+            sock.connect((server_host, port))
+            client_socket.connect((server_host, port))
+            print(client_name.encode('utf-8'))
+            client_socket.sendall(client_name.encode('utf-8'))  # Send the client's name to the server
+            print(f"Successfully connected to port {port}!")
+            return sock  # Return the socket if connection is successful
+        except OSError as e:
+            print(f"Failed to connect to port {port}: {e}")
+            if sock:
+                sock.close()
+    
+    print("Could not connect to any port in the range.")
+    return None  # Return None if no connection was successful
+
+def maintain_connection(server_host, client_name):
+    while True: 
+        client_socket = connect_server(server_host, client_name)
+        if client_socket:
+            return client_socket
+        else:
+            print(f"retrying to connect to server...")
+            utime.sleep(3)
 
 
 # Function to start the client
-def start_client(server_host, server_port, client_name, ssid, password):
+def start_client(server_host, client_name, ssid, password):
     # Connect to Wi-Fi
     connect_wifi(ssid, password)
     
-    # Create a socket and connect to the server
-    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client_socket.connect((server_host, server_port))
-    print(client_name.encode('utf-8'))
-    client_socket.sendall(client_name.encode('utf-8'))  # Send the client's name to the server
-    utime.sleep(3)
-
-    # Start threads for sending and receiving data
-    #_thread.start_new_thread(receive_from_server, (client_socket,client_name, ))
-    
-    return client_socket
+    return maintain_connection(server_host, client_name)
     
 server_host = '192.168.90.163'  # Replace with your server's IP address
 
 client_name = 'load1'  # Replace with your client name
-client_socket = start_client(server_host, server_port, client_name, SSID, PASSWORD)
+client_socket = start_client(server_host, client_name, SSID, PASSWORD)
 data = None
 
 vret_pin = ADC(Pin(26))
@@ -118,45 +137,55 @@ def power_Calc(vout, vret):
     return vout*vret/1.02
 
 while True:
-    required_power = receive_from_server(client_socket, client_name)
-    if required_power != None:
-        print(required_power)
-        pwm_en.value(1)
-        stop = False
-        while not stop:
-            vin = 1.026*(12490/2490)*3.3*(vin_pin.read_u16()/65536) # calibration factor * potential divider ratio * ref voltage * digital reading
-            vout = 1.026*(12490/2490)*3.3*(vout_pin.read_u16()/65536) # calibration factor * potential divider ratio * ref voltage * digital reading
-            vret = 1*3.3*((vret_pin.read_u16()-350)/65536) # calibration factor * potential divider ratio * ref voltage * digital reading
-            count = count + 1      
-            pwm_ref = pid(vret)
-            pwm_ref = int(pwm_ref*65536)
-            pwm.duty_u16(pwm_out)
-            vret_sum+=vret
-            total_vret_readings+=1
-            average_vret = vret_sum/total_vret_readings
-            current_Power = power_Calc(vout, vret)        
-            if current_Power< required_power*(1-tolerance/100):
-                pwm_out+=100
-            elif current_Power > required_power*(1+tolerance/100):
-                pwm_out-=100
-            elif required_power*(1-tolerance/100) <= current_Power <= required_power*(1+tolerance/100):
-                print("Power Achieved")
+    try:
+        required_power = receive_from_server(client_socket, client_name)
+        start = utime.time()
+        if required_power != None:
+            print(required_power)
+            pwm_en.value(1)
+            stop = False
+            while not stop:
+                vin = 1.026*(12490/2490)*3.3*(vin_pin.read_u16()/65536) # calibration factor * potential divider ratio * ref voltage * digital reading
+                vout = 1.026*(12490/2490)*3.3*(vout_pin.read_u16()/65536) # calibration factor * potential divider ratio * ref voltage * digital reading
+                vret = 1*3.3*((vret_pin.read_u16()-350)/65536) # calibration factor * potential divider ratio * ref voltage * digital reading
+                count = count + 1      
+                pwm_ref = pid(vret)
+                pwm_ref = int(pwm_ref*65536)
+                pwm.duty_u16(pwm_out)
+                vret_sum+=vret
+                total_vret_readings+=1
+                average_vret = vret_sum/total_vret_readings
+                current_Power = power_Calc(vout, vret)        
+                if current_Power< required_power*(1-tolerance/100):
+                    pwm_out+=100
+                elif current_Power > required_power*(1+tolerance/100):
+                    pwm_out-=100
+                elif required_power*(1-tolerance/100) <= current_Power <= required_power*(1+tolerance/100):
+                    print("Power Achieved")
+
+            end = utime.time()
+            if end - start >= 5:
                 stop = True
 
-        print("Current Power:",current_Power)
-        print("Duty Cycle:",pwm_out)
-                
-        if count > 2000:
-            
-            count = 0
-            setpoint = setpoint + delta
+            print("Current Power:",current_Power)
+            print("Duty Cycle:",pwm_out)
                     
-            if setpoint > max_sp:
-                setpoint = max_sp
-                delta = - delta
-            
-            if setpoint <= 0:
-                setpoint = 0
-                delta = -delta
+            if count > 2000:
                 
-            pid.setpoint = setpoint
+                count = 0
+                setpoint = setpoint + delta
+                        
+                if setpoint > max_sp:
+                    setpoint = max_sp
+                    delta = - delta
+                
+                if setpoint <= 0:
+                    setpoint = 0
+                    delta = -delta
+                    
+                pid.setpoint = setpoint
+    except (OSError, socket.error) as e:
+        print(f"Connection lost: {e}. Attempting to reconnect...")
+        if client_socket:
+            client_socket.close()
+        client_socket = maintain_connection(server_host, client_name)
