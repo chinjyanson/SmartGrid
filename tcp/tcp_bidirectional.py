@@ -246,6 +246,7 @@ while True:
                 
             else: # Closed Loop Current Control
                 cap_current = 0
+                total_current = 0
                 
                 if required_storage > 0:
                     total_current = required_storage/vb
