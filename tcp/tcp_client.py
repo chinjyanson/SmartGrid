@@ -2,8 +2,7 @@ import network
 import socket
 import json
 import _thread
-import machine
-import utime
+import time
 from credentials import SSID, PASSWORD
 
 # Function to connect to Wi-Fi
@@ -16,7 +15,7 @@ def connect_wifi(ssid, password):
     # Wait for the connection to complete
     while not wlan.isconnected():
         print(".", end="")
-        utime.sleep(1)
+        time.sleep(1)
     
     print(" Connected!")
     print("Network configuration:", wlan.ifconfig())
@@ -45,7 +44,7 @@ def send_to_server(client_socket, data):
         except Exception as e:
             print(f"Error sending data: {e}")
         
-        utime.sleep(5)  # Wait 5 seconds before sending the next dummy data
+        time.sleep(5)  # Wait 5 seconds before sending the next dummy data
 
 
 # Function to start the client
@@ -58,7 +57,7 @@ def start_client(server_host, server_port, client_name, ssid, password):
     client_socket.connect((server_host, server_port))
     print(client_name.encode('utf-8'))
     client_socket.sendall(client_name.encode('utf-8'))  # Send the client's name to the server
-    utime.sleep(3)
+    time.sleep(3)
 
     # Start threads for sending and receiving data
     _thread.start_new_thread(receive_from_server, (client_socket,))

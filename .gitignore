@@ -2,5 +2,5 @@
 buy_sell_algorithm/predictions/saved_populations
 buy_sell_algorithm/predictions/graphs
 tcp/credentials.py
-react-front-end/data.json
+react-front-end/src/assets/ExternalInfo.json
 .vscode

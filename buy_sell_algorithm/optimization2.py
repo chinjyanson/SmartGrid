@@ -243,12 +243,13 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
             print(f"  Deferable Demand {idx}: {deferable_demand[idx].value}")
         for idx in range(len(deferable_list)):
             print(f"  Deferables: {deferable_list[idx].start}, {deferable_list[idx].end}, {deferable_list[idx].energyTotal}, {deferable_list[idx].energyDone}")
-
+        energy_used = demand.value[0] + sum(deferable_demand[idx][0].value for idx in range(len(deferable_list)))
     else:
         print(f"   Optimization failed")
         print(problem.status)
 
-    algovar = AlgoVar(t, optimal_energy_transaction, optimal_storage_transaction, energy_in, energy_used, tick_profit, current_buy_price, current_sell_price, storage, base_demand)
+    algovar = AlgoVar(t, optimal_energy_transaction, optimal_storage_transaction, energy_in, energy_used,
+                      tick_profit, current_buy_price, current_sell_price, storage, base_demand)
 
     return algovar
 

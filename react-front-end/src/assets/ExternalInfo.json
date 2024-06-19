@@ -11,8 +11,32 @@
     "9": [],
     "10": [],
     "11": [],
-    "12": [],
-    "13": [],
+    "12": [
+        {
+            "tick": 12,
+            "naiveProfit": 12.403164711359102,
+            "optProfit": 11.530824285827185,
+            "storage": 0.0,
+            "energyTransaction": 14.061980836374618,
+            "energyUsed": 14.061980836374618,
+            "noDefEnergyUsed": 14.061980836374618,
+            "energyIn": 0.0,
+            "storageProfit": 11.530824285827185
+        }
+    ],
+    "13": [
+        {
+            "tick": 13,
+            "naiveProfit": 5.74071873633942,
+            "optProfit": 19.572038213642962,
+            "storage": 23.39553632384162,
+            "energyTransaction": 31.567803570391874,
+            "energyUsed": 8.172267246550255,
+            "noDefEnergyUsed": 8.172267246550255,
+            "energyIn": 0.0,
+            "storageProfit": 12.31942195325206
+        }
+    ],
     "14": [],
     "15": [],
     "16": [],

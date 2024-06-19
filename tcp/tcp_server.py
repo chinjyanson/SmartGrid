@@ -31,6 +31,9 @@ def handle_client(client_socket, addr, client_name, q):
             #print(f"Client {client_name} disconnected")
             #client_socket.close()
             break
+        except KeyboardInterrupt:
+            print("KeyboardInterrupt")
+            break
 
 # Function to start the server and listen for clients
 def start_server(host, port, q):
