@@ -185,7 +185,7 @@ class ina219:
         ina_i2c.writeto_mem(conf.address, conf.REG_CALIBRATION, b'\x00\x00')
         
 server_host = '192.168.90.163'  # Replace with your server's IP address
-server_port = 5555
+server_port = 5551
 client_name = 'bidirectional'  # Replace with your client name
 data = None
 client_socket = start_client(server_host, server_port, client_name, SSID, PASSWORD)
@@ -194,6 +194,7 @@ client_socket = start_client(server_host, server_port, client_name, SSID, PASSWO
 # Here we go, main function, always executes
 while True:
     required_storage = receive_from_server(client_socket, client_name)
+    start = utime.time()
     if required_storage != None:
         print("Required Storage = {:.3f}".format(required_storage))
         if first_run:
@@ -247,43 +248,52 @@ while True:
                 pwm.duty_u16(duty) # now we output the pwm
                 
             else: # Closed Loop Current Control
-                    
-                if duty <= 5000 or duty>= 32300:
-                    i_ref = 0
-                else:
+                stop = False
+                while not stop:
                     if required_storage > 0:
                         total_current = -required_storage/vb
                         cap_current = total_current/5
-                        print("Total Current = {:.3f}".format(total_current))
                         print("Capacitor Current = {:.3f}".format(cap_current))
                         print("Vb = {:.3f}".format(vb))
-                        
                     else:
                         total_current = -required_storage/va
                         cap_current = total_current/5
-                        print("Total Current = {:.3f}".format(total_current))
                         print("Capacitor Current = {:.3f}".format(cap_current))
                         print("Va = {:.3f}".format(va))
-                    i_ref = saturate(cap_current, 0.2, -0.2)
-    
-                i_err = i_ref-iL # calculate the error in voltage
-                i_err_int = i_err_int + i_err # add it to the integral error
-                i_err_int = saturate(i_err_int, 10000, -10000) # saturate the integral error
-                i_pi_out = (kp*i_err)+(ki*i_err_int) # Calculate a PI controller output
-                
-                pwm_out = saturate(i_pi_out,max_pwm,min_pwm) # Saturate that PI output
-                duty = int(65536-pwm_out) # Invert because reasons
-                pwm.duty_u16(duty) # Send the output of the PI controller out as PWM
+                   
+                    vpot = (required_storage/90)*3.3
+                    print("Vpot = {:.3f}".format(vpot))
+                    
+                    if duty <= 5000 or duty>= 32300:
+                        i_ref = 0
+                        print("saturating")
+                    else:
+                        i_ref = saturate(vpot, 0.2, -0.2)
+                        print("charge/discharge")
+                    
+                    i_err = i_ref-iL # calculate the error in voltage
+                    i_err_int = i_err_int + i_err # add it to the integral error
+                    i_err_int = saturate(i_err_int, 10000, -10000) # saturate the integral error
+                    i_pi_out = (kp*i_err)+(ki*i_err_int) # Calculate a PI controller output
+                        
+                    pwm_out = saturate(i_pi_out,max_pwm,min_pwm) # Saturate that PI output
+                    duty = int(65536-pwm_out) # Invert because reasons
+                    pwm.duty_u16(duty) # Send the output of the PI controller out as PWM
+                    
+                    print("i_ref = {:.3f}".format(i_ref))
+                    print("iL = {:.3f}".format(iL))
+                    print("duty = {:d}".format(duty))
+                    
+                    end = utime.time()
+                    
+                    if end-start >= 5:
+                       stop = True
 
             duty = saturate(duty, 65536, 1000)
             
             # Keep a count of how many times we have executed and reset the timer so we can go back to waiting
             count = count + 1
             timer_elapsed = 0
-            
-            print("iL = {:.3f}".format(iL))
-            print("i_ref = {:.3f}".format(i_ref))
-            print("duty = {:d}".format(duty))
             
             # This set of prints executes every 100 loops by default and can be used to output debug or extra info over USB enable or disable lines as needed
             if count > 100:
