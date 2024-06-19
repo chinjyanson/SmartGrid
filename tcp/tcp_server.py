@@ -4,7 +4,6 @@ import threading
 import json
 import time
 from queue import Queue
-from threading import Lock
 
 clients = {}
 
