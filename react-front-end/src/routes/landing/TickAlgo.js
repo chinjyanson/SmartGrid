@@ -6,14 +6,14 @@ const TickAlgo = ({ naiveCosts, optimalCosts, naiveCostPerTick, optimalCostPerTi
     labels: ['Costs'],
     datasets: [
       {
-        label: 'Naive Costs',
+        label: 'Current Naive Cost',
         data: [naiveCosts],
         backgroundColor: 'rgba(255, 99, 132, 0.6)',
         borderColor: 'rgba(255, 99, 132, 1)',
         borderWidth: 1,
       },
       {
-        label: 'Optimal Costs',
+        label: 'Current Optimal Cost',
         data: [optimalCosts],
         backgroundColor: 'rgba(75, 192, 192, 0.6)',
         borderColor: 'rgba(75, 192, 192, 1)',
@@ -97,19 +97,30 @@ const TickAlgo = ({ naiveCosts, optimalCosts, naiveCostPerTick, optimalCostPerTi
   };
 
   return (
-    <div className="w-full flex flex-col items-center mt-10">
-      <div className="bg-gray-500 bg-opacity-50 p-7 rounded-lg shadow-lg w-11/12 flex items-center">
-
-        <div className="w-full mb-8 flex-1">
-          <Bar data={barChartData} />
+<div className="w-full flex flex-col items-center mt-10">
+      <div className="bg-gray-500 bg-opacity-50 p-7 rounded-lg shadow-lg w-11/12 flex flex-col items-center">
+        <div className="w-full flex items-center">
+          <div className="w-full flex-1">
+            <Bar data={barChartData} />
+          </div>
+          <div className="w-full flex-3">
+            <Line data={lineChartData} options={lineChartOptions} />
+          </div>
         </div>
-        <div className="w-full flex-3">
-          <Line data={lineChartData} options={lineChartOptions} />
+        <div className="algo-info shadow-2xl mt-5">
+          <p className="text-lg text-gray-800">
+            Total Naive Cost: {naiveCosts.toFixed(2)}
+          </p>
+          <p className="text-lg text-gray-800">
+            Total Optimal Cost: {optimalCosts.toFixed(2)}
+          </p>
+          <p className="text-lg text-gray-800">
+            Total Optimal Cost Combined with Storage Sales: {/* Add your logic for this value */}
+          </p>
         </div>
-        {/* <div className="w-full mt-5 flex justify-between algo-info">
-          <p className="text-lg text-gray-800">test</p>
-          <p className="text-lg text-gray-800">test</p>
-        </div> */}
+        <p className="italic text-sm items-center mt-5">
+          "A positive cost is the amount paid by the user, while a negative cost indicates a profit that is accounted for the user."
+        </p>
       </div>
     </div>
   );

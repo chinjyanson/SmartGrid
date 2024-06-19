@@ -162,4 +162,11 @@
   color: #333;
 }
 
-
+/* Algo Module Styling Components */
+.algo-info {
+  background-color: rgb(240, 237, 237);
+  padding: 10px 20px;
+  border-radius: 8px;
+  text-align: center;
+  width: full;
+}
