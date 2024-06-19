@@ -11,6 +11,7 @@ import sys
 from typing import Dict
 import random
 import requests
+import optimization2 as opt2
 
 # Initialize colorama
 init(autoreset=True)
@@ -103,6 +104,7 @@ class Algorithm:
 
             self.predictions['sun'] = get_sunlight()
             self.old_predictions['sun'] = get_sunlight()
+            self.defs = None
             
         else:
             print("Current predictions are ready")
@@ -163,7 +165,7 @@ class Algorithm:
 
         return time.time()-start
 
-    def something_else(self, naive_storage, storage, sum_of_total_profit, total_profit, total_naive_profit):
+    def something_else(self, naive_storage, storage, unmet_demands, total_profit, total_naive_profit):
         start = time.time()
 
         time_taken = self.add_to_data_buffers()
@@ -183,8 +185,8 @@ class Algorithm:
         else:
             self.defs = None
 
-        algovar = opt.maximize_profit_mpc(storage, self.data_buffers, self.predictions, self.tick, 60-self.tick, self.defs)
-        naive_profit, naive_storage = naive.naive_smart_grid_optimizer(self.data_buffers, self.tick, naive_storage, self.defs)
+        algovar = opt2.maximize_profit_mpc(storage, self.data_buffers, self.predictions, self.tick, 60-self.tick, self.defs)
+        naive_profit, naive_storage, unmet_demands = naive.naive_smart_grid_optimizer(self.data_buffers, self.tick, naive_storage, self.defs, unmet_demands)
 
         storage = algovar.storage
         total_profit += algovar.profit
@@ -211,7 +213,10 @@ class Algorithm:
         #     self.energy_api_post(self.cycle_count, demand, energy_produced) #energy used, energy produced
         #     total_profit = 0
 
-        return time.time() - start + time_taken, storage, total_profit, total_naive_profit
+        if self.tick == 59:
+            total_profit, total_naive_profit = 0, 0
+
+        return time.time() - start + time_taken, storage, total_profit, total_naive_profit, unmet_demands, algovar
     
     def driver(self, q : Queue):
         # fill data buffers with historical data at beginning
@@ -231,7 +236,7 @@ class Algorithm:
         remainder = 0
         naive_storage = 0
         storage = 0
-        sum_of_total_profit = 0
+        unmet_demand = 0
         total_profit = 0
         total_naive_profit = 0
 
@@ -251,21 +256,21 @@ class Algorithm:
                 
                 # new cycle should always come before something_else such that data buffers get emptied
                 time_taken = self.new_cycle()
-                tt, storage, total_profit, total_naive_profit = self.something_else(naive_storage, storage, sum_of_total_profit, total_profit, total_naive_profit)
+                tt, storage, total_profit, total_naive_profit, unmet_demand, algovar = self.something_else(naive_storage, storage, unmet_demand, total_profit, total_naive_profit)
                 time_taken += tt
                 remainder = 5-time_taken 
                 print("Cycle ", self.cycle_count)
                 print(Fore.MAGENTA + f"Setting up new cycle took {time_taken} s", (Fore.GREEN if remainder > 1.5 else Fore.LIGHTRED_EX) + f"Time to t+1 [{remainder} s]")
 
             elif((self.tick % self.data_batch_size) == 0 or (self.tick == 59)):
-                time_taken, storage, total_profit, total_naive_profit = self.something_else(naive_storage, storage, sum_of_total_profit, total_profit, total_naive_profit)
+                time_taken, storage, total_profit, total_naive_profit, unmet_demand, algovar = self.something_else(naive_storage, storage, unmet_demand, total_profit, total_naive_profit)
                 time_taken += self.prepare_next()
                 remainder = 5-time_taken
                 print("Cycle ", self.cycle_count)
                 print(Fore.YELLOW + f"Preparation and decision took {time_taken} s", (Fore.GREEN if remainder > 1.5 else Fore.LIGHTRED_EX) + f"Time to t+1 [{remainder} s]")
             
             else:
-                time_taken, storage, total_profit, total_naive_profit = self.something_else(naive_storage, storage, sum_of_total_profit, total_profit, total_naive_profit)
+                time_taken, storage, total_profit, total_naive_profit, unmet_demand, algovar = self.something_else(naive_storage, storage, unmet_demand, total_profit, total_naive_profit)
                 remainder = 5-time_taken
                 print("Cycle ", self.cycle_count)
                 print(Fore.BLUE + f"Something else and adding to data buffers took {time_taken} s", (Fore.GREEN if remainder > 1.5 else Fore.LIGHTRED_EX) + f"Time to t+1 [{remainder} s]")
@@ -282,13 +287,16 @@ class Algorithm:
 
             if(q.empty()):
                 print("Adding results to queue")
-                bidirectional_data['buysell'] = False
-                bidirectional_data['storage'] = storage
+                if algovar.optimal_energy_transactions > 0:
+                    bidirectional_data['buysell'] = True
+                else:
+                    bidirectional_data['buysell'] = False
+                bidirectional_data['storage'] = algovar.optimal_storage_transactions
 
                 q.put(bidirectional_data)
                 #add_data_to_tcp_algo_file(bidirectional_data)
 
-                loads_data['power'] = power
+                loads_data['power'] = algovar.demand/3
         
                 for load_name in loads:
                     loads_data['client'] = load_name
