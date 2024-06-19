@@ -1,7 +1,7 @@
 import React from 'react';
 import { Bar, Line } from 'react-chartjs-2';
 
-const TickAlgo = ({ naiveCosts, optimalCosts, naiveCostPerTick, optimalCostPerTick, storageCostPerTick }) => {
+const TickAlgo = ({ currNaiveCosts, currOptimalCosts, naiveCosts, optimalCosts, storageCosts, naiveCostPerTick, optimalCostPerTick, storageCostPerTick }) => {
   const barChartData = {
     labels: ['Costs'],
     datasets: [
@@ -82,9 +82,6 @@ const TickAlgo = ({ naiveCosts, optimalCosts, naiveCostPerTick, optimalCostPerTi
         ticks: {
           color: 'white', // Y axis ticks color
         },
-        grid: {
-          color: 'rgba(255, 255, 255, 0.1)', // Y axis grid lines color
-        },
       },
     },
     plugins:{
@@ -95,6 +92,8 @@ const TickAlgo = ({ naiveCosts, optimalCosts, naiveCostPerTick, optimalCostPerTi
       },
     },
   };
+
+  const performanceComparison = ((optimalCosts - naiveCosts) / naiveCosts * 100).toFixed(2);
 
   return (
 <div className="w-full flex flex-col items-center mt-10">
@@ -107,15 +106,15 @@ const TickAlgo = ({ naiveCosts, optimalCosts, naiveCostPerTick, optimalCostPerTi
             <Line data={lineChartData} options={lineChartOptions} />
           </div>
         </div>
-        <div className="algo-info shadow-2xl mt-5">
+        <div className="algo-info shadow-2xl mt-5 flex justify-between space-x-5">
           <p className="text-lg text-gray-800">
-            Total Naive Cost: {naiveCosts.toFixed(2)}
+            Total Naive Cost: <span className="font-bold">${naiveCosts.toFixed(2)}</span>
           </p>
           <p className="text-lg text-gray-800">
-            Total Optimal Cost: {optimalCosts.toFixed(2)}
+            Total Optimal Cost: <span className="font-bold">${optimalCosts.toFixed(2)}</span>
           </p>
           <p className="text-lg text-gray-800">
-            Total Optimal Cost Combined with Storage Sales: {/* Add your logic for this value */}
+            Total Optimal Cost Combined with Storage Sales: <span className="font-bold">${storageCosts.toFixed(2)}</span>
           </p>
         </div>
         <p className="italic text-sm items-center mt-5">

@@ -1,16 +1,9 @@
-// DATA TO SHOW IN THE HOME PAGE:
-// module 2:
-// first bubble in row
-// battery/storage indicator (values rounded to 1 d.p.) then next to it we will say if this is an increase of X or decrease by X % from the previous tick
-// make this battery indicator the doughnot chart
-// historical battery value indicator? (maybe barchart)
-// second bubble in row
-// buy and sell indicator (red or green and saying current buy or sell)
-// do a scroll log of actions paired witht ick so like a historical log of the last 59 ticks of buy and sell of energy and the values
 
 // module 3:
 // barchart with 2 bars, one to show the naive costs, another to show the optimal costs so far for the day
 // line graph to show the cost of the naive at each tick (with fill), then second line graph that shows the cost of the optimal at each tick (with fill)
+
+// try to pass info into tickalgo.js as an array? 
 
 import React, { useEffect, useState } from 'react';
 import EnergySavingTip from './EnergySavingTip';
@@ -51,11 +44,13 @@ const Home = () => {
   const [currentStorage, setCurrentStorage] = useState(0);
   const [storageChange, setStorageChange] = useState(0);
   const [historicalStorage, setHistoricalStorage] = useState(Array.from({ length: 60 }, () => 0));
+
   const [naiveCosts, setNaiveCosts] = useState(0);
   const [optimalCosts, setOptimalCosts] = useState(0);
+  const [storageCosts, setStorageCosts] = useState(0);
   const [naiveCostPerTick, setNaiveCostPerTick] = useState(Array.from({ length: 60 }, () => 0));
   const [optimalCostPerTick, setOptimalCostPerTick] = useState(Array.from({ length: 60 }, () => 0));
-  const [storageCostPerTick, setStorageCostPerTick] = useState(Array.from({ length: 60 }, () => 0)); // new state
+  const [storageCostPerTick, setStorageCostPerTick] = useState(Array.from({ length: 60 }, () => 0));
 
   const [totalBought, setTotalBought] = useState(0);
   const [totalSold, setTotalSold] = useState(0);
@@ -137,6 +132,7 @@ const Home = () => {
 
       setNaiveCosts(naiveCostSum);
       setOptimalCosts(optimalCostSum);
+      setStorageCosts(storageCostSum);
       setNaiveCostPerTick(newNaiveCostPerTick);
       setOptimalCostPerTick(newOptimalCostPerTick);
       setStorageCostPerTick(newStorageCostPerTick);
@@ -183,7 +179,13 @@ const Home = () => {
             <TickBuySell currentAction={currentAction} actionLog={actionLog} totalBought={totalBought} totalSold={totalSold} />
         </div>
         <div className="w-full mt-8">
-          <TickAlgo naiveCosts={naiveCosts} optimalCosts={optimalCosts} naiveCostPerTick={naiveCostPerTick} optimalCostPerTick={optimalCostPerTick} storageCostPerTick={storageCostPerTick}/>
+          <TickAlgo 
+          naiveCosts={naiveCosts}
+          optimalCosts={optimalCosts}
+          storageCosts={storageCosts}
+          naiveCostPerTick={naiveCostPerTick}
+          optimalCostPerTick={optimalCostPerTick}
+          storageCostPerTick={storageCostPerTick}/>
         </div>
       </div>
     </div>
