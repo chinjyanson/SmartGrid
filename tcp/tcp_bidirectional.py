@@ -245,22 +245,19 @@ while True:
                 pwm.duty_u16(duty) # now we output the pwm
                 
             else: # Closed Loop Current Control
-                cap_current = 0
                 total_current = 0
                 
                 if required_storage > 0:
                     total_current = required_storage/vb
-                    cap_current = total_current/5
                 else:
                     total_current = required_storage/va
-                    cap_current = total_current/5
                     
                 print("Capacitor Current = {:.3f}".format(cap_current))
                 
                 if duty <= 5000 or duty>= 32300:
                     i_ref = 0
                 else:
-                    i_ref = saturate(cap_current, 1, -1)
+                    i_ref = saturate(total_current, 1, -1)
                 
                 i_err = i_ref-iL # calculate the error in voltage
                 i_err_int = i_err_int + i_err # add it to the integral error
