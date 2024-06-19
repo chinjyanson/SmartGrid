@@ -12,14 +12,14 @@ def main():
     # algorithm runs in main process
     algo = Algorithm()
     server_host = '0.0.0.0'
-    server_port = 5553 
+    server_port = 5559 
 
     # tcp server runs in seperate process
     tcp_process = Process(target=m_tcp.start_server, args=(server_host, server_port, q, ))
     tcp_process.start()
     algo.driver(q)
-
+     
     tcp_process.join()
 
 if __name__ == "__main__":
-    main()
+    main() 

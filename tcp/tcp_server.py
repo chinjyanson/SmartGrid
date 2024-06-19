@@ -1,7 +1,10 @@
 import socket
 import threading
+#from multiprocessing import Process, Queue
 import json
+import time
 from queue import Queue
+from threading import Lock
 
 clients = {}
 
@@ -11,7 +14,8 @@ def handle_client(client_socket, addr, client_name, q):
 
     while True:
         try:
-            while not q.empty():
+            got = False
+            while not got:
                 data = q.get()
 
                 if data['client'] == client_name:
@@ -19,13 +23,14 @@ def handle_client(client_socket, addr, client_name, q):
                     print(f"Sent {data} to {client_name}")
                     str_data = json.dumps(data).encode('utf-8')
                     client_socket.sendall(str_data)
-            
+                    got = True
+                elif data["client"] in clients:
+                    q.put(data)
+
         except Exception as e:
             print(f"Error handling client {client_name}: {e}")
-
             #print(f"Client {client_name} disconnected")
             #client_socket.close()
-
             break
 
 # Function to start the server and listen for clients
@@ -42,6 +47,8 @@ def start_server(host, port, q):
         client_thread = threading.Thread(target=handle_client, args=(client_socket, addr, client_name, q))
         client_thread.daemon = True
         client_thread.start()
+        #client_process = Process(target=handle_client, args=(client_socket, addr, client_name, q, ))
+        #client_process.start()
 
 if __name__ == "__main__":
     q = Queue()
