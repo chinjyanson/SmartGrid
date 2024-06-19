@@ -14,7 +14,7 @@ SUNRISE = 15    #Sunrise ticks after start of day
 DAY_LENGTH = 30 #Ticks between sunrise and sunset
 project_dir = os.getcwd()
 lock = Lock()
-json_path = os.path.join(project_dir, "react-front-end/src/assets", "ExternalInfo.json")
+json_path = os.path.join(project_dir, "react-front-end/src/assets/ExternalInfo.json")
 tcp_path = os.path.join(project_dir, "tcp", "data.json")
 
 """

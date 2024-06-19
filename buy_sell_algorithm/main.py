@@ -28,5 +28,4 @@ def main():
 
     tcp_process.join()
 
-if __name__ == "__main__":
     main()

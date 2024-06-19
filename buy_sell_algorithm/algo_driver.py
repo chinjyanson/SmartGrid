@@ -281,19 +281,27 @@ class Algorithm:
             # send decision to hardware when window starts
             time.sleep(time_to_sleep_in_s)
 
+            power = random.uniform(0, 1.5)
+            storage = random.uniform(0, 1.5)
+
             if(q.empty()):
                 print("Adding results to queue")
+                """
                 if algovar.optimal_energy_transactions > 0:
                     bidirectional_data['buysell'] = True
                 else:
                     bidirectional_data['buysell'] = False
                 bidirectional_data['storage'] = algovar.optimal_storage_transactions
+            `   """
+                
+                bidirectional_data["buysell"] = False
+                bidirectional_data["storage"] = storage
 
                 q.put(bidirectional_data)
                 #add_data_to_tcp_algo_file(bidirectional_data)
 
                 for ld in loads_data:
-                    ld["power"] = algovar.demand/3
+                    ld["power"] = power #algovar.demand/3
                     q.put(ld)
             
             remainder -= time_to_sleep_in_s
