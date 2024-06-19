@@ -20,12 +20,13 @@ def parseDeferables(deferables):
 deferable_list = []
 
 class AlgoVar:
-    def __init__(self, tick, optimal_energy_transactions, optimal_storage_transactions, solar_energy, demand, tick_profit, current_buy_price, current_sell_price, storage):
+    def __init__(self, tick, optimal_energy_transactions, optimal_storage_transactions, solar_energy, demand, tick_profit, current_buy_price, current_sell_price, storage, base_demand):
         self.tick = tick
         self.optimal_energy_transactions = optimal_energy_transactions
         self.optimal_storage_transactions = optimal_storage_transactions
         self.solar_energy = solar_energy
         self.demand = demand
+        self.base_demand = base_demand
         self.buy_price = current_buy_price
         self.sell_price = current_sell_price
         self.profit = tick_profit
@@ -69,10 +70,12 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
 
     # Simulate real-time change
     energy_in = data_buffers['sun'][-1]
-    energy_used = data_buffers['demand'][-1] + POWER_LOSS
+    energy_used = data_buffers['demand'][-1]
     current_buy_price = data_buffers['buy_price'][-1]/100
     current_sell_price = data_buffers['sell_price'][-1]/100
     energy_in = energy_in * 0.05
+    energy_used += POWER_LOSS
+    base_demand = energy_used
 
     #print(f"opt demand {energy_used} kWh")
     #energy_used = min(energy_used, MAX_DEMAND_CAPACITY)
@@ -245,6 +248,9 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
         print(f"   Optimization failed")
         print(problem.status)
 
-    algovar = AlgoVar(t, optimal_energy_transaction, optimal_storage_transaction, energy_in, energy_used, tick_profit, current_buy_price, current_sell_price, storage)
+    algovar = AlgoVar(t, optimal_energy_transaction, optimal_storage_transaction, energy_in, energy_used, tick_profit, current_buy_price, current_sell_price, storage, base_demand)
 
     return algovar
+
+if __name__ == "__main__":
+    print("Running opt solution")

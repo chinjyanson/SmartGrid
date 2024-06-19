@@ -199,22 +199,19 @@ class Algorithm:
 
         print(f" ***************************************************************************************")
 
-        add_data_to_frontend_file({"tick": algovar.tick, "naiveProfit": -naive_profit, "optProfit": -algovar.profit, "storage": algovar.storage,"energyTransaction":algovar.optimal_energy_transactions, "energyUsed": algovar.demand, "energyIn": algovar.solar_energy, "storageProfit": -algovar.profit-algovar.storage*algovar.buy_price})
+        add_data_to_frontend_file({"tick": algovar.tick, "naiveProfit": -naive_profit, "optProfit": -algovar.profit, "storage": algovar.storage,"energyTransaction":algovar.optimal_energy_transactions, "energyUsed": algovar.demand, "noDefEnergyUsed": algovar.base_demand,"energyIn": algovar.solar_energy, "storageProfit": -algovar.profit-algovar.storage*algovar.buy_price})
 
-        # Post data to the cloud
-        # if self.tick == 59:
-        #     if buysell > 0:
-        #         energy_sold = 0
-        #         energy_bought = buysell
-        #     else:
-        #         energy_sold = buysell
-        #         energy_bought = 0
-        #     self.trade_api_post(self.cycle_count, total_profit, energy_sold, energy_bought) #energy sold,energy bought
-        #     self.energy_api_post(self.cycle_count, demand, energy_produced) #energy used, energy produced
-        #     total_profit = 0
-
+        #Post data to the cloud
         if self.tick == 59:
-            total_profit, total_naive_profit = 0, 0
+            if algovar.optimal_energy_transactions > 0:
+                energy_sold = 0
+                energy_bought = algovar.optimal_energy_transactions
+            else:
+                energy_sold = algovar.optimal_energy_transactions
+                energy_bought = 0
+            self.trade_api_post(self.cycle_count, total_profit, energy_sold, energy_bought) #energy sold,energy bought
+            self.energy_api_post(self.cycle_count, algovar.demand, algovar.solar_energy) #energy used, energy produced
+            total_profit, naive_profit = 0, 0
 
         return time.time() - start + time_taken, storage, total_profit, total_naive_profit, unmet_demands, algovar
     
