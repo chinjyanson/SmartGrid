@@ -1,9 +1,5 @@
 
-// module 3:
-// barchart with 2 bars, one to show the naive costs, another to show the optimal costs so far for the day
-// line graph to show the cost of the naive at each tick (with fill), then second line graph that shows the cost of the optimal at each tick (with fill)
-
-// try to pass info into tickalgo.js as an array? 
+// EXPERIMENT WITH MAKING IT LINE INSTEAD OF SCATTER
 
 import React, { useEffect, useState } from 'react';
 import EnergySavingTip from './EnergySavingTip';
@@ -17,27 +13,36 @@ import './landing.css';
 const Home = () => {
   const [energyUsage, setEnergyUsage] = useState(0);
   const [energyProduced, setEnergyProduced] = useState(0);
+
   const [chartData, setChartData] = useState({
     labels: Array.from({ length: 60 }, (_, i) => i),
     datasets: [
       {
         label: 'Energy Usage (kWh)',
         data: Array.from({ length: 60 }, (_, i) => ({ x: i, y: null })),
-        borderColor: 'rgba(75,192,192,1)',
-        backgroundColor: 'rgba(75,192,192,0.2)',
-        pointBackgroundColor: 'rgba(255, 192, 203, 0.8)',
-        pointBorderColor: 'rgba(255, 150, 150, 0.6)',
+        borderColor: 'rgba(255, 51, 153, 1)',
+        backgroundColor: 'rgba(255, 51, 153, 0.2)',
+        pointBackgroundColor: 'rgba(255, 51, 153, 0.8)',
+        pointBorderColor: 'rgba(255, 51, 153, 0.6)',
+      },
+      {
+        label: 'Energy Usage Without Deferrables (kWh)',
+        data: Array.from({ length: 60 }, (_, i) => ({ x: i, y: null })),
+        borderColor: 'rgba(51, 255, 51, 1)',
+        backgroundColor: 'rgba(51, 255, 51, 0.2)',
+        pointBackgroundColor: 'rgba(51, 255, 51, 0.8)',
+        pointBorderColor: 'rgba(51, 255, 51, 0.6)',
       },
       {
         label: 'Energy Produced (kWh)',
         data: Array.from({ length: 60 }, (_, i) => ({ x: i, y: null })),
-        borderColor: 'rgba(255, 99, 132, 1)',
-        backgroundColor: 'rgba(255, 99, 132, 0.2)',
-        pointBackgroundColor: 'rgba(64, 224, 208, 0.8)',
-        pointBorderColor: 'rgba(0, 100, 90, 0.6)',
+        borderColor: 'rgba(51, 153, 255, 1)',
+        backgroundColor: 'rgba(51, 153, 255, 0.2)',
+        pointBackgroundColor: 'rgba(51, 153, 255, 0.8)',
+        pointBorderColor: 'rgba(51, 153, 255, 0.6)',
       }
     ],
-  });
+  }); 
 
   const [currentAction, setCurrentAction] = useState('BUY');
   const [actionLog, setActionLog] = useState([]);
@@ -64,6 +69,7 @@ const Home = () => {
 
       // initial assignments
       let newUsageData = Array.from({ length: 60 }, (_, i) => ({ x: i, y: null }));
+      let newEnergyUsageWithoutDef = Array.from({ length: 60 }, (_, i) => ({ x: i, y: null }));
       let newProducedData = Array.from({ length: 60 }, (_, i) => ({ x: i, y: null }));
       let newHistoricalStorage = Array.from({ length: 60 }, () => 0);
 
@@ -79,11 +85,12 @@ const Home = () => {
       let totalSold = 0;
 
       let latestTick = 0;
-  
+
       Object.keys(data).forEach(key => {
         if (data[key].length > 0) {
           const tickData = data[key][0];
           newUsageData[key] = { x: key, y: tickData.energyUsed };
+          newEnergyUsageWithoutDef[key] = { x: key, y: tickData.noDefEnergyUsed };
           newProducedData[key] = { x: key, y: tickData.energyIn };
           newHistoricalStorage[key] = tickData.storage;
 
@@ -122,6 +129,10 @@ const Home = () => {
           },
           {
             ...prevData.datasets[1],
+            data: newEnergyUsageWithoutDef,
+          },
+          {
+            ...prevData.datasets[2],
             data: newProducedData,
           }
         ],
@@ -183,7 +194,7 @@ const Home = () => {
             <TickBuySell currentAction={currentAction} actionLog={actionLog} totalBought={totalBought} totalSold={totalSold} />
         </div>
         <div className="w-full mt-8">
-          <TickAlgo 
+          <TickAlgo
           currNaiveCosts={currNaiveCosts}
           currOptimalCosts={currOptimalCosts}
           naiveCosts={naiveCosts}
