@@ -8,7 +8,7 @@ class TradeLogTester:
 
     def generate_random_data(self, inputval):
         day = inputval
-        earnings = round(random.uniform(0, 1000), 2)
+        earnings = round(random.uniform(0, -500), 2)
         energysold = round(random.uniform(0, 198), 2)
         energybought = round(random.uniform(0, 198), 2)
         return day, earnings, energysold, energybought
@@ -34,7 +34,7 @@ class TradeLogTester:
             inputval += 1
             day, earnings, energysold, energybought = self.generate_random_data(inputval)
             self.test_api_post(day, earnings, energysold, energybought)
-            time.sleep(5)
+            time.sleep(2)
 
 if __name__ == "__main__":
     tester = TradeLogTester()

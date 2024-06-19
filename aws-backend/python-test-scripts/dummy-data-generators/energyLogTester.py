@@ -8,14 +8,14 @@ class EnergyLogTester:
 
     def generate_random_data(self, inputval):
         day = inputval
-        avgSunIrradiance = round(random.uniform(0, 1), 2)
+        energyUsed = round(random.uniform(0, 1), 2)
         energyProduced = round(random.uniform(0, 198), 2)
-        return day, avgSunIrradiance, energyProduced
+        return day, energyUsed, energyProduced
 
-    def test_api_post(self, day, avgSunIrradiance, energyProduced):
+    def test_api_post(self, day, energyUsed, energyProduced):
         data = {
             "dayID": day,
-            "avgSunIrradiance": avgSunIrradiance,
+            "energyUsed": energyUsed,
             "energyProduced": energyProduced
         }
 
@@ -30,9 +30,9 @@ class EnergyLogTester:
         inputval = int(input("Enter a starting day: "))
         while True:
             inputval += 1
-            day, avgSunIrradiance, energyProduced = self.generate_random_data(inputval)
-            self.test_api_post(day, avgSunIrradiance, energyProduced)
-            time.sleep(5)
+            day, energyUsed, energyProduced = self.generate_random_data(inputval)
+            self.test_api_post(day, energyUsed, energyProduced)
+            time.sleep(2)
 
 if __name__ == "__main__":
     tester = EnergyLogTester()

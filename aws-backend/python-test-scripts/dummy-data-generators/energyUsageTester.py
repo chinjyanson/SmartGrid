@@ -1,3 +1,5 @@
+# This API Endpoint has since been deprecated and is no longer in use. The code is kept for reference purposes.
+
 import requests
 import json
 import time

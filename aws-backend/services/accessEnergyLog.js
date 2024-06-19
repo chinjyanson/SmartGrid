@@ -1,3 +1,5 @@
+// This has now chaned to include the usage log too
+
 const AWS = require('aws-sdk');
 const utils = require('utils');
 
@@ -14,7 +16,7 @@ const energyTable = 'energy-log';
 async function getEnergyLog() {
     const params = {
         TableName: energyTable,
-        ProjectionExpression: 'dayID, avgSunIrradiance, energyProduced',
+        ProjectionExpression: 'dayID, energyUsed, energyProduced',
         // Limit: 90,
     };
     const result = await dynamodb.scan(params).promise();
@@ -27,25 +29,24 @@ async function getEnergyLog() {
 
 async function addEnergyLog(energyLogInfo) {
     const dayID = energyLogInfo.dayID;
-    const avgSunIrradiance = energyLogInfo.avgSunIrradiance;
+    const energyUsed = energyLogInfo.energyUsed;
     const energyProduced = energyLogInfo.energyProduced;
     const addedAt = Math.floor(Date.now() / 1000);
     const expiresAt = addedAt + (500 * 60);
 
-    if (!dayID || !avgSunIrradiance || !energyProduced) {
+    // if (!dayID || !avgSunIrradiance || !energyProduced) {
+    //     return utils.buildResponse(401, 'Invalid energy log');
+    // }
+
+    if (typeof dayID !== 'number' || typeof energyUsed !== 'number' || typeof energyProduced !== 'number') {
         return utils.buildResponse(401, 'Invalid energy log');
     }
-
-    if (typeof dayID !== 'number' || typeof avgSunIrradiance !== 'number' || typeof energyProduced !== 'number') {
-        return utils.buildResponse(401, 'Invalid energy log');
-    }
-
     const params = {
         TableName: energyTable,
         Item: {
             dayID: dayID,
-            avgSunIrradiance: avgSunIrradiance,
-            energyProduced: energyProduced,
+            energyUsed: Math.round(energyUsed * 100) / 100,
+            energyProduced: Math.round(energyProduced * 100) / 100,
             addedAt: addedAt,
             expiresAt: expiresAt
         }

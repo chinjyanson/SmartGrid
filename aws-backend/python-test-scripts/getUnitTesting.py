@@ -10,13 +10,13 @@ class TestAllLog(unittest.TestCase):
         data = response.json()
         self.assertTrue(any('dayID' in d and 'earnings' in d and 'energySold' in d and 'energyBought' in d for d in data))
 
-    def test_get_usage_log(self):
-        response = requests.get('https://evuc3y0h1g.execute-api.eu-north-1.amazonaws.com/PROD/accessUsageLog')
+    # def test_get_usage_log(self):
+    #     response = requests.get('https://evuc3y0h1g.execute-api.eu-north-1.amazonaws.com/PROD/accessUsageLog')
 
-        self.assertEqual(response.status_code, 200)
+    #     self.assertEqual(response.status_code, 200)
 
-        data = response.json()
-        self.assertTrue(any('energyUsed' in d for d in data))
+    #     data = response.json()
+    #     self.assertTrue(any('energyUsed' in d for d in data))
 
     def test_get_energy_log(self):
         response = requests.get('https://evuc3y0h1g.execute-api.eu-north-1.amazonaws.com/PROD/accessEnergyLog')
@@ -24,7 +24,7 @@ class TestAllLog(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
 
         data = response.json()
-        self.assertTrue(any('avgSunIrradiance' in d and 'energyProduced' in d for d in data))
+        self.assertTrue(any('energyUsed' in d and 'energyProduced' in d for d in data))
 
 
 if __name__ == '__main__':

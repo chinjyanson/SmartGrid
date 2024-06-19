@@ -14,37 +14,37 @@ if response.status_code != 200:
 data = response.json()
 data.sort(key=lambda item: item['dayID'])
 x_values = [item['dayID'] for item in data]
-y_values = [item['energyProduced'] for item in data]
-avg_sun_irradiance = [item['avgSunIrradiance'] for item in data]
+energyProduced = [item['energyProduced'] for item in data]
+energyUsed = [item['energyUsed'] for item in data]
 
 # Plot the graph
-plt.plot(x_values, avg_sun_irradiance, label='Average Sun Irradiance')
+plt.plot(x_values, energyUsed, label='Energy Used')
 plt.xlabel('Day')
-plt.ylabel('Sun Irradiance')
-plt.title('Day VS Average Sun Irradiance')
+plt.ylabel('Energy Used')
+plt.title('Day VS Energy Used')
 plt.legend()
 plt.show()
 
 # Create a list of rows for the table
 table_data = []
 for item in data:
-    table_data.append([item['dayID'], item['energyProduced'], item['avgSunIrradiance']])
+    table_data.append([item['dayID'], item['energyProduced'], item['energyUsed']])
 
 # Display the table in the terminal
-print(tabulate(table_data, headers=['Day', 'Energy Produced', 'Average Sun Irradiance']))
+print(tabulate(table_data, headers=['Day', 'Energy Produced', 'Energy Used']))
 
 # Plot the graph
-plt.plot(x_values, y_values, label='Energy Produced')
+plt.plot(x_values, energyProduced, label='Energy Produced')
 plt.xlabel('Day')
 plt.ylabel('Energy Produced')
 plt.title('Day VS Energy Produced')
 plt.legend()
 plt.show()
 
-# Create a list of rows for the table
-table_data = []
-for item in data:
-    table_data.append([item['dayID'], item['energyProduced']])
+# # Create a list of rows for the table
+# table_data = []
+# for item in data:
+#     table_data.append([item['dayID'], item['energyProduced']])
 
-# Display the table in the terminal
-print(tabulate(table_data, headers=['Day', 'Energy Produced']))
+# # Display the table in the terminal
+# print(tabulate(table_data, headers=['Day', 'Energy Produced']))

@@ -36,21 +36,21 @@ async function addTradeLog(tradeLogInfo){
     const expiresAt = addedAt + (500 * 60);
     // 500 minutes for expire time
 
-    if (!dayID || !energyBought || !energySold || !earnings) {
-        return utils.buildResponse(401, 'Invalid trade log');
-    }
-
     if (typeof dayID !== 'number' || typeof energyBought !== 'number' || typeof energySold !== 'number' || typeof earnings !== 'number') {
         return utils.buildResponse(401, 'Invalid trade log');
     }
+
+    // if (dayID < 0 || !earnings) {
+    //     return utils.buildResponse(401, 'Invalid trade log');
+    // }
 
     const params = {
         TableName: tradeTable,
         Item: {
             dayID: dayID,
-            energyBought: energyBought,
-            energySold: energySold,
-            earnings: earnings,
+            energyBought: Math.round(energyBought * 100) / 100,
+            energySold: Math.round(energySold * 100) / 100,
+            earnings: Math.round(earnings * 100) / 100,
             addedAt: addedAt,
             expiresAt: expiresAt
         }
