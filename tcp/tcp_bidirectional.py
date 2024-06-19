@@ -182,8 +182,8 @@ class ina219:
         ina_i2c.writeto_mem(conf.address, conf.REG_CONFIG, b'\x19\x9F') # PG = /8
         ina_i2c.writeto_mem(conf.address, conf.REG_CALIBRATION, b'\x00\x00')
         
-server_host = '172.20.10.3'  # Replace with your server's IP address
-server_port = 5555
+server_host = '192.168.90.163'  # Replace with your server's IP address
+server_port = 5551
 client_name = 'bidirectional'  # Replace with your client name
 data = None
 client_socket = start_client(server_host, server_port, client_name, SSID, PASSWORD)
@@ -193,7 +193,7 @@ client_socket = start_client(server_host, server_port, client_name, SSID, PASSWO
 while True:
     required_storage = receive_from_server(client_socket, client_name)
     if required_storage != None:
-        print(required_storage)
+        print("Required Storage = {:.3f}".format(required_storage))
         if first_run:
             # for first run, set up the INA link and the loop timer settings
             ina = ina219(SHUNT_OHMS, 64, 5)
@@ -245,20 +245,33 @@ while True:
                 pwm.duty_u16(duty) # now we output the pwm
                 
             else: # Closed Loop Current Control
+                cap_current = 0
                 total_current = 0
                 
                 if required_storage > 0:
-                    total_current = required_storage/vb
+                    total_current = -required_storage/vb
+                    cap_current = total_current/5
+                    print("Total Current = {:.3f}".format(total_current))
+                    print("Capacitor Current = {:.3f}".format(cap_current))
+                    print("iL = {:.3f}".format(iL))
+                    print("Vb = {:.3f}".format(vb))
+                    print("duty = {:d}".format(duty))
+                    print("i_ref = {:.3f}".format(i_ref))
                 else:
-                    total_current = required_storage/va
+                    total_current = -required_storage/va
+                    cap_current = total_current/5
+                    print("Total Current = {:.3f}".format(total_current))
+                    print("Capacitor Current = {:.3f}".format(cap_current))
+                    print("iL = {:.3f}".format(iL))
+                    print("Va = {:.3f}".format(va))
+                    print("duty = {:d}".format(duty))
+                    print("i_ref = {:.3f}".format(i_ref))
                     
-                print("Capacitor Current = {:.3f}".format(cap_current))
-                
                 if duty <= 5000 or duty>= 32300:
                     i_ref = 0
                 else:
-                    i_ref = saturate(total_current, 1, -1)
-                
+                    i_ref = saturate(cap_current, 0.2, -0.2)
+                    
                 i_err = i_ref-iL # calculate the error in voltage
                 i_err_int = i_err_int + i_err # add it to the integral error
                 i_err_int = saturate(i_err_int, 10000, -10000) # saturate the integral error
@@ -295,4 +308,3 @@ while True:
                 #print("v_pi_out = {:.3f}".format(v_pi_out))
                 #print(v_pot_filt)
                 count = 0
-
