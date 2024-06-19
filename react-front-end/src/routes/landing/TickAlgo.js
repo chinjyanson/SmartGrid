@@ -9,14 +9,14 @@ const TickAlgo = ({ currNaiveCosts, currOptimalCosts, naiveCosts, optimalCosts, 
     labels: ['Methods'],
     datasets: [
       {
-        label: 'Current Naive Cost',
+        label: 'Naive',
         data: [currNaiveCosts],
         backgroundColor: 'rgba(255, 99, 132, 0.6)',
         borderColor: 'rgba(255, 99, 132, 1)',
         borderWidth: 1,
       },
       {
-        label: 'Current Optimal Cost',
+        label: 'Optimal',
         data: [currOptimalCosts],
         backgroundColor: 'rgba(75, 192, 192, 0.6)',
         borderColor: 'rgba(75, 192, 192, 1)',
@@ -32,7 +32,7 @@ const TickAlgo = ({ currNaiveCosts, currOptimalCosts, naiveCosts, optimalCosts, 
         beginAtZero: true,
         title: {
           display: true,
-          text: 'Tick Cost ($)',
+          text: 'Current Tick Cost ($)',
           color: 'white',
           font: {
             weight: 'bold',
@@ -142,11 +142,20 @@ const TickAlgo = ({ currNaiveCosts, currOptimalCosts, naiveCosts, optimalCosts, 
 
   let iconComponent = null;
   if (performanceComparison > 0) {
-    iconComponent = <FontAwesomeIcon icon={faCaretUp} className="increase-icon" />;
+    iconComponent = <FontAwesomeIcon icon={faCaretUp} className="increase-icon fa-xl" />;
   } else if (performanceComparison < 0) {
-    iconComponent = <FontAwesomeIcon icon={faCaretDown} className="decrease-icon" />;
+    iconComponent = <FontAwesomeIcon icon={faCaretDown} className="decrease-icon fa-xl" />;
   } else {
-    iconComponent = <FontAwesomeIcon icon={faEquals} className="equal-icon" />;
+    iconComponent = <FontAwesomeIcon icon={faEquals} className="equal-icon fa-xl" />;
+  }
+  
+  let textColorClass = '';
+  if (performanceComparison > 0) {
+    textColorClass = 'text-green-500';
+  } else if (performanceComparison < 0) {
+    textColorClass = 'text-red-500';
+  } else {
+    textColorClass = 'text-gray-300';
   }
   
   return (
@@ -154,19 +163,21 @@ const TickAlgo = ({ currNaiveCosts, currOptimalCosts, naiveCosts, optimalCosts, 
       <div className="bg-gray-500 bg-opacity-50 p-7 rounded-lg shadow-lg w-11/12 flex flex-col items-center">
         <div className="w-full flex items-center">
           <div className="w-full h-full flex-1">
-            <h2 className="text-2xl text-white text-center">Cost Comparison</h2>
+            <h2 className="text-2xl font-semibold text-white text-center mb-4 ml-4">Cost Comparison</h2>
             <div className="w-full flex items-center justify-center">
               <Bar data={barChartData} options={barChartOptions} style={{height: '400px', width: '300px'}}/>
             </div>
-            <div className="w-full flex flex-col items-center mt-5">
+            <div className="w-full flex flex-col items-center mt-3">
               <div className="total-action-bubble bg-gray-800 p-6 rounded-xl shadow-2xl text-center text-white ml-3">
-                <p className="mb-1">Performance Difference:</p>
-                <span className="text-lg font-bold mb-2">{performanceComparison.toFixed(2)}</span>
+                <p className="mb-1">Current Cost Difference:</p>
+                <span className={`text-xl font-bold mb-2 ${textColorClass}`}>
+                  {performanceComparison > 0 ? `+${performanceComparison.toFixed(2)}` : performanceComparison.toFixed(2)}
+                </span>
                 <span className="ml-2">{iconComponent}</span>
               </div>
             </div>
           </div>
-          <div className="w-full flex-3">
+          <div className="w-full flex-3 ml-4">
             <Line data={lineChartData} options={lineChartOptions} />
           </div>
         </div>
@@ -178,7 +189,7 @@ const TickAlgo = ({ currNaiveCosts, currOptimalCosts, naiveCosts, optimalCosts, 
             Total Optimal Cost: <span className="font-bold">${optimalCosts.toFixed(2)}</span>
           </p>
           <p className="text-lg text-gray-800">
-            Total Optimal Cost Combined with Storage Sales: <span className="font-bold">${storageCosts.toFixed(2)}</span>
+            Total Optimal Cost combined with Storage Sales: <span className="font-bold">${storageCosts.toFixed(2)}</span>
           </p>
         </div>
         <p className="italic text-sm items-center mt-5">
