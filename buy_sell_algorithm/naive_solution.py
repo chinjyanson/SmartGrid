@@ -11,7 +11,7 @@ deferable_list = []
 def naive_smart_grid_optimizer(data_buffers, t, curr_storage, deferables, unmet_demand):
     current_storage = curr_storage
     STORAGE_CAPACITY = 50  # Maximum storage capacity in Joules
-    POWER_LOSS = 0
+    POWER_LOSS = 2
     LINEAR_SOLAR_DEPENDANCE = 5/100
     global deferable_list
     total_profit = 0

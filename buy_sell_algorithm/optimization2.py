@@ -42,7 +42,7 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
 
     MAX_STORAGE_CAPACITY = 50
     MAX_DEMAND_CAPACITY = 20
-    POWER_LOSS = 0
+    POWER_LOSS = 2
     predicted_buy_prices = [ele/100 for ele in predictions_buffer['buy_price']]
     predicted_sell_prices = [ele/100 for ele in predictions_buffer['sell_price']]
     predicted_dem = predictions_buffer['demand']
@@ -69,7 +69,7 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
 
     # Simulate real-time change
     energy_in = data_buffers['sun'][-1]
-    energy_used = data_buffers['demand'][-1]
+    energy_used = data_buffers['demand'][-1] + POWER_LOSS
     current_buy_price = data_buffers['buy_price'][-1]/100
     current_sell_price = data_buffers['sell_price'][-1]/100
     energy_in = energy_in * 0.05
@@ -130,7 +130,7 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
     for i in range(1, horizon):  # Starting from 1 since solar_energy[0] is fixed to energy_in
         constraints += [
             solar_energy[i] == predicted_sun[t + i] * 0.05,
-            demand[i] == predicted_demand[i] + POWER_LOSS,  # Predicted demand
+            demand[i] == predicted_demand[i] ,  # Predicted demand
         ]
 
     for idx, deferable in enumerate(deferable_list):
