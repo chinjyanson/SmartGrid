@@ -20,7 +20,7 @@ def parseDeferables(deferables):
 deferable_list = []
 
 class AlgoVar:
-    def __init__(self, tick, optimal_energy_transactions, optimal_storage_transaction, solar_energy, demand, tick_profit, current_buy_price, current_sell_price, storage):
+    def __init__(self, tick, optimal_energy_transactions, optimal_storage_transactions, solar_energy, demand, tick_profit, current_buy_price, current_sell_price, storage):
         self.tick = tick
         self.optimal_energy_transactions = optimal_energy_transactions
         self.optimal_storage_transactions = optimal_storage_transactions
@@ -168,6 +168,7 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
         energy_used += naive_deferable_demand
         excess_energy = 0
         energy_bought = 0
+        optimal_storage_transaction = 0
 
         # Use naive solution if solution is infeasible
         if energy_in >= energy_used:
@@ -180,6 +181,7 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
         if energy_used > 0:
             if storage >= energy_used:
                 storage -= energy_used
+                optimal_storage_transaction += energy_used
                 energy_used = 0
             else:
                 energy_used -= storage
@@ -192,6 +194,7 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
 
         if energy_in > 0:
             if storage + energy_in <= MAX_STORAGE_CAPACITY:
+                optimal_storage_transaction -= energy_in
                 storage += energy_in
             else:
                 excess_energy = storage + energy_in - MAX_STORAGE_CAPACITY

@@ -27,14 +27,17 @@ def naive_smart_grid_optimizer(data_buffers, t, curr_storage, deferables, unmet_
     # Total energy needed
     total_demand = actual_demand + unmet_demand
     for idx in range(len(deferable_list)):
-        if deferable_list[idx].start <= t < deferable_list[idx].end:
-            total_demand += deferable_list[idx].energyTotal / (deferable_list[idx].end - deferable_list[idx].start) # Spread energy requirement over time window
+        start = max(deferable_list[idx].start - t, 0)
+        end = deferable_list[idx].end - t
+        if start <= t < end:
+            total_demand += deferable_list[idx].energyTotal / (end - start) # Spread energy requirement over time window
 
     excess_energy = 0
-    print(f"naive demand: {total_demand}")
     if total_demand > 20:
         unmet_demand = total_demand - 20
         total_demand = 20
+
+    print(f"naive demand: {total_demand}")
     # Use solar energy first to meet demand
     if solar_energy >= total_demand:
         solar_energy -= total_demand
