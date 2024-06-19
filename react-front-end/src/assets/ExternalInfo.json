@@ -1,233 +1,376 @@
 {
-    "0": [],
-    "1": [],
+    "0": [
+        {
+            "tick": 0,
+            "naiveProfit": 4.662768359318567,
+            "optProfit": -0.661783219533904,
+            "storage": 0.0,
+            "energyTransaction": -2.647132878135616,
+            "energyUsed": 6.541546987318015,
+            "energyIn": 0.0,
+            "storageProfit": -0.661783219533904
+        }
+    ],
+    "1": [
+        {
+            "tick": 1,
+            "naiveProfit": 0.26011360701693714,
+            "optProfit": 5.0,
+            "storage": 50.0,
+            "energyTransaction": 50.0,
+            "energyUsed": 0.0,
+            "energyIn": 0.0,
+            "storageProfit": 2.5
+        }
+    ],
     "2": [
         {
             "tick": 2,
-            "naiveProfit": -35.304162914871014,
-            "optProfit": -3.08686203503136,
-            "energyTransaction": -0.6064757452896643,
-            "energyUsage": 2.2227725223070007,
-            "energyIn": 2.3704182194053853
+            "naiveProfit": 2.905605090690641,
+            "optProfit": -6.166761166242391,
+            "storage": 16.317499348323125,
+            "energyTransaction": -29.365529363059004,
+            "energyUsed": 4.31697128861787,
+            "energyIn": 0.0,
+            "storageProfit": -9.593436029390247
         }
     ],
     "3": [
         {
             "tick": 3,
-            "naiveProfit": -29.01479228471654,
-            "optProfit": -3.950428528255073,
-            "energyTransaction": -0.8904054484575099,
-            "energyUsage": 3.9490804586768258,
-            "energyIn": 2.2447972327643395
+            "naiveProfit": 2.899041127687199,
+            "optProfit": -0.03295897573423763,
+            "storage": 11.859209039550414,
+            "energyTransaction": -0.15694750349636968,
+            "energyUsed": 4.301342805276341,
+            "energyIn": 0.0,
+            "storageProfit": -2.523392874039825
         }
     ],
     "4": [
         {
             "tick": 4,
-            "naiveProfit": -32.800944686742895,
-            "optProfit": -1.2564153807150795,
-            "energyTransaction": 0.7548217438953011,
-            "energyUsage": 0.48512523185341117,
-            "energyIn": 4.5220926752760455
+            "naiveProfit": 6.311773458839785,
+            "optProfit": -1.037613352398845,
+            "storage": 0.0,
+            "energyTransaction": -3.577977077237396,
+            "energyUsed": 8.281231962313019,
+            "energyIn": 0.0,
+            "storageProfit": -1.037613352398845
         }
     ],
     "5": [
         {
             "tick": 5,
-            "naiveProfit": -37.500439179894315,
-            "optProfit": 0.12595457876503602,
-            "energyTransaction": 0.1202944391286298,
-            "energyUsage": 2.874667683213727,
-            "energyIn": 0.20053902955845582
+            "naiveProfit": 5.322257314361144,
+            "optProfit": 3.9176438364696833,
+            "storage": 0.0,
+            "energyTransaction": 7.254895993462376,
+            "energyUsed": 7.254895993462376,
+            "energyIn": 0.0,
+            "storageProfit": 3.9176438364696833
         }
     ],
     "6": [
         {
             "tick": 6,
-            "naiveProfit": -18.811586668222574,
-            "optProfit": -6.437903552437743,
-            "energyTransaction": 0.015879439488703033,
-            "energyUsage": 3.7228290544213693,
-            "energyIn": 4.937700220276844
+            "naiveProfit": 0.26011360701693714,
+            "optProfit": 5.0,
+            "storage": 50.0,
+            "energyTransaction": 50.0,
+            "energyUsed": 0.0,
+            "energyIn": 0.0,
+            "storageProfit": 2.5
         }
     ],
     "7": [
         {
             "tick": 7,
-            "naiveProfit": -12.81673266763965,
-            "optProfit": -8.582820855041762,
-            "energyTransaction": 0.20657609799526334,
-            "energyUsage": 2.364822460186568,
-            "energyIn": 4.044334177101933
+            "naiveProfit": 1.5685496215571848,
+            "optProfit": 0,
+            "storage": 47.84795539878397,
+            "energyTransaction": 0.0,
+            "energyUsed": 2.152044601216037,
+            "energyIn": 0.0,
+            "storageProfit": -7.655672863805435
         }
     ],
     "8": [
         {
             "tick": 8,
-            "naiveProfit": -3.6136311912545163,
-            "optProfit": -7.928305073499342,
-            "energyTransaction": -0.7292381713436076,
-            "energyUsage": 2.7601241424447474,
-            "energyIn": 3.661022460265338
+            "naiveProfit": 3.0814926199417028,
+            "optProfit": -8.211446757008748,
+            "storage": 4.1807021477848,
+            "energyTransaction": -39.10212741432737,
+            "energyUsed": 4.565125836671799,
+            "energyIn": 0.0,
+            "storageProfit": -9.089394208043556
         }
     ],
     "9": [
         {
             "tick": 9,
-            "naiveProfit": -41.269745429645774,
-            "optProfit": -1.4379351530147833,
-            "energyTransaction": -0.3733219455040796,
-            "energyUsage": 3.734820394383027,
-            "energyIn": 1.6312430768930034
+            "naiveProfit": 0.5982612961389555,
+            "optProfit": 0,
+            "storage": 4.1807021477848,
+            "energyTransaction": 0.0,
+            "energyUsed": 0.0,
+            "energyIn": 0.0,
+            "storageProfit": -0.459877236256328
         }
     ],
     "10": [
         {
             "tick": 10,
-            "naiveProfit": -7.762826317925008,
-            "optProfit": -4.414267497026131,
-            "energyTransaction": 0.9713560907621257,
-            "energyUsage": 0.8341900503560341,
-            "energyIn": 0.3696189607040434
+            "naiveProfit": 0.8429550879959828,
+            "optProfit": 0,
+            "storage": 3.6597823364875683,
+            "energyTransaction": 0.0,
+            "energyUsed": 0.5209198112972311,
+            "energyIn": 0.0,
+            "storageProfit": -0.4757717037433839
         }
     ],
     "11": [
         {
             "tick": 11,
-            "naiveProfit": -16.11613445800988,
-            "optProfit": -0.15019329143077523,
-            "energyTransaction": 0.21284650272358712,
-            "energyUsage": 2.601143318233405,
-            "energyIn": 1.9987267264762727
+            "naiveProfit": 0.9543564023685474,
+            "optProfit": 14.365467475688854,
+            "storage": 49.52256703027083,
+            "energyTransaction": 46.34021766351243,
+            "energyUsed": 0.4774329697291685,
+            "energyIn": 0.0,
+            "storageProfit": 6.93708242114823
         }
     ],
     "12": [
         {
             "tick": 12,
-            "naiveProfit": -44.61664172811295,
-            "optProfit": -4.095731132275073,
-            "energyTransaction": 0.09536871256617106,
-            "energyUsage": 1.1074201506019773,
-            "energyIn": 3.2101547402219473
+            "naiveProfit": 13.806419521033067,
+            "optProfit": -15.58932981129938,
+            "storage": 0.0,
+            "energyTransaction": -36.25425537511484,
+            "energyUsed": 13.268311655155994,
+            "energyIn": 0.0,
+            "storageProfit": -15.58932981129938
         }
     ],
     "13": [
         {
             "tick": 13,
-            "naiveProfit": -26.96766764259291,
-            "optProfit": -3.3588707005569526,
-            "energyTransaction": -0.7601368401797151,
-            "energyUsage": 2.9420859168971887,
-            "energyIn": 2.2542396228787196
+            "naiveProfit": 10.56920382775149,
+            "optProfit": 8.488294971615995,
+            "storage": 0.0,
+            "energyTransaction": 10.610368714519993,
+            "energyUsed": 10.610368714519991,
+            "energyIn": 0.0,
+            "storageProfit": 8.488294971615995
         }
     ],
     "14": [
         {
             "tick": 14,
-            "naiveProfit": -48.50553692922415,
-            "optProfit": -5.568027236644135,
-            "energyTransaction": -0.4579829005854747,
-            "energyUsage": 3.1721759743988066,
-            "energyIn": 4.808707289956899
+            "naiveProfit": 1.924481380806866,
+            "optProfit": 2.8978951791052228,
+            "storage": 4.629081483290949,
+            "energyTransaction": 6.037281623135881,
+            "energyUsed": 1.4082001398449318,
+            "energyIn": 0.0,
+            "storageProfit": 1.786915623115395
         }
     ],
     "15": [
         {
             "tick": 15,
-            "naiveProfit": -14.297716740611978,
-            "optProfit": -2.174269589330705,
-            "energyTransaction": -0.04683932192266387,
-            "energyUsage": 0.9877191495644971,
-            "energyIn": 3.1065977111323564
+            "naiveProfit": 2.4070773605696862,
+            "optProfit": 0,
+            "storage": 2.772666885738679,
+            "energyTransaction": 0.0,
+            "energyUsed": 1.85641459755227,
+            "energyIn": 0.0,
+            "storageProfit": -0.7486200591494434
         }
     ],
     "16": [
         {
             "tick": 16,
-            "naiveProfit": -26.707121209982176,
-            "optProfit": -3.781348053269051,
-            "energyTransaction": 0.48601773168660606,
-            "energyUsage": 1.2027646423265944,
-            "energyIn": 4.219063169076324
+            "naiveProfit": 9.098087510477137,
+            "optProfit": 6.357874519129351,
+            "storage": 2.772666885738679,
+            "energyTransaction": 8.256979894973183,
+            "energyUsed": 8.756979894973183,
+            "energyIn": 0.5,
+            "storageProfit": 5.304261102548653
         }
     ],
     "17": [
         {
             "tick": 17,
-            "naiveProfit": -48.948667311542186,
-            "optProfit": -6.348573072261385,
-            "energyTransaction": -0.6020894896951942,
-            "energyUsage": 2.3693386929051384,
-            "energyIn": 2.1886649151854823
+            "naiveProfit": 4.005967061809614,
+            "optProfit": 2.048672067989766,
+            "storage": 2.772666885738679,
+            "energyTransaction": 3.724858305435938,
+            "energyUsed": 4.724858305435938,
+            "energyIn": 1.0,
+            "storageProfit": 1.3000520088403227
         }
     ],
     "18": [
         {
             "tick": 18,
-            "naiveProfit": -24.212251845015247,
-            "optProfit": -8.123528947065403,
-            "energyTransaction": 0.3701693193319207,
-            "energyUsage": 2.047271791370017,
-            "energyIn": 2.4997085702338436
+            "naiveProfit": 5.922647415146605,
+            "optProfit": 3.751829331091865,
+            "storage": 2.772666885738679,
+            "energyTransaction": 6.150539887035844,
+            "energyUsed": 7.650539887035844,
+            "energyIn": 1.5,
+            "storageProfit": 2.9200292653702613
         }
     ],
     "19": [
         {
             "tick": 19,
-            "naiveProfit": -34.19732586167076,
-            "optProfit": -8.054153415812182,
-            "energyTransaction": -0.4314763916839281,
-            "energyUsage": 0.9829169180417556,
-            "energyIn": 0.47916822116965067
+            "naiveProfit": 2.1358268166738243,
+            "optProfit": 0,
+            "storage": 0.991818014635659,
+            "energyTransaction": 0.0,
+            "energyUsed": 3.7808488711030197,
+            "energyIn": 2.0,
+            "storageProfit": -0.19836360292713182
         }
     ],
     "20": [
         {
             "tick": 20,
-            "naiveProfit": -31.831548503733276,
-            "optProfit": -6.2158309303381855,
-            "energyTransaction": -0.4046302671092271,
-            "energyUsage": 1.1870772444796703,
-            "energyIn": 4.847036479041837
+            "naiveProfit": 8.855922527278784,
+            "optProfit": 6.435994171283338,
+            "storage": 0.991818014635659,
+            "energyTransaction": 9.46469731071079,
+            "energyUsed": 11.914697310710789,
+            "energyIn": 2.45,
+            "storageProfit": 6.098776046307214
         }
     ],
     "21": [
         {
             "tick": 21,
-            "naiveProfit": -28.738312946343175,
-            "optProfit": -1.4688020534850946,
-            "energyTransaction": -0.28080920940120024,
-            "energyUsage": 3.874402633858321,
-            "energyIn": 1.0630558722641133
+            "naiveProfit": 2.943712596894783,
+            "optProfit": 1.5558125103679823,
+            "storage": 0.991818014635659,
+            "energyTransaction": 3.98926284709739,
+            "energyUsed": 6.88926284709739,
+            "energyIn": 2.9000000000000004,
+            "storageProfit": 1.367367087587207
         }
     ],
     "22": [
         {
             "tick": 22,
-            "naiveProfit": -28.738312946343175,
-            "optProfit": -1.4688020534850946,
-            "energyTransaction": -0.28080920940120024,
-            "energyUsage": 3.994402633858321,
-            "energyIn": 1.18630558722641133
+            "naiveProfit": 7.724845099811998,
+            "optProfit": 5.696375742580519,
+            "storage": 0.991818014635659,
+            "energyTransaction": 9.993641653650034,
+            "energyUsed": 13.293641653650035,
+            "energyIn": 3.3000000000000003,
+            "storageProfit": 5.418666698482534
         }
     ],
     "23": [
         {
             "tick": 23,
-            "naiveProfit": -28.738312946343175,
-            "optProfit": -1.4688020534850946,
-            "energyTransaction": -2,
-            "energyUsage": 4.24402633858321,
-            "energyIn": 1.18630558722641133
+            "naiveProfit": 1.0927597857663325,
+            "optProfit": 9.311554577219225,
+            "storage": 47.807350877074526,
+            "energyTransaction": 49.00818198536434,
+            "energyUsed": 5.892649122925473,
+            "energyIn": 3.7,
+            "storageProfit": 5.008892998282517
         }
     ],
-    "24": [],
-    "25": [],
-    "26": [],
-    "27": [],
-    "28": [],
-    "29": [],
-    "30": [],
+    "24": [
+        {
+            "tick": 24,
+            "naiveProfit": 0.716782676072677,
+            "optProfit": 0.2850443859803115,
+            "storage": 48.04500527771479,
+            "energyTransaction": 2.192649122925473,
+            "energyUsed": 5.954994722285204,
+            "energyIn": 4.0,
+            "storageProfit": -2.597655930682576
+        }
+    ],
+    "25": [
+        {
+            "tick": 25,
+            "naiveProfit": 8.321,
+            "optProfit": -9.108112159063351,
+            "storage": 0.0,
+            "energyTransaction": -35.03120061178212,
+            "energyUsed": 17.313804665932683,
+            "energyIn": 4.3,
+            "storageProfit": -9.108112159063351
+        }
+    ],
+    "26": [
+        {
+            "tick": 26,
+            "naiveProfit": 0.9917121301822593,
+            "optProfit": 0.616853371215954,
+            "storage": 0.0,
+            "energyTransaction": 4.406095508685385,
+            "energyUsed": 8.956095508685385,
+            "energyIn": 4.55,
+            "storageProfit": 0.616853371215954
+        }
+    ],
+    "27": [
+        {
+            "tick": 27,
+            "naiveProfit": 1.3404447343529615,
+            "optProfit": 0.9120347241057553,
+            "storage": 0.0,
+            "energyTransaction": 5.7002170256609705,
+            "energyUsed": 10.45021702566097,
+            "energyIn": 4.75,
+            "storageProfit": 0.9120347241057553
+        }
+    ],
+    "28": [
+        {
+            "tick": 28,
+            "naiveProfit": 0.3914448762909113,
+            "optProfit": 5.0,
+            "storage": 34.85,
+            "energyTransaction": 50.0,
+            "energyUsed": 6.086886198864074,
+            "energyIn": 4.8500000000000005,
+            "storageProfit": 3.2575
+        }
+    ],
+    "29": [
+        {
+            "tick": 29,
+            "naiveProfit": 0,
+            "optProfit": 0,
+            "storage": 19.8,
+            "energyTransaction": 0.0,
+            "energyUsed": 0.0,
+            "energyIn": 4.95,
+            "storageProfit": -0.9900000000000001
+        }
+    ],
+    "30": [
+        {
+            "tick": 30,
+            "naiveProfit": 6.9,
+            "optProfit": -1.291575523719185,
+            "storage": 0.0,
+            "energyTransaction": -5.615545755300804,
+            "energyUsed": 19.184454244699197,
+            "energyIn": 5.0,
+            "storageProfit": -1.291575523719185
+        }
+    ],
     "31": [],
     "32": [],
     "33": [],
@@ -256,6 +399,5 @@
     "56": [],
     "57": [],
     "58": [],
-    "59": [],
-    "batteryStorage": 2.99208473556915877
-  }
+    "59": []
+}

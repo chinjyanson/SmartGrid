@@ -12,7 +12,7 @@ const TickEnergy = ({ energyUsage, energyProduced, chartData }) => {
             <Speedometer
               value={energyUsage}
               minValue={0}
-              maxValue={10}
+              maxValue={20}
               needleColor="white"
               startColor="pink"
               segments={10}
@@ -28,7 +28,7 @@ const TickEnergy = ({ energyUsage, energyProduced, chartData }) => {
             <Speedometer
               value={energyProduced}
               minValue={0}
-              maxValue={10}
+              maxValue={5}
               needleColor="white"
               startColor="#3498db"
               segments={10}
@@ -79,7 +79,7 @@ const TickEnergy = ({ energyUsage, energyProduced, chartData }) => {
                   type: 'linear',
                   position: 'left',
                   min: 0,
-                  max: 14,
+                  max: 50,
                   ticks: {
                     color: 'white',
                   },

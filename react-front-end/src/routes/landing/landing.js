@@ -42,11 +42,11 @@ const Home = () => {
         backgroundColor: 'rgba(255, 99, 132, 0.2)',
         pointBackgroundColor: 'rgba(64, 224, 208, 0.8)',
         pointBorderColor: 'rgba(0, 100, 90, 0.6)',
-      },
+      }
     ],
   });
 
-  const [currentAction, setCurrentAction] = useState('buy');
+  const [currentAction, setCurrentAction] = useState('BUY');
   const [actionLog, setActionLog] = useState([]);
   const [currentStorage, setCurrentStorage] = useState(0);
   const [storageChange, setStorageChange] = useState(0);
@@ -55,42 +55,67 @@ const Home = () => {
   const [optimalCosts, setOptimalCosts] = useState(0);
   const [naiveCostPerTick, setNaiveCostPerTick] = useState(Array.from({ length: 60 }, () => 0));
   const [optimalCostPerTick, setOptimalCostPerTick] = useState(Array.from({ length: 60 }, () => 0));
+  const [storageCostPerTick, setStorageCostPerTick] = useState(Array.from({ length: 60 }, () => 0)); // new state
+
+  const [totalBought, setTotalBought] = useState(0);
+  const [totalSold, setTotalSold] = useState(0);
 
   useEffect(() => {
     document.title = 'Home | Energy Dashboard';
     const fetchData = async () => {
       const data = ExternalInfo;
 
+      // initial assignments
       let newUsageData = Array.from({ length: 60 }, (_, i) => ({ x: i, y: null }));
       let newProducedData = Array.from({ length: 60 }, (_, i) => ({ x: i, y: null }));
       let newHistoricalStorage = Array.from({ length: 60 }, () => 0);
-      let lastStorageValue = data.batteryStorage;
+
       let naiveCostSum = 0;
       let optimalCostSum = 0;
+      let storageCostSum = 0;
       let newNaiveCostPerTick = Array.from({ length: 60 }, () => 0);
       let newOptimalCostPerTick = Array.from({ length: 60 }, () => 0);
-      let newActionLog = [];
+      let newStorageCostPerTick = Array.from({ length: 60 }, () => 0);
 
+      let newActionLog = [];
+      let totalBought = 0;
+      let totalSold = 0;
+
+      let latestTick = 0;
+  
       Object.keys(data).forEach(key => {
-        if (key !== "batteryStorage" && data[key].length > 0) {
+        if (data[key].length > 0) {
           const tickData = data[key][0];
-          newUsageData[key] = { x: key, y: tickData.energyUsage };
+          newUsageData[key] = { x: key, y: tickData.energyUsed };
           newProducedData[key] = { x: key, y: tickData.energyIn };
+          newHistoricalStorage[key] = tickData.storage;
 
           naiveCostSum += tickData.naiveProfit;
           optimalCostSum += tickData.optProfit;
+          storageCostSum += tickData.storageProfit;
           newNaiveCostPerTick[key] = naiveCostSum;
           newOptimalCostPerTick[key] = optimalCostSum;
+          newStorageCostPerTick[key] = storageCostSum;
 
-          newHistoricalStorage[key] = lastStorageValue;
-          lastStorageValue -= tickData.energyTransaction;
+          let action = tickData.energyTransaction > 0 ? 'BUY' : tickData.energyTransaction < 0 ? 'SELL' : 'N/A';
+          newActionLog.push({
+            tick: key,
+            action: action,
+            value: Math.abs(tickData.energyTransaction)
+          });
 
-          newActionLog.push({ tick: key, action: tickData.energyTransaction >= 0 ? 'buy' : 'sell', value: Math.abs(tickData.energyTransaction) });
+          if (action === 'BUY') {
+            totalBought += Math.abs(tickData.energyTransaction);
+          } else if (action === 'SELL') {
+            totalSold += Math.abs(tickData.energyTransaction);
+          }
+
+          latestTick = Math.max(latestTick, key);
         }
       });
-
-      setEnergyUsage(newUsageData[newUsageData.length - 1]?.y ?? 0);
-      setEnergyProduced(newProducedData[newProducedData.length - 1]?.y ?? 0);
+  
+      setEnergyUsage(newUsageData[latestTick]?.y ?? 0);
+      setEnergyProduced(newProducedData[latestTick]?.y ?? 0);
       setChartData(prevData => ({
         ...prevData,
         datasets: [
@@ -101,22 +126,33 @@ const Home = () => {
           {
             ...prevData.datasets[1],
             data: newProducedData,
-          },
+          }
         ],
       }));
-      setCurrentStorage(data.batteryStorage);
-      setStorageChange((data.batteryStorage - newHistoricalStorage[newHistoricalStorage.length - 1]) / newHistoricalStorage[newHistoricalStorage.length - 1] * 100);
+
+      setCurrentStorage(data[latestTick]?.[0]?.storage ?? 0);
+      setStorageChange(newHistoricalStorage[latestTick] - newHistoricalStorage[latestTick - 1] ?? 0);
       setHistoricalStorage(newHistoricalStorage);
+
+
       setNaiveCosts(naiveCostSum);
       setOptimalCosts(optimalCostSum);
       setNaiveCostPerTick(newNaiveCostPerTick);
       setOptimalCostPerTick(newOptimalCostPerTick);
-      setCurrentAction(newActionLog[newActionLog.length - 1]?.action ?? 'buy');
-      setActionLog(newActionLog);
-    };
+      setStorageCostPerTick(newStorageCostPerTick);
 
+      // console.log(newActionLog[newActionLog.length - 1]?.action)
+      // SO MUCH DEBUGGING OVER THIS AS ARRAY LENGTH NON MATCH
+
+      setActionLog(newActionLog);
+      setCurrentAction(newActionLog[newActionLog.length - 1]?.action);
+
+      setTotalBought(totalBought);
+      setTotalSold(totalSold);
+    };
     fetchData();
   }, []);
+  
 
   const scrollToContent = () => {
     const contentSection = document.getElementById('content-section');
@@ -144,10 +180,10 @@ const Home = () => {
             <TickStorage currentStorage={currentStorage} storageChange={storageChange} historicalStorage={historicalStorage} />
         </div>
         <div className="w-full mt-8">
-            <TickBuySell currentAction={currentAction} actionLog={actionLog} />
+            <TickBuySell currentAction={currentAction} actionLog={actionLog} totalBought={totalBought} totalSold={totalSold} />
         </div>
         <div className="w-full mt-8">
-          <TickAlgo naiveCosts={naiveCosts} optimalCosts={optimalCosts} naiveCostPerTick={naiveCostPerTick} optimalCostPerTick={optimalCostPerTick} />
+          <TickAlgo naiveCosts={naiveCosts} optimalCosts={optimalCosts} naiveCostPerTick={naiveCostPerTick} optimalCostPerTick={optimalCostPerTick} storageCostPerTick={storageCostPerTick}/>
         </div>
       </div>
     </div>
