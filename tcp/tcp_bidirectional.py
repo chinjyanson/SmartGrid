@@ -245,12 +245,25 @@ while True:
                 Vshunt = ina.vshunt()
                 CL = OL_CL_pin.value() # Are we in closed or open loop mode
                 BU = BU_BO_pin.value() # Are we in buck or boost mode?
-                    
-                # New min and max PWM limits and we use the measured current directly
-                min_pwm = 0 
-                max_pwm = 64536
-                iL = Vshunt/SHUNT_OHMS
-                pwm_ref = saturate(65536-(int((vpot/3.3)*65536)),max_pwm,min_pwm) # convert the pot value to a PWM value for use later
+
+                duty = 65536-pwm_out # Invert the PWM because thats how it needs to be output for a buck because of other inversions in the hardware
+                pwm.duty_u16(duty) # now we output the pwm
+                
+            else: # Closed Loop Current Control
+                stop = False
+                while not stop:
+                    if required_storage > 0:
+                        total_current = -required_storage/vb
+                        cap_current = total_current/5
+                        print("Capacitor Current = {:.3f}".format(cap_current))
+                        print("Vb = {:.3f}".format(vb))
+                    else:
+                        total_current = -required_storage/va
+                        cap_current = total_current/5
+                        print("Capacitor Current = {:.3f}".format(cap_current))
+                        print("Va = {:.3f}".format(va))
+                   
+                    vpot = (required_storage/90)
                     
                 if CL != 1: # Buck-OL Open loop so just limit the current but otherwise pass through the reference directly as a duty cycle
                     i_err_int = 0 #reset integrator
