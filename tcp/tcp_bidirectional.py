@@ -261,7 +261,7 @@ while True:
                         print("Capacitor Current = {:.3f}".format(cap_current))
                         print("Va = {:.3f}".format(va))
                    
-                    vpot = (required_storage/90)*3.3
+                    vpot = (required_storage/90)
                     print("Vpot = {:.3f}".format(vpot))
                     
                     if duty <= 5000 or duty>= 32300:
