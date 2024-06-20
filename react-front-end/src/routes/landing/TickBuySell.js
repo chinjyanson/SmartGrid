@@ -64,7 +64,7 @@ const TickBuySell = ({ currentAction, actionLog, totalBought, totalSold}) => {
                 <li key={index} className="action-log-item">
                   <span className="action-log-label">Tick {log.tick}</span>
                   <span className={`action-log-value ${log.action === 'BUY' ? 'text-green-500 font-bold' : log.action === 'SELL' ? 'text-red-500 font-bold' : 'text-yellow-500 font-bold'}`}>
-                    {log.action}: <span className="text-gray-400">{log.value.toFixed(2)} kWh</span>
+                    {log.action}: <span className="text-gray-400">{log.value.toFixed(2)} J</span>
                   </span>
                 </li>
               ))}

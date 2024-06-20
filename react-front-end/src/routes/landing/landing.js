@@ -18,7 +18,7 @@ const Home = () => {
     labels: Array.from({ length: 60 }, (_, i) => i),
     datasets: [
       {
-        label: 'Energy Usage (kWh)',
+        label: 'Energy Usage (J)',
         data: Array.from({ length: 60 }, (_, i) => ({ x: i, y: null })),
         borderColor: 'rgba(255, 51, 153, 1)',
         backgroundColor: 'rgba(255, 51, 153, 0.2)',
@@ -26,7 +26,7 @@ const Home = () => {
         pointBorderColor: 'rgba(255, 51, 153, 0.6)',
       },
       {
-        label: 'Energy Usage Without Deferrables (kWh)',
+        label: 'Energy Usage Without Deferrables (J)',
         data: Array.from({ length: 60 }, (_, i) => ({ x: i, y: null })),
         borderColor: 'rgba(51, 255, 51, 1)',
         backgroundColor: 'rgba(51, 255, 51, 0.2)',
@@ -34,7 +34,7 @@ const Home = () => {
         pointBorderColor: 'rgba(51, 255, 51, 0.6)',
       },
       {
-        label: 'Energy Produced (kWh)',
+        label: 'Energy Produced (J)',
         data: Array.from({ length: 60 }, (_, i) => ({ x: i, y: null })),
         borderColor: 'rgba(51, 153, 255, 1)',
         backgroundColor: 'rgba(51, 153, 255, 0.2)',

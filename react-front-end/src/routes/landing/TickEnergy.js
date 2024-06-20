@@ -22,7 +22,7 @@ const TickEnergy = ({ energyUsage, energyProduced, chartData }) => {
               textColor="transparent"
               labelFontSize='0'
             />
-            <p className="text-lg">Current Energy Usage: <strong>{energyUsage} kWh</strong></p>
+            <p className="text-lg">Current Energy Usage: <strong>{energyUsage} J</strong></p>
           </div>
           <div className="flex flex-col items-center">
             <Speedometer
@@ -38,7 +38,7 @@ const TickEnergy = ({ energyUsage, energyProduced, chartData }) => {
               textColor="transparent"
               labelFontSize='0'
             />
-            <p className="text-lg">Current Energy Produced: <strong>{energyProduced} kWh</strong></p>
+            <p className="text-lg">Current Energy Produced: <strong>{energyProduced} J</strong></p>
           </div>
         </div>
         <div className="w-full">
@@ -70,7 +70,7 @@ const TickEnergy = ({ energyUsage, energyProduced, chartData }) => {
                 y: {
                   title: {
                     display: true,
-                    text: 'Energy (kWh)',
+                    text: 'Energy (J)',
                     color: 'white',
                     font: {
                       weight: 'bold',

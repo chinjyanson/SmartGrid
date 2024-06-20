@@ -24,7 +24,7 @@ const CombinedCharts = ({ lineChartData, pieChartData }) => {
       y: {
         title: {
           display: true,
-          text:'Energy (kWh)',
+          text:'Energy (J)',
           color: 'white', // X axis title color
           font: {
             weight: 'bold', // Make the title bold
