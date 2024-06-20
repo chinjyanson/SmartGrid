@@ -19,6 +19,7 @@ def parseDeferables(deferables):
 
 deferable_list = []
 
+
 class AlgoVar:
     def __init__(self, tick, optimal_energy_transactions, optimal_storage_transactions, solar_energy, demand, tick_profit, current_buy_price, current_sell_price, storage, base_demand):
         self.tick = tick
@@ -64,6 +65,8 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
     # for idx in range(len(deferable_list)):
     #     if deferable_list[idx].start <= t < deferable_list[idx].end:
     #         deferable_demand += deferable_list[idx].energyTotal / (deferable_list[idx].end - deferable_list[idx].start) 
+
+    print(f"initial_storage_level {initial_storage_level}")
 
     storage = initial_storage_level
     tick_profit = 0
@@ -128,6 +131,7 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
             solar_energy[i] >= 0,
             demand[i] >= 0,
             deferable_demand[0][i] + deferable_demand[1][i] + deferable_demand[2][i] + demand[i] <= MAX_DEMAND_CAPACITY,
+            #sum(deferable_demand[idx][i] for idx in range(len(deferable_list))) + demand[i] <= MAX_DEMAND_CAPACITY,
         ]
 
     for i in range(1, horizon):  # Starting from 1 since solar_energy[0] is fixed to energy_in
@@ -229,21 +233,22 @@ def maximize_profit_mpc(initial_storage_level, data_buffers, predictions_buffer,
         print(f"  Energy Currently in storage: {storage} kWh")
         print(f"  Energy Used: {energy_used} kWh")
         print(f"  Solar Energy: {energy_in} kWh")
+        print(f" storage: {storage}" )
         # print(f"  Current Buy Price: {current_buy_price} £/kWh")
         # print(f"  Current Sell Price: {current_sell_price} £/kWh")
         # print(f" energy_transactions.value: {energy_transactions.value}")
         # print(f" storage_transactions.value: {storage_transactions.value}")
         # print(f" solar_energy: {solar_energy.value}")
-        print(f"Demand Value: {demand.value[0] + sum(deferable_demand[idx][0].value for idx in range(len(deferable_list)))}")
-        print(f" demand: {demand.value}")
-        print(f" storage: {storage_level.value}")
+        # print(f"Demand Value: {demand.value[0] + sum(deferable_demand[idx][0].value for idx in range(len(deferable_list)))}")
+        # print(f" demand: {demand.value}")
+        # print(f" storage: {storage_level.value}")
         # print(f" Predicted Buy Prices: {predicted_buy_prices[t:t + horizon]}")
         # print(f" Predicted Sell Prices: {predicted_sell_prices[t:t + horizon]}")
-        for idx in range(len(deferable_list)):
-            print(f"  Deferable Demand {idx}: {deferable_demand[idx].value}")
-        for idx in range(len(deferable_list)):
-            print(f"  Deferables: {deferable_list[idx].start}, {deferable_list[idx].end}, {deferable_list[idx].energyTotal}, {deferable_list[idx].energyDone}")
-
+        # for idx in range(len(deferable_list)):
+        #     print(f"  Deferable Demand {idx}: {deferable_demand[idx].value}")
+        # for idx in range(len(deferable_list)):
+        #     print(f"  Deferables: {deferable_list[idx].start}, {deferable_list[idx].end}, {deferable_list[idx].energyTotal}, {deferable_list[idx].energyDone}")
+        energy_used = demand.value[0] + sum(deferable_demand[idx][0].value for idx in range(len(deferable_list)))
     else:
         print(f"   Optimization failed")
         print(problem.status)

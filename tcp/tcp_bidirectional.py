@@ -10,7 +10,8 @@ from credentials import SSID, PASSWORD
 required_storage = 0
 str_data = ""
 cap_current = 0
-total_current = 0              
+total_current = 0 
+ports = range(5550,5560)             
 
 # Function to connect to Wi-Fi
 def connect_wifi(ssid, password):
@@ -39,7 +40,7 @@ def receive_from_server(client_socket, client_name):
             
             if parsed_data.get("client") == client_name:
                 str_data = data
-                #print(f"Received from server: {parsed_data}")
+                print(f"Received from server: {parsed_data}")
                 return parsed_data['storage']
             else:
                 print(f"Ignored message for {parsed_data.get('client')}")
@@ -58,25 +59,47 @@ def send_to_server(client_socket, data):
         except Exception as e:
             print(f"Error sending data: {e}")
         
-        utime.sleep(5)  # Wait 5 seconds before sending the next dummy data
+        utime.sleep(5) 
 
+def connect_server(server_host, client_name):
+    for port in ports:
+        try:
+            print(f"Attempting to connect to port {port}...")
+            # Create a socket object
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            # Attempt to connect to the server
+            sock.connect((server_host, port))
+            client_socket.connect((server_host, server_port))
+            print(client_name.encode('utf-8'))
+            client_socket.sendall(client_name.encode('utf-8'))  # Send the client's name to the server
+            print(f"Successfully connected to port {port}!")
+            return sock  # Return the socket if connection is successful
+        except OSError as e:
+            print(f"Failed to connect to port {port}: {e}")
+            if sock:
+                sock.close()
+    
+    print("Could not connect to any port in the range.")
+    return None  # Return None if no connection was successful
+
+def maintain_connection(server_host, client_name):
+    while True: 
+        client_socket = connect_server(server_host, client_name)
+        if client_socket:
+            return client_socket
+        else:
+            print(f"retrying to connect to server...")
+            utime.sleep(3)
 
 # Function to start the client
-def start_client(server_host, server_port, client_name, ssid, password):
+def start_client(server_host, client_name, ssid, password):
     # Connect to Wi-Fi
     connect_wifi(ssid, password)
-    
     # Create a socket and connect to the server
-    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client_socket.connect((server_host, server_port))
-    print(client_name.encode('utf-8'))
-    client_socket.sendall(client_name.encode('utf-8'))  # Send the client's name to the server
-    utime.sleep(3)
 
     # Start threads for sending and receiving data
     #_thread.start_new_thread(receive_from_server, (client_socket,))
-
-    return client_socket
+    return maintain_connection(server_host, client_name)
 
 # Set up some pin allocations for the Analogues and switches
 va_pin = ADC(Pin(28))
@@ -156,7 +179,7 @@ class ina219:
     REG_CURRENT = 0x04
     REG_CALIBRATION = 0x05
     
-    def __init__(self,sr, address, maxi):
+    def _init_(self,sr, address, maxi):
         self.address = address
         self.shunt = sr
             
@@ -188,62 +211,41 @@ server_host = '192.168.90.163'  # Replace with your server's IP address
 server_port = 5551
 client_name = 'bidirectional'  # Replace with your client name
 data = None
-client_socket = start_client(server_host, server_port, client_name, SSID, PASSWORD)
+client_socket = start_client(server_host, client_name, SSID, PASSWORD)
 
 
 # Here we go, main function, always executes
 while True:
-    required_storage = receive_from_server(client_socket, client_name)
-    start = utime.time()
-    if required_storage != None:
-        print("Required Storage = {:.3f}".format(required_storage))
-        if first_run:
-            # for first run, set up the INA link and the loop timer settings
-            ina = ina219(SHUNT_OHMS, 64, 5)
-            ina.configure()
-            first_run = 0
-            
-            # This starts a 1kHz timer which we use to control the execution of the control loops and sampling
-            loop_timer = Timer(mode=Timer.PERIODIC, freq=1000, callback=tick)
-        
-        # If the timer has elapsed it will execute some functions, otherwise it skips everything and repeats until the timer elapses
-        if timer_elapsed == 1: # This is executed at 1kHz
-            va = 1.017*(12490/2490)*3.3*(va_pin.read_u16()/65536) # calibration factor * potential divider ratio * ref voltage * digital reading
-            vb = 1.015*(12490/2490)*3.3*(vb_pin.read_u16()/65536) # calibration factor * potential divider ratio * ref voltage * digital reading
-            
-            vpot_in = 1.026*3.3*(vpot_pin.read_u16()/65536) # calibration factor * potential divider ratio * ref voltage * digital reading
-            v_pot_filt[v_pot_index] = vpot_in # Adds the new reading to our array of readings at the current index
-            v_pot_index = v_pot_index + 1 # Moves the index of the buffer for next time
-            if v_pot_index == 100: # Loops it round if it reaches the end
-                v_pot_index = 0
-            vpot = sum(v_pot_filt)/100 # Actual reading used is the average of the last 100 readings
-            
-            Vshunt = ina.vshunt()
-            CL = OL_CL_pin.value() # Are we in closed or open loop mode
-            BU = BU_BO_pin.value() # Are we in buck or boost mode?
+    try:
+        required_storage = receive_from_server(client_socket, client_name)
+        start = utime.time()
+        if required_storage != None:
+            print("Required Storage = {:.3f}".format(required_storage))
+            if first_run:
+                # for first run, set up the INA link and the loop timer settings
+                ina = ina219(SHUNT_OHMS, 64, 5)
+                ina.configure()
+                first_run = 0
                 
-            # New min and max PWM limits and we use the measured current directly
-            min_pwm = 0 
-            max_pwm = 64536
-            iL = Vshunt/SHUNT_OHMS
-            pwm_ref = saturate(65536-(int((vpot/3.3)*65536)),max_pwm,min_pwm) # convert the pot value to a PWM value for use later
-                  
-            if CL != 1: # Buck-OL Open loop so just limit the current but otherwise pass through the reference directly as a duty cycle
-                i_err_int = 0 #reset integrator
+                # This starts a 1kHz timer which we use to control the execution of the control loops and sampling
+                loop_timer = Timer(mode=Timer.PERIODIC, freq=1000, callback=tick)
+            
+            # If the timer has elapsed it will execute some functions, otherwise it skips everything and repeats until the timer elapses
+            if timer_elapsed == 1: # This is executed at 1kHz
+                va = 1.017*(12490/2490)*3.3*(va_pin.read_u16()/65536) # calibration factor * potential divider ratio * ref voltage * digital reading
+                vb = 1.015*(12490/2490)*3.3*(vb_pin.read_u16()/65536) # calibration factor * potential divider ratio * ref voltage * digital reading
                 
-                if iL > 2: # Current limiting function
-                    pwm_out = pwm_out - 10 # if there is too much current, knock down the duty cycle
-                    OC = 1 # Set the OC flag
-                    pwm_out = saturate(pwm_out, pwm_ref, min_pwm)
-                elif iL < -2:
-                    pwm_out = pwm_out + 10 # We are now below the current limit so bring the duty back up
-                    OC = 1 # Reset the OC flag
-                    pwm_out = saturate(pwm_out, max_pwm, pwm_ref)
-                else:
-                    pwm_out = pwm_ref
-                    OC = 0
-                    pwm_out = saturate(pwm_out, pwm_ref, min_pwm)
-                    
+                vpot_in = 1.026*3.3*(vpot_pin.read_u16()/65536) # calibration factor * potential divider ratio * ref voltage * digital reading
+                v_pot_filt[v_pot_index] = vpot_in # Adds the new reading to our array of readings at the current index
+                v_pot_index = v_pot_index + 1 # Moves the index of the buffer for next time
+                if v_pot_index == 100: # Loops it round if it reaches the end
+                    v_pot_index = 0
+                vpot = sum(v_pot_filt)/100 # Actual reading used is the average of the last 100 readings
+                
+                Vshunt = ina.vshunt()
+                CL = OL_CL_pin.value() # Are we in closed or open loop mode
+                BU = BU_BO_pin.value() # Are we in buck or boost mode?
+
                 duty = 65536-pwm_out # Invert the PWM because thats how it needs to be output for a buck because of other inversions in the hardware
                 pwm.duty_u16(duty) # now we output the pwm
                 
@@ -263,55 +265,97 @@ while True:
                    
                     vpot = (required_storage/90)
                     
-                    if duty <= 5000 or duty>= 32300:
-                        i_ref = 0
-                        print("saturating")
+                if CL != 1: # Buck-OL Open loop so just limit the current but otherwise pass through the reference directly as a duty cycle
+                    i_err_int = 0 #reset integrator
+                    
+                    if iL > 2: # Current limiting function
+                        pwm_out = pwm_out - 10 # if there is too much current, knock down the duty cycle
+                        OC = 1 # Set the OC flag
+                        pwm_out = saturate(pwm_out, pwm_ref, min_pwm)
+                    elif iL < -2:
+                        pwm_out = pwm_out + 10 # We are now below the current limit so bring the duty back up
+                        OC = 1 # Reset the OC flag
+                        pwm_out = saturate(pwm_out, max_pwm, pwm_ref)
                     else:
-                        i_ref = saturate(vpot, 0.2, -0.2)
-                        print("charge/discharge")
-                    
-                    i_err = i_ref-iL # calculate the error in voltage
-                    i_err_int = i_err_int + i_err # add it to the integral error
-                    i_err_int = saturate(i_err_int, 10000, -10000) # saturate the integral error
-                    i_pi_out = (kp*i_err)+(ki*i_err_int) # Calculate a PI controller output
+                        pwm_out = pwm_ref
+                        OC = 0
+                        pwm_out = saturate(pwm_out, pwm_ref, min_pwm)
                         
-                    pwm_out = saturate(i_pi_out,max_pwm,min_pwm) # Saturate that PI output
-                    duty = int(65536-pwm_out) # Invert because reasons
-                    pwm.duty_u16(duty) # Send the output of the PI controller out as PWM
+                    duty = 65536-pwm_out # Invert the PWM because thats how it needs to be output for a buck because of other inversions in the hardware
+                    pwm.duty_u16(duty) # now we output the pwm
                     
-                    print("i_ref = {:.3f}".format(i_ref))
-                    print("iL = {:.3f}".format(iL))
-                    print("duty = {:d}".format(duty))
+                else: # Closed Loop Current Control
+                    stop = False
+                    while not stop:
+                        if required_storage > 0:
+                            total_current = -required_storage/vb
+                            cap_current = total_current/5
+                            print("Capacitor Current = {:.3f}".format(cap_current))
+                            print("Vb = {:.3f}".format(vb))
+                        else:
+                            total_current = -required_storage/va
+                            cap_current = total_current/5
+                            print("Capacitor Current = {:.3f}".format(cap_current))
+                            print("Va = {:.3f}".format(va))
                     
-                    end = utime.time()
-                    
-                    if end-start >= 5:
-                       stop = True
+                        vpot = (required_storage/90)*3.3
+                        print("Vpot = {:.3f}".format(vpot))
+                        
+                        if duty <= 5000 or duty>= 32300:
+                            i_ref = 0
+                            print("saturating")
+                        else:
+                            i_ref = saturate(vpot, 0.2, -0.2)
+                            print("charge/discharge")
+                        
+                        i_err = i_ref-iL # calculate the error in voltage
+                        i_err_int = i_err_int + i_err # add it to the integral error
+                        i_err_int = saturate(i_err_int, 10000, -10000) # saturate the integral error
+                        i_pi_out = (kp*i_err)+(ki*i_err_int) # Calculate a PI controller output
+                            
+                        pwm_out = saturate(i_pi_out,max_pwm,min_pwm) # Saturate that PI output
+                        duty = int(65536-pwm_out) # Invert because reasons
+                        pwm.duty_u16(duty) # Send the output of the PI controller out as PWM
+                        
+                        print("i_ref = {:.3f}".format(i_ref))
+                        print("iL = {:.3f}".format(iL))
+                        print("duty = {:d}".format(duty))
+                        
+                        end = utime.time()
+                        
+                        if end-start >= 5:
+                            stop = True
 
-            duty = saturate(duty, 65536, 1000)
-            
-            # Keep a count of how many times we have executed and reset the timer so we can go back to waiting
-            count = count + 1
-            timer_elapsed = 0
-            
-            # This set of prints executes every 100 loops by default and can be used to output debug or extra info over USB enable or disable lines as needed
-            if count > 100:
+                duty = saturate(duty, 65536, 1000)
                 
-                print("Va = {:.3f}".format(va))
-                print("Vb = {:.3f}".format(vb))
-                print("Vpot = {:.3f}".format(vpot))
-                print("iL = {:.3f}".format(iL))
-                print("OC = {:b}".format(OC))
-                print("CL = {:b}".format(CL))
-                print("BU = {:b}".format(BU))
-                #print("trip = {:b}".format(trip))
-                print("duty = {:d}".format(duty))
-                print("i_err = {:.3f}".format(i_err))
-                #print("i_err_int = {:.3f}".format(i_err_int))
-                #print("i_pi_out = {:.3f}".format(i_pi_out))
-                print("i_ref = {:.3f}".format(i_ref))
-                #print("v_err = {:.3f}".format(v_err))
-                #print("v_err_int = {:.3f}".format(v_err_int))
-                #print("v_pi_out = {:.3f}".format(v_pi_out))
-                #print(v_pot_filt)
-                count = 0
+                # Keep a count of how many times we have executed and reset the timer so we can go back to waiting
+                count = count + 1
+                timer_elapsed = 0
+                
+                # This set of prints executes every 100 loops by default and can be used to output debug or extra info over USB enable or disable lines as needed
+                if count > 100:
+                    
+                    print("Va = {:.3f}".format(va))
+                    print("Vb = {:.3f}".format(vb))
+                    print("Vpot = {:.3f}".format(vpot))
+                    print("iL = {:.3f}".format(iL))
+                    print("OC = {:b}".format(OC))
+                    print("CL = {:b}".format(CL))
+                    print("BU = {:b}".format(BU))
+                    #print("trip = {:b}".format(trip))
+                    print("duty = {:d}".format(duty))
+                    print("i_err = {:.3f}".format(i_err))
+                    #print("i_err_int = {:.3f}".format(i_err_int))
+                    #print("i_pi_out = {:.3f}".format(i_pi_out))
+                    print("i_ref = {:.3f}".format(i_ref))
+                    #print("v_err = {:.3f}".format(v_err))
+                    #print("v_err_int = {:.3f}".format(v_err_int))
+                    #print("v_pi_out = {:.3f}".format(v_pi_out))
+                    #print(v_pot_filt)
+                    count = 0
+
+    except (OSError, socket.error) as e:
+        print(f"Connection lost: {e}. Attempting to reconnect...")
+        if client_socket:
+            client_socket.close()
+        client_socket = maintain_connection(server_host, client_name)

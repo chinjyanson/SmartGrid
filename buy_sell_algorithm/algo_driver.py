@@ -1,4 +1,4 @@
-from queue import Queue 
+from queue import Queue
 import time
 from predictions.utils import plot_datas, get_sunlight, init_frontend_file, add_data_to_frontend_file
 from colorama import Fore, Back, Style, init
@@ -198,7 +198,7 @@ class Algorithm:
         print(f"naive profit total: {total_naive_profit}")
 
         print(f" ***************************************************************************************")
-
+       
         add_data_to_frontend_file({"tick": algovar.tick, "naiveProfit": -naive_profit, "optProfit": -algovar.profit, "storage": algovar.storage,"energyTransaction":algovar.optimal_energy_transactions, "energyUsed": algovar.demand, "noDefEnergyUsed": algovar.base_demand,"energyIn": algovar.solar_energy, "storageProfit": -algovar.profit-algovar.storage*algovar.buy_price})
 
         #Post data to the cloud
@@ -211,9 +211,9 @@ class Algorithm:
                 energy_bought = 0
             self.trade_api_post(self.cycle_count, total_profit, energy_sold, energy_bought) #energy sold,energy bought
             self.energy_api_post(self.cycle_count, algovar.demand, algovar.solar_energy) #energy used, energy produced
-            total_profit, naive_profit = 0, 0
+            total_profit, total_naive_profit = 0, 0
 
-        return time.time() - start + time_taken, storage, total_profit, total_naive_profit, unmet_demands, algovar
+        return time.time() - start + time_taken, naive_storage, storage, total_profit, total_naive_profit, unmet_demands, algovar
     
     def driver(self, q : Queue):
         # fill data buffers with historical data at beginning
@@ -237,7 +237,7 @@ class Algorithm:
         total_profit = 0
         total_naive_profit = 0
 
-        loads_data = [{"client": "load", "power":None},{"client": "load1", "power":None}, {"client": "load2", "power":None}, {"client": "load3", "power":None}]
+        loads_data = [{"client": "load", "power":None},{"client": "load1", "power":None, "tick": None}, {"client": "load2", "power":None}, {"client": "load3", "power":None}]
         bidirectional_data = {'client':'bidirectional', 'buysell':None, 'storage':None}
 
         #data_to_clients = {"load":0, "load1":0, "load2":0, "load3":0, "bidirectional":{"buysell":0, "storage":None}}
@@ -252,21 +252,21 @@ class Algorithm:
                 
                 # new cycle should always come before something_else such that data buffers get emptied
                 time_taken = self.new_cycle()
-                tt, storage, total_profit, total_naive_profit, unmet_demand, algovar = self.something_else(naive_storage, storage, unmet_demand, total_profit, total_naive_profit)
+                tt, naive_storage, storage, total_profit, total_naive_profit, unmet_demand, algovar = self.something_else(naive_storage, storage, unmet_demand, total_profit, total_naive_profit)
                 time_taken += tt
                 remainder = 5-time_taken 
                 print("Cycle ", self.cycle_count)
                 print(Fore.MAGENTA + f"Setting up new cycle took {time_taken} s", (Fore.GREEN if remainder > 1.5 else Fore.LIGHTRED_EX) + f"Time to t+1 [{remainder} s]")
 
             elif((self.tick % self.data_batch_size) == 0 or (self.tick == 59)):
-                time_taken, storage, total_profit, total_naive_profit, unmet_demand, algovar = self.something_else(naive_storage, storage, unmet_demand, total_profit, total_naive_profit)
+                time_taken, naive_storage, storage, total_profit, total_naive_profit, unmet_demand, algovar = self.something_else(naive_storage, storage, unmet_demand, total_profit, total_naive_profit)
                 time_taken += self.prepare_next()
                 remainder = 5-time_taken
                 print("Cycle ", self.cycle_count)
                 print(Fore.YELLOW + f"Preparation and decision took {time_taken} s", (Fore.GREEN if remainder > 1.5 else Fore.LIGHTRED_EX) + f"Time to t+1 [{remainder} s]")
             
             else:
-                time_taken, storage, total_profit, total_naive_profit, unmet_demand, algovar = self.something_else(naive_storage, storage, unmet_demand, total_profit, total_naive_profit)
+                time_taken, naive_storage, storage, total_profit, total_naive_profit, unmet_demand, algovar= self.something_else(naive_storage, storage, unmet_demand, total_profit, total_naive_profit)
                 remainder = 5-time_taken
                 print("Cycle ", self.cycle_count)
                 print(Fore.BLUE + f"Something else and adding to data buffers took {time_taken} s", (Fore.GREEN if remainder > 1.5 else Fore.LIGHTRED_EX) + f"Time to t+1 [{remainder} s]")
@@ -277,32 +277,38 @@ class Algorithm:
 
             print(Fore.CYAN + f"Hardware given window of {window_length_in_s} s")
             print(Fore.LIGHTGREEN_EX + f"Sending decision to hardware after {time_to_sleep_in_s} s")
+            print("********************************************************************************", storage)
 
             # send decision to hardware when window starts
             time.sleep(time_to_sleep_in_s)
 
             power = random.uniform(0, 1.5)
-            storage = random.uniform(0, 1.5)
 
-            if(q.empty()):
-                print("Adding results to queue")
-                """
-                if algovar.optimal_energy_transactions > 0:
-                    bidirectional_data['buysell'] = True
-                else:
-                    bidirectional_data['buysell'] = False
-                bidirectional_data['storage'] = algovar.optimal_storage_transactions
-            `   """
-                
-                bidirectional_data["buysell"] = False
-                bidirectional_data["storage"] = storage
+            tcp_fake_storage = random.uniform(0, 1.5)
 
-                q.put(bidirectional_data)
-                #add_data_to_tcp_algo_file(bidirectional_data)
+            
+            while(not q.empty()):
+                _ = q.get()
+            #if(q.empty()):
+            print("Adding results to queue")
+            """
+            if algovar.optimal_energy_transactions > 0:
+                bidirectional_data['buysell'] = True
+            else:
+                bidirectional_data['buysell'] = False
+            bidirectional_data['storage'] = algovar.optimal_storage_transactions
+        `   """
+            
+            bidirectional_data["buysell"] = False
+            bidirectional_data["storage"] = storage
 
-                for ld in loads_data:
-                    ld["power"] = power #algovar.demand/3
-                    q.put(ld)
+            q.put(bidirectional_data)
+            #add_data_to_tcp_algo_file(bidirectional_data)
+
+            for ld in loads_data:
+                ld["power"] = algovar.demand/3
+                ld["tick"] = self.tick
+                q.put(ld)
             
             remainder -= time_to_sleep_in_s
 
