@@ -262,7 +262,6 @@ while True:
                         print("Va = {:.3f}".format(va))
                    
                     vpot = (required_storage/90)
-                    print("Vpot = {:.3f}".format(vpot))
                     
                     if duty <= 5000 or duty>= 32300:
                         i_ref = 0
