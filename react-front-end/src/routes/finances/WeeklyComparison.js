@@ -23,13 +23,13 @@ const WeeklyComparison = ({ comparison }) => {
       <div className="comparison-item">
         <div className="comparison-label">Energy Bought:</div>
         <div className="comparison-value">
-          {formatDifference(comparison.energyBought.difference)} kWh {renderTrendIcon(comparison.energyBought.trend)}
+          {formatDifference(comparison.energyBought.difference)} J {renderTrendIcon(comparison.energyBought.trend)}
         </div>
       </div>
       <div className="comparison-item">
         <div className="comparison-label">Energy Sold:</div>
         <div className="comparison-value">
-          {formatDifference(comparison.energySold.difference)} kWh {renderTrendIcon(comparison.energySold.trend)}
+          {formatDifference(comparison.energySold.difference)} J {renderTrendIcon(comparison.energySold.trend)}
         </div>
       </div>
       <div className="comparison-item">

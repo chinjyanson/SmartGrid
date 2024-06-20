@@ -24,7 +24,7 @@ const ProductionChart = ({ data }) => {
       y: {
         title: {
           display: true,
-          text:'Energy Produced (kWh)',
+          text:'Energy Produced (J)',
           color: 'white', // X axis title color
           font: {
             weight: 'bold', // Make the title bold

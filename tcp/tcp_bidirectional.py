@@ -82,7 +82,7 @@ def connect_server(server_host, client_name):
     print("Could not connect to any port in the range.")
     return None  # Return None if no connection was successful
 
-def maintain_connection(server_host, server_port, client_name):
+def maintain_connection(server_host, client_name):
     while True: 
         client_socket = connect_server(server_host, client_name)
         if client_socket:

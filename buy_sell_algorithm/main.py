@@ -19,7 +19,7 @@ q = Queue()
 def main():
     algo = Algorithm()
     server_host = '0.0.0.0'
-    server_port = 5559
+    server_port = 5550
 
     # tcp server runs in separate process
     tcp_process = Process(target=start_server, args=(server_host, server_port, q))
@@ -28,4 +28,5 @@ def main():
 
     tcp_process.join()
 
+if "__main__" == __name__:
     main()

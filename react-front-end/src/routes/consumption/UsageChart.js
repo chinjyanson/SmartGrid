@@ -24,7 +24,7 @@ const UsageChart = ({ data }) => {
       y: {
         title: {
           display: true,
-          text:'Energy Used (kWh)',
+          text:'Energy Used (J)',
           color: 'white', // X axis title color
           font: {
             weight: 'bold', // Make the title bold

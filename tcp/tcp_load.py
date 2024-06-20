@@ -62,22 +62,22 @@ def send_to_server(client_socket, data):
         utime.sleep(5)
 
 def connect_server(server_host, client_name):
-    for port in ports:
-        try:
-            print(f"Attempting to connect to port {port}...")
-            # Create a socket object
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            # Attempt to connect to the server
-            sock.connect((server_host, port))
-            client_socket.connect((server_host, port))
-            print(client_name.encode('utf-8'))
-            client_socket.sendall(client_name.encode('utf-8'))  # Send the client's name to the server
-            print(f"Successfully connected to port {port}!")
-            return sock  # Return the socket if connection is successful
-        except OSError as e:
-            print(f"Failed to connect to port {port}: {e}")
-            if sock:
-                sock.close()
+    while True:
+        for port in ports:
+            try:
+                print(f"Attempting to connect to port {port}...")
+                # Create a socket object
+                client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                # Attempt to connect to the server
+                client_socket.connect((server_host, port))
+                print(client_name.encode('utf-8'))
+                client_socket.sendall(client_name.encode('utf-8'))  # Send the client's name to the server
+                print(f"Successfully connected to port {port}!")
+                return client_socket  # Return the socket if connection is successful
+            except OSError as e:
+                print(f"Failed to connect to port {port}: {e}")
+                if client_socket:
+                    client_socket.close()
     
     print("Could not connect to any port in the range.")
     return None  # Return None if no connection was successful
@@ -99,7 +99,7 @@ def start_client(server_host, client_name, ssid, password):
     
     return maintain_connection(server_host, client_name)
     
-server_host = '192.168.90.163'  # Replace with your server's IP address
+server_host = '192.168.90.7'  # Replace with your server's IP address
 
 client_name = 'load1'  # Replace with your client name
 client_socket = start_client(server_host, client_name, SSID, PASSWORD)
@@ -145,8 +145,8 @@ while True:
             pwm_en.value(1)
             stop = False
             while not stop:
-                vin = 1.026*(12490/2490)*3.3*(vin_pin.read_u16()/65536) # calibration factor * potential divider ratio * ref voltage * digital reading
-                vout = 1.026*(12490/2490)*3.3*(vout_pin.read_u16()/65536) # calibration factor * potential divider ratio * ref voltage * digital reading
+                vin = 1.026*(12490/2490)3.3(vin_pin.read_u16()/65536) # calibration factor * potential divider ratio * ref voltage * digital reading
+                vout = 1.026*(12490/2490)3.3(vout_pin.read_u16()/65536) # calibration factor * potential divider ratio * ref voltage * digital reading
                 vret = 1*3.3*((vret_pin.read_u16()-350)/65536) # calibration factor * potential divider ratio * ref voltage * digital reading
                 count = count + 1      
                 pwm_ref = pid(vret)
