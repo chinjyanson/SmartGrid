@@ -61,9 +61,9 @@ Primarily shows the tick by tick comparisons and decisions. It shows in particul
 - Historical data on storage
 - MILP Algorithm vs Naive Solution
 ### Consumption Page 
-![alt text](https://github.com/chinjyanson/SmartGrid/blob/main/images/consumption.png)
+![alt text](https://github.com/chinjyanson/SmartGrid/blob/main/images/consumptions.png)
 ### Finance Page
-![alt text](https://github.com/chinjyanson/SmartGrid/blob/main/images/finance.png)
+![alt text](https://github.com/chinjyanson/SmartGrid/blob/main/images/finances.png)
 
 ## Making the APIs
 
