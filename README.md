@@ -51,7 +51,7 @@ interface.
 
 ### Optimization 
 Primarily made possible by a Coin and Branch or Cut Solver, which is a Mixed Integer Linear Programming library that works based on this flowchart below:
-![alt text](https://github.com/chinjyanson/SmartGrid/blob/main/images/CBC.png)
+![alt text](https://github.com/chinjyanson/SmartGrid/blob/main/images/cbc.png)
 We make the prediction window `60-ticks` since the new predictions only come in every 60 ticks. That means that the outputs for our cp variables will be an array of length `60-ticks` and the CBC solver accounts for the best set of values of all variables to create the maximum profit. Obviously the predicted values does not always equate to the actual value, hence we always re-run the CBC solver at each tick (almost like recalibrating)
 
 ## Webserver 
